@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Reminder - dotspeaks</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Base Styles */
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+        table { border-collapse: collapse !important; }
+        body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+        a { color: #0000FF; text-decoration: underline; }
+        .brand-font { font-family: 'Poppins', 'Arial', sans-serif; }
+
+        /* Responsive Styles */
+        @media screen and (max-width: 600px) {
+            .content-cell {
+                padding: 25px 20px !important;
+            }
+            .hero-heading {
+                font-size: 24px !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #f4f7f6; margin: 0 !important; padding: 0 !important;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td align="center" style="padding: 20px 15px;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+                    <!-- LOGO -->
+                    <tr>
+                        <td align="center" style="padding: 20px 0 30px 0;">
+                            <img src="https://i0.wp.com/dotspeaks.com/wp-content/uploads/2025/07/Dotspeaks-logo.png?fit=2560%2C591&ssl=1" alt="dotspeaks Logo" width="150" style="display: block;">
+                        </td>
+                    </tr>
+                    <!-- MAIN CONTENT CONTAINER -->
+                    <tr>
+                        <td bgcolor="#ffffff" align="center" style="padding: 40px 30px; border-radius: 12px;" class="content-cell">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <!-- HEADING -->
+                                <tr>
+                                    <td align="center" class="brand-font" style="color: #1a1a1a;">
+                                        <h1 class="hero-heading" style="font-size: 28px; font-weight: 700; margin: 0 0 25px 0;">Friendly Reminder</h1>
+                                    </td>
+                                </tr>
+                                <!-- CONTENT -->
+                                <tr>
+                                    <td align="left" class="brand-font" style="color: #333333; font-size: 16px; line-height: 1.7;">
+                                        <p style="margin: 0 0 15px 0;">Hello [Greeting Name],</p>
+                                        <p style="margin: 0 0 15px 0;">This is a quick reminder that your meeting, <strong style="color: #0000FF;">"[Meeting Title]"</strong>, is scheduled to begin in [Time Until Meeting].</p>
+                                        <p style="margin: 0 0 25px 0;">We're looking forward to speaking with you!</p>
+                                    </td>
+                                </tr>
+                                <!-- CTA Button -->
+                                <tr>
+                                    <td align="center" style="padding: 10px 0 20px 0;">
+
+                                        <!-- === BACKEND LOGIC: USE THIS BUTTON FOR IMMINENT REMINDERS (e.g., 15-min, 5-min) === -->
+                                        <a href="[Meeting Link]" target="_blank" style="display: inline-block; padding: 14px 35px; font-family: 'Poppins', 'Arial', sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #0000FF; text-decoration: none; border-radius: 50px;">
+                                            Join Your Meeting Now
+                                        </a>
+
+                                    </td>
+                                </tr>
+                                 <!-- Closing Text -->
+                                 <tr>
+                                    <td align="left" class="brand-font" style="color: #333333; font-size: 16px; line-height: 1.7;">
+                                        <p style="margin: 0;">See you soon!</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- FOOTER -->
+                    <tr>
+                        <td align="center" style="padding: 30px 20px; color: #888888; font-family: 'Poppins', 'Arial', sans-serif; font-size: 12px; line-height: 1.6;">
+                            <p style="margin: 0 0 15px 0;">
+                                <a href="#" target="_blank" style="text-decoration: none; padding: 0 8px; color: #888888;">Help & Contact</a> &nbsp;|&nbsp;
+                                <a href="#" target="_blank" style="text-decoration: none; padding: 0 8px; color: #888888;">Security</a> &nbsp;|&nbsp;
+                                <a href="#" target="_blank" style="text-decoration: none; padding: 0 8px; color: #888888;">Apps</a>
+                            </p>
+                            <p style="margin: 0;">&copy; 2024 dotspeaks. All rights reserved.</p>
+                            <p style="margin: 5px 0 0 0;">This is an automated reminder for your scheduled meeting.</p>
+                            <p style="margin: 15px 0 0 0;"><a href="[Unsubscribe Link]" style="color: #888888; text-decoration: underline;">Unsubscribe</a></p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

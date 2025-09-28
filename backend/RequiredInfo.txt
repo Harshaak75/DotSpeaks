@@ -1,0 +1,37 @@
+SUPABASE_URL = 
+SUPABASE_SERVICE_ROLE_KEY = 
+
+
+# Connect to Supabase via connection pooling
+DATABASE_URL=
+
+# Direct connection to the database. Used for migrations
+DIRECT_URL=
+
+
+# SALTING FOR PASSWORD TO MAKE IT HASHED
+
+SALT_ROUNDS = 
+
+SALT_ROUNDS_TOKEN = 
+
+ACCESS_SECRET = 
+
+REFRESH_SECRET =
+
+# cookies
+
+NODE_ENV = 
+
+EMAIL_USER = 
+EMAIL_PASS = 
+
+# google info
+
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=
+
+REWORK_LIMIT = 
+
+FRONTEND_URL = 

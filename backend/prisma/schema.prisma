@@ -1,0 +1,603 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model users {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email      String    @unique
+  password   String
+  role       String
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+
+  profile               profiles?
+  RefreshToken          RefreshToken[]
+  attendance            attendance[]
+  TelecommunicatorLeads TelecommunicatorLeads[]
+  BussinessDeveloper    BussinessDeveloper[]
+  forwardedLeads        BussinessDeveloper[]    @relation("ForwardedLeads")
+  MeetingEvent          MeetingEvent[]
+  bd_assignments        bd_tele_assignments[]   @relation("bd_assignments")
+  tele_assignments      bd_tele_assignments[]   @relation("tele_assignments")
+  chat_members          chat_members[]
+  chat_messages         chat_messages[]
+
+  bd_group_owner_chats chats[]              @relation("bd_group_owner")
+  DesignerSubmission   DesignerSubmission[]
+
+  requestedTickets HelpTicket[] @relation("TicketRequester")
+  resolvedTickets  HelpTicket[] @relation("TicketResolver")
+}
+
+model attendance {
+  id                  String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id             String?        @db.Uuid
+  login_time          DateTime       @db.Timestamptz(6)
+  total_break_minutes Int?           @default(0)
+  logout_time         DateTime?      @db.Timestamptz(6)
+  status              String         @default("Present")
+  hours_worked        Decimal?       @default(0) @db.Decimal(5, 2)
+  created_at          DateTime?      @default(now()) @db.Timestamptz(6)
+  users               users?         @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  break_events        break_events[]
+  profilesId          String?        @db.Uuid
+}
+
+model break_events {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attendance_id String?   @db.Uuid
+  break_start   DateTime? @db.Time(6)
+  break_end     DateTime? @db.Time(6)
+
+  attendance attendance? @relation(fields: [attendance_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model company_goals {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String
+  description String?
+  category    String
+  priority    String    @default("Medium")
+  status      String    @default("On Track")
+  progress    Int?      @default(0)
+  start_date  DateTime  @db.Date
+  end_date    DateTime  @db.Date
+  owner       String
+  department  String
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model department_goals {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String
+  description String?
+  priority    String    @default("Medium")
+  status      String    @default("On Track")
+  progress    Int?      @default(0)
+  start_date  DateTime  @db.Date
+  end_date    DateTime  @db.Date
+  assigned_to String
+  department  String
+  editable    Boolean?  @default(true)
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model documents {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title           String
+  type            String
+  category        String
+  size            String?
+  last_modified   DateTime? @default(now()) @db.Timestamptz(6)
+  download_url    String?
+  description     String?
+  confidentiality String    @default("Internal")
+  version         String?   @default("1.0")
+  created_at      DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model meetings {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String
+  date         DateTime  @db.Date
+  time         DateTime  @db.Time(6)
+  duration     String?
+  participants String[]
+  location     String?
+  type         String    @default("In-Person")
+  status       String    @default("Scheduled")
+  agenda       String?
+  organizer    String
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  meeting_link String?
+}
+
+model profiles {
+  id                          String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                     String?                      @unique @db.Uuid
+  employee_code               String                       @unique
+  name                        String
+  contact                     String?
+  email                       String                       @unique
+  designation                 String
+  department                  String
+  join_date                   DateTime                     @db.Date
+  created_at                  DateTime?                    @default(now()) @db.Timestamptz(6)
+  updated_at                  DateTime?                    @default(now()) @db.Timestamptz(6)
+  user                        users?                       @relation(fields: [user_id], references: [id])
+  BrandHeadPackageAssignments BrandHeadPackageAssignments?
+  BandHeadClinet              ClientAssignment[]
+
+  schedulingLink String? @default("No link")
+
+  googleAccessToken     String?
+  googleRefreshToken    String? // IMPORTANT: Store this to get new access tokens without re-authenticating
+  googleTokenExpiryDate DateTime?
+  TeamMember            TeamMember[]
+  Team                  Team[]
+  PackageEmployee       PackageEmployee[]
+  Content               Content[]
+}
+
+// packages
+
+model Package {
+  id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                        String                        @unique // e.g., "Spark", "Growth", "Enterprise"
+  BrandHeadPackageAssignments BrandHeadPackageAssignments[]
+  Team                        Team[]
+  PackageEmployee             PackageEmployee[]
+}
+
+// it is mainly used to get the information about : "Who is working on the Spark package?"
+model BrandHeadPackageAssignments {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profile_id String   @unique @db.Uuid
+  profile    profiles @relation(fields: [profile_id], references: [id])
+  Package    Package? @relation(fields: [packageId], references: [id])
+  packageId  String?  @db.Uuid
+}
+
+model reports {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String
+  type        String
+  date        DateTime  @db.Date
+  uploaded_by String
+  file_size   String?
+  status      String    @default("Completed")
+  summary     Json?
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model team_members {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String
+  position         String
+  email            String    @unique
+  phone            String?
+  department       String
+  location         String?
+  join_date        DateTime  @db.Date
+  avatar           String?
+  status           String    @default("Active")
+  reports_to       String?
+  direct_reports   Int?      @default(0)
+  current_projects String[]
+  skills           String[]
+  created_at       DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model tutorials {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String
+  description   String?
+  type          String
+  duration      String?
+  category      String
+  instructor    String?
+  is_watched    Boolean?  @default(false)
+  url           String?
+  thumbnail_url String?
+  last_updated  DateTime? @default(now()) @db.Timestamptz(6)
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+// Hashed token
+
+model RefreshToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @unique @db.Uuid
+  tokenHash String // Hashed refresh token using bcrypt or SHA-256
+  createdAt DateTime
+  expiresAt DateTime // You can set expiry matching the refresh token
+  user      users    @relation(fields: [userId], references: [id])
+}
+
+// client refresh token
+
+model ClientRefreshToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientId  String   @unique @db.Uuid
+  tokenHash String // Hashed refresh token using bcrypt or SHA-256
+  createdAt DateTime
+  expiresAt DateTime // You can set expiry matching the refresh token
+  client    clients  @relation(fields: [clientId], references: [id])
+}
+
+// client
+
+model clients {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email              String              @unique
+  password           String
+  company_name       String?
+  package            String? // e.g., "SPARK", "Growth"
+  created_at         DateTime            @default(now())
+
+  passwordResetToken       String?   @unique
+  passwordResetExpires     DateTime?
+
+  
+  ClientRefreshToken ClientRefreshToken?
+  BandHeadClinet     ClientAssignment[]
+
+  sourceLeadId          String?                @unique @db.Uuid
+  TelecommunicatorLeads TelecommunicatorLeads? @relation(fields: [sourceLeadId], references: [id])
+  Team                  Team?                  @relation(fields: [teamId], references: [id])
+  teamId                String?                @db.Uuid
+  Content               Content[]
+  MarketingContent      MarketingContent[]
+  OnboardingData  ClientOnboardingData?
+}
+
+
+model ClientOnboardingData {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // This creates the one-to-one link to your existing clients table
+  clientId        String   @unique @db.Uuid
+  client          clients  @relation(fields: [clientId], references: [id])
+
+  // --- All fields from your onboarding form ---
+  // Company Info
+  yearOfEstablishment String?
+  about               String? @db.Text
+  websiteUrl          String?
+  industry            String?
+  keyProducts         String? @db.Text
+
+  // Contact Info
+  primaryContactPerson String?
+  positionTitle       String?
+  contactNumber       String?
+  
+  // Goals, Activities, and Social Media (stored as JSON)
+  marketingGoals      Json?
+  currentMarketingActivities Json?
+  socialMediaAccounts Json?
+
+  // Other Details
+  timeline            String?
+  targetAudience      String? @db.Text
+  currentChallenges   String? @db.Text
+  competitors         Json? // Stored as a JSON array of strings
+
+  createdAt           DateTime @default(now())
+}
+
+model TelecommunicatorLeads {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company            String?
+  contact            String?
+  phone              String?
+  source             String?
+  email              String?
+  status             String               @default("New") // e.g., 'New', 'Contacted', 'Forwarded'
+  created_at         DateTime             @default(now())
+  // ... other fields
+  assignedToId       String?              @db.Uuid
+  assignedTo         users?               @relation(fields: [assignedToId], references: [id])
+  BussinessDeveloper BussinessDeveloper[]
+  clients            clients?
+}
+
+model BussinessDeveloper {
+  id                String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leadId            String                @unique @db.Uuid
+  TeleCommunication TelecommunicatorLeads @relation(fields: [leadId], references: [id])
+
+  status String? @default("Working")
+
+  assignedToId String? @db.Uuid
+  assignedTo   users?  @relation(fields: [assignedToId], references: [id])
+
+  forwardedByTelecommunicatorId String?  @db.Uuid
+  forwardedByTelecommunicator   users?   @relation("ForwardedLeads", fields: [forwardedByTelecommunicatorId], references: [id])
+  created_at                    DateTime @default(now())
+}
+
+// for Brand Head Link to Client
+
+model ClientAssignment {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  BH_profile_id String   @db.Uuid
+  profiles      profiles @relation(fields: [BH_profile_id], references: [id])
+
+  clinetId   String   @db.Uuid
+  clients    clients  @relation(fields: [clinetId], references: [id])
+  created_at DateTime @default(now())
+}
+
+// Team
+
+model TeamMember {
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  teamId String @db.Uuid
+  team   Team   @relation(fields: [teamId], references: [id])
+
+  profileId String   @db.Uuid
+  profile   profiles @relation(fields: [profileId], references: [id])
+
+  role       String // e.g., "Graphic Designer", "Digital Marketer"
+  created_at DateTime @default(now())
+}
+
+model Team {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  packageId String  @db.Uuid
+  package   Package @relation(fields: [packageId], references: [id])
+
+  brandHeadId String   @db.Uuid
+  brandHead   profiles @relation(fields: [brandHeadId], references: [id])
+
+  members    TeamMember[]
+  clients    clients[] // optional: if you want to directly attach clients to teams
+  created_at DateTime     @default(now())
+}
+
+// package assign for employees
+
+model PackageEmployee {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  packageId String  @db.Uuid
+  package   Package @relation(fields: [packageId], references: [id])
+
+  profileId String   @db.Uuid
+  profile   profiles @relation(fields: [profileId], references: [id])
+
+  role       String // e.g., "Designer", "Manager"
+  assignedBy String?  @db.Uuid // HR who added them
+  created_at DateTime @default(now())
+}
+
+// google meet
+
+model MeetingEvent {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  googleEventId String    @unique
+  userId        String?   @db.Uuid
+  title         String? // summary
+  email         String?
+  startTime     DateTime?
+  endTime       DateTime?
+  meetingLink   String? // hangoutLink or in location
+  cancelUrl     String? // parsed from description
+  rescheduleUrl String? // parsed from description
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  users         users?    @relation(fields: [userId], references: [id])
+}
+
+model bd_tele_assignments {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  bd_user_id String @db.Uuid
+  bd         users  @relation("bd_assignments", fields: [bd_user_id], references: [id])
+
+  tele_user_id String @db.Uuid
+  tele         users  @relation("tele_assignments", fields: [tele_user_id], references: [id])
+
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+
+  // one-to-one DM chat
+  chat chats? @relation("dm_assignment_chat")
+
+  @@unique([bd_user_id, tele_user_id])
+}
+
+// Chartting tables
+
+enum ChatType {
+  DM
+  GROUP
+}
+
+model chats {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type       ChatType
+  title      String?
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @updatedAt
+
+  // GROUP chat owned by a BD
+  group_owner_id String? @db.Uuid
+  group_owner    users?  @relation("bd_group_owner", fields: [group_owner_id], references: [id])
+
+  // DM chat belongs to one bd↔tele assignment
+  dm_assignment_id String?              @db.Uuid
+  dm_assignment    bd_tele_assignments? @relation("dm_assignment_chat", fields: [dm_assignment_id], references: [id])
+
+  members  chat_members[]
+  messages chat_messages[]
+
+  @@unique([group_owner_id])
+  @@unique([dm_assignment_id])
+  @@index([type])
+}
+
+model chat_members {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chat_id   String    @db.Uuid
+  user_id   String    @db.Uuid
+  joined_at DateTime? @default(now()) @db.Timestamptz(6)
+
+  chat chats @relation(fields: [chat_id], references: [id])
+  user users @relation(fields: [user_id], references: [id])
+
+  @@unique([chat_id, user_id], name: "chat_id_user_id")
+  @@index([user_id])
+}
+
+model chat_messages {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chat_id    String    @db.Uuid
+  sender_id  String    @db.Uuid
+  content    String
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+
+  chat   chats @relation(fields: [chat_id], references: [id])
+  sender users @relation(fields: [sender_id], references: [id])
+
+  @@index([chat_id, created_at])
+}
+
+// content writer content
+
+model Content {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientId        String?   @db.Uuid
+  client          clients?  @relation(fields: [clientId], references: [id])
+  contentWriterId String?   @db.Uuid
+  writer          profiles? @relation(fields: [contentWriterId], references: [id])
+
+  title  String
+  start  DateTime
+  status ContentStatus @default(pending_review)
+
+  documentUrl   String? // URL of uploaded document (PDF or Word)
+  documentType  DocumentType?
+  reworkComment String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  MarketingContent MarketingContent[]
+}
+
+enum ContentStatus {
+  pending_review
+  approved
+  rework_requested
+  Help_requested
+
+  // ✅ NEW STATUS for individual tasks (MarketingContent)
+  DM_APPROVED      // Digital Marketer has approved this specific creative
+
+  // ✅ NEW STATUS for the parent batch (Content)
+  READY_FOR_CLIENT // All sub-tasks are DM_APPROVED, the whole package is ready
+}
+
+enum DocumentType {
+  PDF
+  Word
+}
+
+model MarketingContent {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientId String @db.Uuid
+
+  // Common
+  campaignTitle String // short title or campaign name
+  date          DateTime
+  hashtags      String[]
+  sourcePdf     String?
+  createdAt     DateTime @default(now())
+
+  status ContentStatus @default(pending_review)
+
+  reworkComment String?
+
+  reworkCount Int @default(0)
+
+  contentId String @db.Uuid
+
+  fileStatus FileStatus @default(NOT_UPLOADED)
+
+  // Marketer Guide
+  title   String? // e.g., "Marketer Guide"
+  content String? // full marketer text
+
+  // Designer Guide
+  designerTitle String? // e.g., "Designer Guide"
+  objective     String?
+  visual        String?
+  headline      String?
+  message       String?
+  cta           String?
+  branding      String?
+
+  platform String? // e.g. Instagram, Facebook, LinkedIn
+  postType String? // e.g. Static Post, Carousel, Reel
+  postTime String? // store time as string "11:00 AM"
+
+  clients            clients?             @relation(fields: [clientId], references: [id])
+  Content            Content              @relation(fields: [contentId], references: [id])
+  DesignerSubmission DesignerSubmission[]
+  HelpTicket         HelpTicket[]
+}
+
+enum FileStatus {
+  UPLOADED
+  NOT_UPLOADED
+}
+
+model DesignerSubmission {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  filePath String // The path in Supabase Storage, e.g., "private/designer_id/task_id/image.png"
+  fileName String // The original name of the file, e.g., "instagram_post_v1.png"
+  fileType String // The MIME type, e.g., "image/png"
+
+  // Relation to the Graphic Designer who uploaded it
+  designerId String @db.Uuid
+  designer   users  @relation(fields: [designerId], references: [id])
+
+  // Relation to the specific task it fulfills
+  taskId String           @unique @db.Uuid
+  task   MarketingContent @relation(fields: [taskId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum TicketStatus {
+  OPEN
+  RESOLVED
+}
+
+model HelpTicket {
+  id       String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  message  String       @db.Text // The designer's comment/question
+  status   TicketStatus @default(OPEN)
+  response String?      @db.Text // The Brand Head's response/suggestion
+
+  // Relation to the task the ticket is about
+  taskId String           @db.Uuid
+  task   MarketingContent @relation(fields: [taskId], references: [id])
+
+  // Relation to the user who requested help (the designer)
+  requesterId String @db.Uuid
+  requester   users  @relation("TicketRequester", fields: [requesterId], references: [id])
+
+  // Relation to the user who resolved the ticket (the brand head)
+  resolverId String? @db.Uuid
+  resolver   users?  @relation("TicketResolver", fields: [resolverId], references: [id])
+
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+}
