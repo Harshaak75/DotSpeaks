@@ -497,6 +497,8 @@ enum ContentStatus {
   rework_requested
   Help_requested
 
+  GF_APPROVED
+
   // ✅ NEW STATUS for individual tasks (MarketingContent)
   DM_APPROVED      // Digital Marketer has approved this specific creative
 

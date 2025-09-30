@@ -182,32 +182,37 @@ const TeamFormModal = ({
 
   const packageName = useSelector((state: any) => state.profile.PackageName);
 
-  const handleSave = async () => {
-    const data = [
-      {
-        teamName,
-        client: client.name,
-        clientId: client.id,
-        graphicDesignerId: members["Graphic Designer"],
-        digitalMarketerId: members["Digital Marketer"],
-        contentStrategistId: members["Content Strategist"],
-      },
-    ];
-    console.log(data);
-    try {
-      console.log("hi");
-      const response = await api.BrandHead.team.createTeam(
-        accessToken,
-        dispatch,
-        data,
-        packageName
-      );
-      console.log(response);
-    } catch (error) {
-      console.error("Error creating team:", error);
-    }
-    onClose();
+const handleSave = async () => {
+  const data = {
+    teamId: Date.now().toString(), // temporary ID until backend returns
+    teamName,
+    clientName: client.name,
+    clientId: client.id,
+    members: Object.entries(members)
+      .filter(([_, id]) => id) // only keep assigned roles
+      .map(([role, id]) => {
+        const emp = selectedEmployee[role].find((e: any) => e.id === id);
+        return { profileId: id, name: emp?.name, role };
+      }),
   };
+
+  try {
+    const response = await api.BrandHead.team.createTeam(
+      accessToken,
+      dispatch,
+      [data], // API expects array
+      packageName
+    );
+    console.log("Created:", response);
+
+    // update parent state
+    onSave(data);
+  } catch (error) {
+    console.error("Error creating team:", error);
+  }
+  onClose();
+};
+
 
   const renderSelectForClient = (clients: any) => {
     if (clients.length === 0) {
@@ -313,6 +318,21 @@ const TeamFormModal = ({
                   {Object.keys(selectedEmployee).map((role) => (
                     <div key={role}>{renderSelectForRole(role as Role)}</div>
                   ))}
+                </div>
+
+                <div className="mt-6 flex justify-end space-x-4">
+                  <button
+                    onClick={onClose}
+                    className="px-4 py-2 rounded-lg text-gray-600 bg-gray-100 hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className="px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    Save Team
+                  </button>
                 </div>
               </Dialog.Panel>
             </Transition.Child>

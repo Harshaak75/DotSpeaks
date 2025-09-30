@@ -8,7 +8,8 @@ import prisma from "../../lib/prismaClient";
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-export const uploadDesign = async (
+export const 
+uploadDesign = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -41,15 +42,33 @@ export const uploadDesign = async (
 
     console.log(uploadData);
 
-    const newSubmission = await prisma.designerSubmission.create({
-      data: {
+    // const newSubmission = await prisma.designerSubmission.create({
+    //   data: {
+    //     filePath: uploadData.path, // The path returned by Supabase
+    //     fileName: file.originalname,
+    //     fileType: file.mimetype,
+    //     taskId: taskId,
+    //     designerId: userId,
+    //   },
+    // });
+
+    const newSubmission = await prisma.designerSubmission.upsert({
+      where:{
+        taskId: taskId
+      },
+      update:{
+        filePath: uploadData.path, // The path returned by Supabase
+        fileName: file.originalname,
+        fileType: file.mimetype,
+      },
+      create:{
         filePath: uploadData.path, // The path returned by Supabase
         fileName: file.originalname,
         fileType: file.mimetype,
         taskId: taskId,
         designerId: userId,
-      },
-    });
+      }
+    })
 
     // update the file status in the marketContent table
 
@@ -59,6 +78,7 @@ export const uploadDesign = async (
       },
       data: {
         fileStatus: "UPLOADED",
+        status: "GF_APPROVED"
       },
     });
 

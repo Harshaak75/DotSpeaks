@@ -3,6 +3,7 @@ import { authenticate_user } from "../middleware/authMiddleware";
 import {
   addComment,
   GetContent,
+  GetTheDesign,
 } from "../controller/ClientFunction/ClientMiddleware";
 import prisma from "../lib/prismaClient";
 
@@ -61,5 +62,7 @@ router.put("/approval/:id", authenticate_user, async (req, res) => {
     res.status(500).json({ message: "Status is not approved", error: error });
   }
 });
+
+router.get("/contentDesign", authenticate_user, GetTheDesign)
 
 export default router;

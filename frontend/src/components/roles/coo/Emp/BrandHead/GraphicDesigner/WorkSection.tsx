@@ -57,7 +57,7 @@ interface DesignerTask {
   clientName: string; // Added for display purposes
   title: string; // 'campaignTitle' from backend
   start: Date;
-  status: "pending_review" | "rework_requested" | "approved" | "Help_requested";
+  status: "pending_review" | "rework_requested" | "approved" | "Help_requested" | "GF_APPROVED";
   details: TaskDetails;
   imageUrl?: string;
   helpRequest?: string;
@@ -298,7 +298,7 @@ const WorkSection = () => {
                 (data: any) =>
                   data.status === "pending_review" ||
                   data.status === "rework_requested" ||
-                  data.status === "Help_requested"
+                  data.status === "Help_requested" || data.status === "approved"
               )
               .map((data: any) => {
                 // ✅ FIX 2: Added logic to find the Brand Head's latest comment
@@ -316,7 +316,7 @@ const WorkSection = () => {
                   clientName: client.company_name,
                   title: data.campaignTitle,
                   start: new Date(data.date),
-                  status: data.status, // Use the real status from the backend
+                  status: data.status === "approved" ? "pending_review" : data.status, // Use the real status from the backend
                   suggestion: latestResolvedTicket
                 ? { text: latestResolvedTicket.response }
                 : undefined,
@@ -433,7 +433,8 @@ const WorkSection = () => {
     (task) =>
       task.clientId === selectedClient?.id &&
       task.status !== "approved" &&
-      task.status !== "Help_requested"
+      task.status !== "Help_requested" &&
+      task.status !== "GF_APPROVED"
   );
 
   const nextTask = filteredEvents.sort(

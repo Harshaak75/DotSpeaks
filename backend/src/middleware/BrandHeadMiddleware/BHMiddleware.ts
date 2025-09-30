@@ -91,6 +91,12 @@ export const CreateTeam = async (
       return res.status(404).json({ error: "Profile not found" });
     }
 
+    if (!data[0].clientId) {
+      return res.status(400).json({ error: "Client ID is required" });
+    }
+
+    console.log("ClientId received:", data[0].clientId);
+
     // create a team
 
     const team = await prisma.team.create({
@@ -103,19 +109,18 @@ export const CreateTeam = async (
 
     // create a team member record
 
-    console.log("data:", data);
+    console.log("data:", data[0].members);
 
-    const members = [
-      { role: "Graphic Designer", profileId: data[0].graphicDesignerId },
-      { role: "Digital Marketer", profileId: data[0].digitalMarketerId },
-      { role: "Content Strategist", profileId: data[0].contentStrategistId },
-    ].filter((m) => m.profileId); // remove empty ones
+    const members = data[0].members.map((member: any) => ({
+      role: member.role,
+      profileId: member.profileId,
+    }));
 
     console.log(members);
 
     // 3. Insert all members
     await prisma.teamMember.createMany({
-      data: members.map((m) => ({
+      data: members.map((m: any) => ({
         teamId: team.id,
         profileId: m.profileId,
         role: m.role,
@@ -285,7 +290,7 @@ export const CreateClientAccountFromBrandHead = async (
     //   },
     //   include: { OnboardingData: true },
     // });
-    console.log(formData)
+    console.log(formData);
 
     const client = await prisma.clients.findUnique({
       where: { email: formData.emailAddress }, // Use the provided email
@@ -335,6 +340,31 @@ export const CreateClientAccountFromBrandHead = async (
       formData.emailAddress, // Client Email
       resetURL // The secure reset link
     );
+
+    // client assign is pending from the brandhead side
+
+    const BHid = req.user?.user_id;
+
+    const BrandHeadProfileId = await prisma.profiles.findUnique({
+      where:{
+        user_id: BHid
+      },
+      select:{
+        id: true
+      }
+    })
+
+    if(!BrandHeadProfileId){
+      return res.status(404).json({error: "Brand Head profile not found"})
+    }
+
+    await prisma.clientAssignment.create({
+      data:{
+        BH_profile_id: BrandHeadProfileId?.id,
+        clinetId: client.id
+      }
+    })
+
 
     res.status(201).json({
       message:

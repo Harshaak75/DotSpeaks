@@ -540,33 +540,37 @@ export const api = {
       },
     },
     resetPassword: {
-            post: async (token: string, newPassword: string) => {
-                try {
-                    const response = await axios.post(
-                        `${API_BASE_URL}/auth/reset-password`, 
-                        { // The request body
-                            token,
-                            newPassword
-                        },
-                        { // Axios config
-                            withCredentials: true,
-                        }
-                    );
-                    return response.data;
-                } catch (error) {
-                    if (axios.isAxiosError(error)) {
-                        console.error(
-                            "Password reset failed:",
-                            error.response?.data || error.message
-                        );
-                        // Re-throw the error so the component can catch it
-                        throw new Error(error.response?.data?.message || 'An unknown error occurred.');
-                    }
-                    // Re-throw for non-Axios errors
-                    throw error;
-                }
+      post: async (token: string, newPassword: string) => {
+        try {
+          const response = await axios.post(
+            `${API_BASE_URL}/auth/reset-password`,
+            {
+              // The request body
+              token,
+              newPassword,
             },
-        },
+            {
+              // Axios config
+              withCredentials: true,
+            }
+          );
+          return response.data;
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            console.error(
+              "Password reset failed:",
+              error.response?.data || error.message
+            );
+            // Re-throw the error so the component can catch it
+            throw new Error(
+              error.response?.data?.message || "An unknown error occurred."
+            );
+          }
+          // Re-throw for non-Axios errors
+          throw error;
+        }
+      },
+    },
   },
   attendance: {
     StartBreak: {
@@ -958,6 +962,23 @@ export const api = {
       get: async (accessToken: any, dispatch: any) => {
         try {
           const response = await fetch(`${API_BASE_URL}/client/content`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            credentials: "include",
+          });
+          return handleResponse(response, dispatch);
+        } catch (error) {
+          console.log(error);
+        }
+      },
+    },
+    getContentDesignData: {
+      get: async (accessToken: any, dispatch: any) => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/client/contentDesign`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",

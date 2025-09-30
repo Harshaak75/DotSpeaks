@@ -3,8 +3,11 @@ const router = express.Router();
 import supabase from "../config/supabase";
 import { authenticate_user } from "../middleware/authMiddleware";
 import prisma from "../lib/prismaClient";
-import { RequestHelp, uploadDesign } from "../middleware/DesignerMiddleware/DesignMiddleWare";
-import multer from 'multer';
+import {
+  RequestHelp,
+  uploadDesign,
+} from "../middleware/DesignerMiddleware/DesignMiddleWare";
+import multer from "multer";
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -13,7 +16,7 @@ router.get("/getContent", authenticate_user, async (req, res) => {
   try {
     const userId = req.user?.user_id;
     // Fetch clients assigned to the user and include their MarketingContent
-const clientData = await prisma.clients.findMany({
+    const clientData = await prisma.clients.findMany({
       where: {
         Team: {
           members: {
@@ -54,9 +57,14 @@ const clientData = await prisma.clients.findMany({
   }
 });
 
-router.post("/submission/upload", authenticate_user,upload.single('file'), uploadDesign)
+router.post(
+  "/submission/upload",
+  authenticate_user,
+  upload.single("file"),
+  uploadDesign
+);
 
-router.get("/getUserId", authenticate_user, async (req, res) =>{
+router.get("/getUserId", authenticate_user, async (req, res) => {
   try {
     const user_id = req.user?.user_id;
 
@@ -64,7 +72,7 @@ router.get("/getUserId", authenticate_user, async (req, res) =>{
   } catch (error) {
     res.status(500).json({ message: "Cannot get user ID", error: error });
   }
-})
+});
 
 router.post("/request-help", authenticate_user, RequestHelp);
 

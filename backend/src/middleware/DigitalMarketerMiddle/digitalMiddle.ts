@@ -174,11 +174,37 @@ export const ApprovalTheDesign = async (
       });
 
       if (remainingTasksCount === 0) {
-        await tx.content.update({
+        const readyContent = await tx.content.update({
           where: { id: parentContentId },
           data: { status: "READY_FOR_CLIENT" },
+          include: {
+            // Include the client to get their team and name
+            client: true,
+          },
         });
         // TODO: Send a notification to the client that their content is ready for review
+        if (readyContent.clientId) {
+          // The channel name is based on the client's ID
+          const privateChannelName = `private-client-notifications-${readyContent.clientId}`;
+
+          const payload = {
+            event: "content_ready_for_your_review",
+            message: `Your new content, "${readyContent.title}", is ready for review!`,
+            contentId: readyContent.id,
+            clientName: readyContent.client?.company_name,
+          };
+
+          console.log(
+            `📢 Broadcasting to CLIENT channel ${privateChannelName}`
+          );
+
+          // Send the broadcast
+          await supabase.channel(privateChannelName).send({
+            type: "broadcast",
+            event: payload.event,
+            payload: payload,
+          });
+        }
         return { allTasksCompleted: true };
       }
 
