@@ -13,6 +13,7 @@ import { selectAccessToken, selectUserRole } from "./redux/slice/authSlice";
 import { AuthCheck } from "./utils/Token/useAuthCheck";
 import ClientLogin from "./components/auth/ClientLogin";
 import ResetPasswordPage from "./components/auth/ResetPasswordPage";
+import AuthCallback from "./utils/AuthCallBack";
 
 function App() {
   // const role = localStorage.getItem("role");
@@ -48,6 +49,8 @@ function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/auth/meta/callback" element={<AuthCallback />} />
+
         <Route
           path="/"
           element={
@@ -68,7 +71,7 @@ function App() {
             )
           }
         />
-        <Route path="/ClientLogin" element={<ClientLogin/>} />
+        <Route path="/ClientLogin" element={<ClientLogin />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="*" element={<div>404 - Not Found</div>} />
       </Routes>

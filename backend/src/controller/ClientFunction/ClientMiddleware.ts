@@ -37,7 +37,10 @@ export const GetContent = async (
       responseData = await Promise.all(
         fullData.map(async (content) => {
           let imageUrls: any[] = [];
-          if (content.DesignerSubmission && content.DesignerSubmission.length > 0) {
+          if (
+            content.DesignerSubmission &&
+            content.DesignerSubmission.length > 0
+          ) {
             imageUrls = await Promise.all(
               content.DesignerSubmission.map(async (submission) => {
                 const { data, error } = await supabase.storage
@@ -53,7 +56,7 @@ export const GetContent = async (
           };
         })
       );
-    } 
+    }
     // 4. ELSE: Not all are approved, so shape the data to send only the basic fields
     else {
       console.log("Not all items approved. Sending limited data shape...");
@@ -74,7 +77,6 @@ export const GetContent = async (
     }
 
     res.status(200).json({ content: responseData });
-
   } catch (error) {
     console.error("Error fetching content: ", error);
     res.status(500).json({ error: "Internal server error" });
@@ -179,3 +181,113 @@ export const GetTheDesign = async (
     res.status(500).json({ message: "Internal server error", error });
   }
 };
+
+export const GetTeamMembers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  // Assuming the user's ID from the token is the client's ID
+  const clientId = req.user?.user_id;
+
+  if (!clientId) {
+    return res
+      .status(401)
+      .json({ error: "Authentication error: Client ID not found." });
+  }
+
+  try {
+    // --- STEP 1: Execute a single, efficient query to get all related data ---
+    const client = await prisma.clients.findUnique({
+      where: { id: clientId },
+      select: {
+        Team: {
+          // Go from Client -> Team
+          select: {
+            name: true, // Get the team name
+            brandHead: {
+              // Go from Team -> Brand Head's Profile
+              select: {
+                name: true,
+                email: true,
+                designation: true,
+              },
+            },
+            members: {
+              // Go from Team -> List of Team Members
+              select: {
+                profile: {
+                  // For each member, go to their Profile
+                  select: {
+                    name: true,
+                    designation: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!client) {
+      return res.status(404).json({ error: "Client not found." });
+    }
+
+    const team = client.Team;
+
+    if (!team) {
+      return res
+        .status(404)
+        .json({ error: "Team not assigned to this client." });
+    }
+
+    // --- STEP 2: Format the data into the desired key-value object ---
+    const formattedTeam: { [key: string]: any } = {};
+
+    // Add the Brand Head
+    if (team.brandHead) {
+      const roleKey = team.brandHead.designation; // e.g., "brandHead"
+      formattedTeam[roleKey] = {
+        name: team.brandHead.name,
+        email: team.brandHead.email, // Email is included for the Brand Head
+        designation: team.brandHead.designation,
+      };
+    }
+
+    // Add the other team members
+    team.members.forEach((member) => {
+      if (member.profile) {
+        const roleKey = member.profile.designation; // e.g., "graphicDesigner"
+        formattedTeam[roleKey] = {
+          name: member.profile.name,
+          designation: member.profile.designation,
+        };
+      }
+    });
+
+    res.status(200).json(formattedTeam);
+  } catch (error) {
+    console.error("Error fetching team members:", error);
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};
+
+
+export const AutoPost = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const appId = process.env.App_Id;
+    const appUrl = process.env.App_Url;
+
+    if(!appId && !appUrl){
+      res.status(500).json({message: "The appId or appUrl not found"})
+    }
+    
+  } catch (error) {
+    
+  }
+}

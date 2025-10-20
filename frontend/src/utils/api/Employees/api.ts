@@ -26,6 +26,153 @@ const handleResponse = async (response: Response, dispatch: Function) => {
 
 export const api = {
   // COO API endpoints
+  ceo: {
+    profile: {
+      get: async (accessToken: any, dispatch: Function) => {
+        const response = await fetch(`${API_BASE_URL}/coo/profile`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: "include", // Include cookies in the request
+        });
+        return handleResponse(response, dispatch); // Use the helper
+      },
+      update: async (data: any, accessToken: any, dispatch: Function) => {
+        const response = await fetch(`${API_BASE_URL}/coo/profile`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: "include", // Include cookies in the request
+          body: JSON.stringify(data),
+        });
+        return handleResponse(response, dispatch);
+      },
+    },
+    setTargets: {
+      post: async (
+        accessToken: any,
+        dispatch: Function,
+        targets: any,
+        totalRevenue: any
+      ) => {
+        const response = await fetch(`${API_BASE_URL}/ceo/setTarget`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ targets, totalRevenue }),
+          credentials: "include", // Include cookies in the request
+        });
+        return handleResponse(response, dispatch);
+      },
+    },
+  },
+  cmo: {
+    profile: {
+      get: async (accessToken: any, dispatch: Function) => {
+        const response = await fetch(`${API_BASE_URL}/coo/profile`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: "include", // Include cookies in the request
+        });
+        return handleResponse(response, dispatch); // Use the helper
+      },
+      update: async (data: any, accessToken: any, dispatch: Function) => {
+        const response = await fetch(`${API_BASE_URL}/coo/profile`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: "include", // Include cookies in the request
+          body: JSON.stringify(data),
+        });
+        return handleResponse(response, dispatch);
+      },
+    },
+    addcmoTargets: {
+      post: async (accessToken: any, dispatch: Function, data: any) => {
+        const response = await fetch(`${API_BASE_URL}/cmo/addCMOTargets`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ data }),
+          credentials: "include", // Include cookies in the request
+        });
+        return handleResponse(response, dispatch);
+      },
+    },
+
+    getTargets: {
+      get: async (accessToken: any, dispatch: Function, quarter: any) => {
+        const response = await fetch(
+          `${API_BASE_URL}/cmo/sendTarget/${quarter}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            credentials: "include", // Include cookies in the request
+          }
+        );
+        return handleResponse(response, dispatch);
+      },
+    },
+
+    getCurrentQuarter: {
+      get: async (accessToken: any, dispatch: Function) => {
+        const response = await fetch(`${API_BASE_URL}/cmo/getQuarter`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: "include", // Include cookies in the request
+        });
+        return handleResponse(response, dispatch);
+      },
+    },
+
+    uploadLeads: {
+      post: async (
+        accessToken: any,
+        dispatch: any,
+        quarter: any,
+        file: any,
+        packages: any
+      ) => {
+        try {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("quarter", quarter);
+          formData.append("Package", packages);
+
+          const response = await fetch(`${API_BASE_URL}/cmo/UploadLeads`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+            credentials: "include",
+            body: formData,
+          });
+          return handleResponse(response, dispatch);
+        } catch (error) {
+          console.log(error);
+        }
+      },
+    },
+  },
   coo: {
     profile: {
       get: async (accessToken: any, dispatch: Function) => {
@@ -1003,6 +1150,26 @@ export const api = {
             },
             credentials: "include",
           });
+          return handleResponse(response, dispatch);
+        } catch (error) {
+          console.log(error);
+        }
+      },
+    },
+    getTeamMembers: {
+      get: async (accessToken: any, dispatch: any) => {
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}/client/GetTeamMembers`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`,
+              },
+              credentials: "include",
+            }
+          );
           return handleResponse(response, dispatch);
         } catch (error) {
           console.log(error);

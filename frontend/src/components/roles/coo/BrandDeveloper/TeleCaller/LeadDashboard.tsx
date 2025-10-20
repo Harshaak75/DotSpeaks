@@ -1,9 +1,10 @@
-import React, { useState, Fragment, useMemo, useEffect } from "react";
+import React, { useState, Fragment, useEffect, useMemo } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { Phone, Mail, Send, Star } from "lucide-react";
+import { Phone, Mail, Send, Star, EyeOff } from "lucide-react";
 import { api } from "../../../../../utils/api/Employees/api";
 import { useDispatch, useSelector } from "react-redux";
 import { selectAccessToken } from "../../../../../redux/slice/authSlice";
+import ToastNotification from "../../../../ToastMessageComp";
 
 // --- TYPE DEFINITIONS ---
 type LeadStatus =
@@ -13,7 +14,7 @@ type LeadStatus =
   | "Interested"
   | "Forwarded"
   | "Not Interested";
-// MODIFIED: Added 'Interested' as a direct outcome
+
 type ActivityOutcome =
   | "Contacted - No Answer"
   | "Contacted - Left Voicemail"
@@ -24,13 +25,29 @@ type ActivityOutcome =
 
 interface Lead {
   id: string;
-  name: string;
+  name?: string;
   company: string;
   phone?: string;
   email?: string;
   source: string;
   status: LeadStatus;
+  package?: { name: string };
 }
+
+// --- HELPER FUNCTIONS ---
+const maskPhone = (phone: string) => {
+  if (!phone) return "";
+  return phone.replace(/(\d{2})\d{4}(\d{2})$/, "$1******$2");
+};
+
+const maskEmail = (email: string) => {
+  if (!email) return "";
+  const [user, domain] = email.split("@");
+  if (!domain) return email;
+  return (
+    user.slice(0, 2) + "*".repeat(Math.max(0, user.length - 2)) + "@" + domain
+  );
+};
 
 // --- LOG ACTIVITY MODAL ---
 const LogActivityModal = ({ isOpen, onClose, lead, onLogActivity }: any) => {
@@ -68,6 +85,10 @@ const LogActivityModal = ({ isOpen, onClose, lead, onLogActivity }: any) => {
     });
   };
 
+  const handleCompanyCall = async (leadId: string) => {
+    alert("Initiating call to lead ID: " + leadId);
+  };
+
   const handleActionToggle = (action: any) => {
     setActions((prev: any) => ({ ...prev, [action]: !prev[action] }));
   };
@@ -102,35 +123,39 @@ const LogActivityModal = ({ isOpen, onClose, lead, onLogActivity }: any) => {
                   as="h3"
                   className="text-lg font-bold leading-6 text-gray-900"
                 >
-                  Log Activity for {lead.name}
+                  Log Activity for {lead.name || lead.company}
                 </Dialog.Title>
 
+                {/* CONTACT DETAILS (MASKED) */}
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
                   <h4 className="text-sm font-semibold text-gray-600 mb-2">
                     Contact Details
                   </h4>
-                  <div className="space-y-2">
-                    {lead.phone && (
-                      <a
-                        href={`tel:${lead.phone}`}
-                        className="flex items-center text-blue-600 hover:underline"
-                      >
-                        <Phone className="h-4 w-4 mr-2" />
-                        {lead.phone}
-                      </a>
-                    )}
-                    {lead.email && (
-                      <a
-                        href={`mailto:${lead.email}`}
-                        className="flex items-center text-blue-600 hover:underline"
-                      >
-                        <Mail className="h-4 w-4 mr-2" />
-                        {lead.email}
-                      </a>
-                    )}
+                  <div className="flex items-center text-gray-700 justify-between">
+                    <div className="flex items-center">
+                      <Phone className="h-4 w-4 mr-2 text-blue-500" />
+                      {maskPhone(lead.phone)}
+                    </div>
+                    <button
+                      onClick={() => handleCompanyCall(lead.id)}
+                      className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
+                    >
+                      Call via Company
+                    </button>
                   </div>
+                  {lead.email && (
+                    <div className="mt-2 flex items-center text-gray-700">
+                      <Mail className="h-4 w-4 mr-2 text-blue-500" />
+                      {maskEmail(lead.email)}
+                    </div>
+                  )}
+                  <p className="mt-2 text-xs text-gray-400 italic">
+                    The real number is hidden. The call will be made through the
+                    company phone line.
+                  </p>
                 </div>
 
+                {/* FORM FIELDS */}
                 <div className="mt-4 space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
@@ -152,46 +177,38 @@ const LogActivityModal = ({ isOpen, onClose, lead, onLogActivity }: any) => {
                     </select>
                   </div>
 
+                  {/* ACTIONS */}
                   <div className="p-4 bg-gray-50 rounded-lg border space-y-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Actions Taken
                       </label>
-                      <div className="flex space-x-4">
-                        <label className="flex items-center text-sm">
-                          <input
-                            type="checkbox"
-                            checked={actions.discussedPricing}
-                            onChange={() =>
-                              handleActionToggle("discussedPricing")
-                            }
-                            className="h-4 w-4 rounded mr-2"
-                          />{" "}
-                          Discussed Pricing
-                        </label>
-                        <label className="flex items-center text-sm">
-                          <input
-                            type="checkbox"
-                            checked={actions.sentFollowUp}
-                            onChange={() => handleActionToggle("sentFollowUp")}
-                            className="h-4 w-4 rounded mr-2"
-                          />{" "}
-                          Sent Follow-up
-                        </label>
-                        <label className="flex items-center text-sm">
-                          <input
-                            type="checkbox"
-                            checked={actions.scheduledDemo}
-                            onChange={() => handleActionToggle("scheduledDemo")}
-                            className="h-4 w-4 rounded mr-2"
-                          />{" "}
-                          Scheduled Demo
-                        </label>
+                      <div className="flex flex-wrap gap-4">
+                        {[
+                          ["discussedPricing", "Discussed Pricing"],
+                          ["sentFollowUp", "Sent Follow-up"],
+                          ["scheduledDemo", "Scheduled Demo"],
+                        ].map(([key, label]) => (
+                          <label
+                            key={key}
+                            className="flex items-center text-sm"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={actions[key as keyof typeof actions]}
+                              onChange={() => handleActionToggle(key)}
+                              className="h-4 w-4 rounded mr-2"
+                            />{" "}
+                            {label}
+                          </label>
+                        ))}
                       </div>
                     </div>
+
+                    {/* RATING */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Lead Ratings
+                        Lead Rating
                       </label>
                       <div className="flex items-center">
                         {[...Array(5)].map((_, i) => (
@@ -209,6 +226,7 @@ const LogActivityModal = ({ isOpen, onClose, lead, onLogActivity }: any) => {
                     </div>
                   </div>
 
+                  {/* NOTES */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Notes
@@ -222,6 +240,8 @@ const LogActivityModal = ({ isOpen, onClose, lead, onLogActivity }: any) => {
                     />
                   </div>
                 </div>
+
+                {/* SUBMIT */}
                 <div className="mt-6 flex justify-end">
                   <button
                     onClick={handleLog}
@@ -243,21 +263,42 @@ const LogActivityModal = ({ isOpen, onClose, lead, onLogActivity }: any) => {
 const FollowUpDashboard = ({ info }: any) => {
   const [leads, setLeads] = useState(info);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<string>("All");
   const [loading, setloading] = useState(false);
   const accessToken = useSelector(selectAccessToken);
   const dispatch = useDispatch();
 
-  console.log("info", info);
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "info",
+  });
+
+  // --- Compute dynamic package grouping ---
+  const packageCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    leads.forEach((lead: any) => {
+      const pkg = lead.package?.name || "Unknown";
+      counts[pkg] = (counts[pkg] || 0) + 1;
+    });
+    return counts;
+  }, [leads]);
+
+  const uniquePackages = ["All", ...Object.keys(packageCounts)];
+
+  const filteredLeads =
+    selectedPackage === "All"
+      ? leads
+      : leads.filter((l: any) => l.package?.name === selectedPackage);
 
   const handleLogActivity = async (
     leadId: string,
     outcome: ActivityOutcome,
-    notes: string
+    notes: string,
+    rating: any
   ) => {
     let newStatus: LeadStatus;
 
-    // --- THIS IS THE FIX ---
-    // The logic is now more specific to correctly assign the status.
     if (outcome === "Interested - Scheduled Follow-up") {
       newStatus = "Follow-up";
     } else if (outcome === "Interested") {
@@ -276,8 +317,18 @@ const FollowUpDashboard = ({ info }: any) => {
         leadId,
         newStatus
       );
+      setToast({
+        show: true,
+        message: `Lead status updated successfully.`,
+        type: "success",
+      });
     } catch (error) {
       console.log(error);
+      setToast({
+        show: true,
+        message: "Failed to update status. Please try again.",
+        type: "error",
+      });
     } finally {
       setloading(false);
     }
@@ -285,7 +336,6 @@ const FollowUpDashboard = ({ info }: any) => {
     setLeads((prev: any) =>
       prev.map((l: any) => (l.id === leadId ? { ...l, status: newStatus } : l))
     );
-    alert(`Activity logged for lead ID ${leadId}.`);
   };
 
   const handleSendToDeveloper = async (leadId: string) => {
@@ -296,8 +346,18 @@ const FollowUpDashboard = ({ info }: any) => {
         dispatch,
         leadId
       );
+      setToast({
+        show: true,
+        message: "The Lead sent to Business Developer successfully.",
+        type: "success",
+      });
     } catch (error) {
       console.log(error);
+      setToast({
+        show: true,
+        message: "Failed to send lead to Business Developer. Please try again.",
+        type: "error",
+      });
     } finally {
       setloading(false);
     }
@@ -310,23 +370,30 @@ const FollowUpDashboard = ({ info }: any) => {
       </div>
     );
 
-  const followUps = info.filter((l: any) => {
-  console.log(l.status); // ✅ This will log
-  return l.status?.trim() === "Follow-up";
-});
+  const followUps = leads.filter((l: any) => l.status === "Follow-up");
+
   return (
-    <div className=" min-h-screen">
+    <div className="min-h-screen">
+      {toast.show && (
+        <ToastNotification
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
+      )}
+
       <h1 className="text-3xl font-bold text-gray-900 mb-6">
         Contacted & Follow-up Leads
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="p-4 bg-white rounded-lg shadow-sm border">
-          <p className="text-sm text-gray-500">Pending Follow-ups</p>
-          <p className="text-3xl font-bold text-yellow-600">
-            {followUps.length}
-          </p>
-        </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+        {Object.entries(packageCounts).map(([pkg, count]) => (
+          <div key={pkg} className="p-4 bg-white rounded-lg shadow-sm border">
+            <p className="text-sm text-gray-500">{pkg} Leads</p>
+            <p className="text-3xl font-bold text-blue-600">{count}</p>
+          </div>
+        ))}
         <div className="p-4 bg-white rounded-lg shadow-sm border">
           <p className="text-sm text-gray-500">Hot Leads (Interested)</p>
           <p className="text-3xl font-bold text-orange-500">
@@ -334,20 +401,39 @@ const FollowUpDashboard = ({ info }: any) => {
           </p>
         </div>
         <div className="p-4 bg-white rounded-lg shadow-sm border">
-          <p className="text-sm text-gray-500">Meetings Scheduled</p>
-          <p className="text-3xl font-bold text-green-600">{4}</p>
+          <p className="text-sm text-gray-500">Pending Follow-ups</p>
+          <p className="text-3xl font-bold text-yellow-600">
+            {followUps.length}
+          </p>
         </div>
         <div className="p-4 bg-white rounded-lg shadow-sm border">
           <p className="text-sm text-gray-500">Total Calls to Make</p>
           <p className="text-3xl font-bold text-gray-800">
-            {info.filter((l: any) => l.status === "New").length}
+            {leads.filter((l: any) => l.status === "New").length}
           </p>
         </div>
       </div>
 
+      {/* Filter */}
+      <div className="mb-6">
+        <label className="text-sm font-semibold text-gray-700 mr-2">
+          Filter by Package:
+        </label>
+        <select
+          value={selectedPackage}
+          onChange={(e) => setSelectedPackage(e.target.value)}
+          className="p-2 border rounded-md"
+        >
+          {uniquePackages.map((pkg) => (
+            <option key={pkg}>{pkg}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Leads Table */}
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Follow-up Queue
+          Leads Queue ({selectedPackage})
         </h2>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -355,6 +441,9 @@ const FollowUpDashboard = ({ info }: any) => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Contact
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Package
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Status
@@ -365,11 +454,16 @@ const FollowUpDashboard = ({ info }: any) => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {info.map((lead: any) => (
+              {filteredLeads.map((lead: any) => (
                 <tr key={lead.id}>
                   <td className="px-6 py-4">
-                    <p className="font-medium text-gray-900">{lead.name}</p>
+                    <p className="font-medium text-gray-900">
+                      {lead.name || lead.company}
+                    </p>
                     <p className="text-sm text-gray-500">{lead.company}</p>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    {lead.package?.name || "N/A"}
                   </td>
                   <td className="px-6 py-4">
                     <span
@@ -378,6 +472,8 @@ const FollowUpDashboard = ({ info }: any) => {
                           ? "bg-yellow-100 text-yellow-800"
                           : lead.status === "Follow-up"
                           ? "bg-indigo-100 text-indigo-800"
+                          : lead.status === "New"
+                          ? "bg-gray-100 text-gray-700"
                           : "bg-purple-100 text-purple-800"
                       }`}
                     >
@@ -407,9 +503,16 @@ const FollowUpDashboard = ({ info }: any) => {
               ))}
             </tbody>
           </table>
+
+          {filteredLeads.length === 0 && (
+            <p className="text-center py-4 text-gray-500">
+              No leads available for this package.
+            </p>
+          )}
         </div>
       </div>
 
+      {/* MODAL */}
       <LogActivityModal
         isOpen={!!selectedLead}
         onClose={() => setSelectedLead(null)}

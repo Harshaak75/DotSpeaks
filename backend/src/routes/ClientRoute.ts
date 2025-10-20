@@ -3,6 +3,7 @@ import { authenticate_user } from "../middleware/authMiddleware";
 import {
   addComment,
   GetContent,
+  GetTeamMembers,
   GetTheDesign,
 } from "../controller/ClientFunction/ClientMiddleware";
 import prisma from "../lib/prismaClient";
@@ -64,5 +65,8 @@ router.put("/approval/:id", authenticate_user, async (req, res) => {
 });
 
 router.get("/contentDesign", authenticate_user, GetTheDesign)
+
+router.get("/GetTeamMembers", authenticate_user, GetTeamMembers);
+
 
 export default router;

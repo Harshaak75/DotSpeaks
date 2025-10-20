@@ -30,8 +30,9 @@ model users {
   bd_group_owner_chats chats[]              @relation("bd_group_owner")
   DesignerSubmission   DesignerSubmission[]
 
-  requestedTickets HelpTicket[] @relation("TicketRequester")
-  resolvedTickets  HelpTicket[] @relation("TicketResolver")
+  requestedTickets HelpTicket[]   @relation("TicketRequester")
+  resolvedTickets  HelpTicket[]   @relation("TicketResolver")
+  YearlyTarget     YearlyTarget[]
 }
 
 model attendance {
@@ -135,13 +136,14 @@ model profiles {
 
   schedulingLink String? @default("No link")
 
-  googleAccessToken     String?
-  googleRefreshToken    String? // IMPORTANT: Store this to get new access tokens without re-authenticating
-  googleTokenExpiryDate DateTime?
-  TeamMember            TeamMember[]
-  Team                  Team[]
-  PackageEmployee       PackageEmployee[]
-  Content               Content[]
+  googleAccessToken        String?
+  googleRefreshToken       String? // IMPORTANT: Store this to get new access tokens without re-authenticating
+  googleTokenExpiryDate    DateTime?
+  TeamMember               TeamMember[]
+  Team                     Team[]
+  PackageEmployee          PackageEmployee?
+  Content                  Content[]
+  EmployeeClientAssignment EmployeeClientAssignment[]
 }
 
 // packages
@@ -152,6 +154,8 @@ model Package {
   BrandHeadPackageAssignments BrandHeadPackageAssignments[]
   Team                        Team[]
   PackageEmployee             PackageEmployee[]
+  UploadedLeads               UploadedLeads[]
+  TelecommunicatorLeads       TelecommunicatorLeads[]
 }
 
 // it is mainly used to get the information about : "Who is working on the Spark package?"
@@ -233,36 +237,35 @@ model ClientRefreshToken {
 // client
 
 model clients {
-  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email              String              @unique
-  password           String
-  company_name       String?
-  package            String? // e.g., "SPARK", "Growth"
-  created_at         DateTime            @default(now())
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String   @unique
+  password     String
+  company_name String?
+  package      String? // e.g., "SPARK", "Growth"
+  created_at   DateTime @default(now())
 
-  passwordResetToken       String?   @unique
-  passwordResetExpires     DateTime?
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
 
-  
   ClientRefreshToken ClientRefreshToken?
   BandHeadClinet     ClientAssignment[]
 
-  sourceLeadId          String?                @unique @db.Uuid
-  TelecommunicatorLeads TelecommunicatorLeads? @relation(fields: [sourceLeadId], references: [id])
-  Team                  Team?                  @relation(fields: [teamId], references: [id])
-  teamId                String?                @db.Uuid
-  Content               Content[]
-  MarketingContent      MarketingContent[]
-  OnboardingData  ClientOnboardingData?
+  sourceLeadId             String?                    @unique @db.Uuid
+  TelecommunicatorLeads    TelecommunicatorLeads?     @relation(fields: [sourceLeadId], references: [id])
+  Team                     Team?                      @relation(fields: [teamId], references: [id])
+  teamId                   String?                    @db.Uuid
+  Content                  Content[]
+  MarketingContent         MarketingContent[]
+  OnboardingData           ClientOnboardingData?
+  EmployeeClientAssignment EmployeeClientAssignment[]
 }
 
-
 model ClientOnboardingData {
-  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
   // This creates the one-to-one link to your existing clients table
-  clientId        String   @unique @db.Uuid
-  client          clients  @relation(fields: [clientId], references: [id])
+  clientId String  @unique @db.Uuid
+  client   clients @relation(fields: [clientId], references: [id])
 
   // --- All fields from your onboarding form ---
   // Company Info
@@ -274,28 +277,45 @@ model ClientOnboardingData {
 
   // Contact Info
   primaryContactPerson String?
-  positionTitle       String?
-  contactNumber       String?
-  
+  positionTitle        String?
+  contactNumber        String?
+
   // Goals, Activities, and Social Media (stored as JSON)
-  marketingGoals      Json?
+  marketingGoals             Json?
   currentMarketingActivities Json?
-  socialMediaAccounts Json?
+  socialMediaAccounts        Json?
 
   // Other Details
-  timeline            String?
-  targetAudience      String? @db.Text
-  currentChallenges   String? @db.Text
-  competitors         Json? // Stored as a JSON array of strings
+  timeline          String?
+  targetAudience    String? @db.Text
+  currentChallenges String? @db.Text
+  competitors       Json? // Stored as a JSON array of strings
 
-  createdAt           DateTime @default(now())
+  createdAt DateTime @default(now())
+}
+
+model UploadedLeads {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fileName   String
+  uploadedBy String?  @db.Uuid // CMO user ID
+  quarter    String
+  version    Int      @default(1)
+  totalLeads Int?
+  createdAt  DateTime @default(now())
+
+  packageId String?  @db.Uuid
+  package   Package? @relation(fields: [packageId], references: [id])
+
+  teleLeads TelecommunicatorLeads[] @relation("FileToTeleLeads")
 }
 
 model TelecommunicatorLeads {
   id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   company            String?
-  contact            String?
   phone              String?
+  website            String?
+  industry           String?
+  city               String?
   source             String?
   email              String?
   status             String               @default("New") // e.g., 'New', 'Contacted', 'Forwarded'
@@ -305,6 +325,15 @@ model TelecommunicatorLeads {
   assignedTo         users?               @relation(fields: [assignedToId], references: [id])
   BussinessDeveloper BussinessDeveloper[]
   clients            clients?
+
+  dynamicData     Json?
+  uploadedLeadsId String?        @db.Uuid
+  UploadedLeads   UploadedLeads? @relation("FileToTeleLeads", fields: [uploadedLeadsId], references: [id])
+
+  packageId String?  @db.Uuid
+  package   Package? @relation(fields: [packageId], references: [id])
+
+  assignedDate DateTime?
 }
 
 model BussinessDeveloper {
@@ -362,14 +391,15 @@ model Team {
   created_at DateTime     @default(now())
 }
 
-// package assign for employees
+// package assign for employees  
+// Still not did prisma Migrate
 
 model PackageEmployee {
   id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   packageId String  @db.Uuid
   package   Package @relation(fields: [packageId], references: [id])
 
-  profileId String   @db.Uuid
+  profileId String   @unique @db.Uuid
   profile   profiles @relation(fields: [profileId], references: [id])
 
   role       String // e.g., "Designer", "Manager"
@@ -500,7 +530,7 @@ enum ContentStatus {
   GF_APPROVED
 
   // ✅ NEW STATUS for individual tasks (MarketingContent)
-  DM_APPROVED      // Digital Marketer has approved this specific creative
+  DM_APPROVED // Digital Marketer has approved this specific creative
 
   // ✅ NEW STATUS for the parent batch (Content)
   READY_FOR_CLIENT // All sub-tasks are DM_APPROVED, the whole package is ready
@@ -553,6 +583,8 @@ model MarketingContent {
   Content            Content              @relation(fields: [contentId], references: [id])
   DesignerSubmission DesignerSubmission[]
   HelpTicket         HelpTicket[]
+
+  @@unique([contentId, date, platform, postType])
 }
 
 enum FileStatus {
@@ -602,4 +634,142 @@ model HelpTicket {
 
   createdAt  DateTime  @default(now())
   resolvedAt DateTime?
+}
+
+// WORKING ON THE MANY TO MANY RELATION OF EMPLOTEE AND CLIENTS
+
+model RoleAssignmentThreshold {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  role        String   @unique // e.g., "Graphic Designer", "Digital Marketer", "Content Writer"
+  max_clients Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EmployeeClientAssignment {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  // Link to the Employee
+  profileId String   @db.Uuid
+  profile   profiles @relation(fields: [profileId], references: [id])
+
+  // Link to the Client
+  clientId String  @db.Uuid
+  client   clients @relation(fields: [clientId], references: [id])
+
+  assignedAt DateTime @default(now())
+
+  @@unique([profileId, clientId]) // Ensures an employee can only be assigned to the same client once
+  @@index([profileId])
+  @@index([clientId])
+}
+
+// auto Post
+
+enum Platform {
+  INSTAGRAM
+  FACEBOOK
+  LINKEDIN
+  YOUTUBE
+  TWITTER
+}
+
+// Target Model
+
+model YearlyTarget {
+  id                 String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  year               Int
+  totalRevenueTarget BigInt
+  ceoId              String                @db.Uuid
+  ceo                users                 @relation(fields: [ceoId], references: [id])
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  quarters           QuarterlyProjection[]
+}
+
+model QuarterlyProjection {
+  // Primary Key
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  // Context & Calculation Results
+  quarterName String // e.g., "Q1", "Q2", "Q3", "Q4"
+
+  // The calculated values based on the 60% expenses / 40% savings rule
+  projectedRevenue  BigInt // totalRevenueTarget / 4
+  projectedExpenses BigInt // projectedRevenue * 0.6
+  projectedSavings  BigInt // projectedRevenue * 0.4
+
+  // Foreign Key to link back to the main YearlyTarget
+  yearlyTargetId String       @db.Uuid
+  yearlyTarget   YearlyTarget @relation(fields: [yearlyTargetId], references: [id])
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  // Enforce uniqueness for a quarter within a yearly target
+  @@unique([yearlyTargetId, quarterName])
+}
+
+// This is the new table to store all social media connection details
+// model SocialAccountConnection {
+//   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+//   // Link to your existing clients table
+//   clientId String  @db.Uuid
+//   client   clients @relation(fields: [clientId], references: [id])
+
+//   platform       Platform // Which social media platform this is
+//   platformUserId String // The user's ID on that platform (e.g., Instagram User ID)
+//   username       String // The user's handle, for display purposes
+
+//   // --- TOKENS (MUST be encrypted before storing) ---
+//   accessToken     String    @db.Text // Encrypted short-lived token to make API calls
+//   refreshToken    String?   @db.Text // Encrypted long-lived token to get new access tokens
+//   tokenExpiryDate DateTime? // The expiry date of the accessToken
+
+//   // The permissions (scopes) the user granted us
+//   scopes String[]
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   // A client can only have one connection per platform
+//   @@unique([clientId, platform])
+// }
+
+// CMO TARGETS
+
+model CmoTarget {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cmoId            String   @db.Uuid // link to the CMO or ACMO user
+  targetQuarter    String
+  quarterlyRevenue Int
+  monthlyUnits     Int
+  version          Int      @default(1)
+  totalTargetLeads Int
+  createdAt        DateTime @default(now())
+
+  // Relationships
+  packages TargetPackage[]
+}
+
+model BroadcastLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type      String // e.g., "target_for_cmo"
+  payload   Json
+  version   Int // increments every new quarterly/yearly target
+  createdAt DateTime @default(now())
+
+  @@unique([type, version]) // optional: prevent duplicate version insert
+}
+
+model TargetPackage {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cmoTargetId String @db.Uuid
+  name        String
+  target      Int
+  achieved    Int    @default(0)
+
+  // Relationship back to the parent
+  cmoTarget CmoTarget @relation(fields: [cmoTargetId], references: [id])
 }

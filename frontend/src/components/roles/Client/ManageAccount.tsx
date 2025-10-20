@@ -1,212 +1,518 @@
-import React, { useState, Fragment } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
-import { 
-    Lock,
-    Shield,
-    Plus,
-    Eye,
-    EyeOff,
-    Trash2,
-    Instagram,
-    Facebook,
-    Linkedin,
-    Youtube,
-    Twitter,
-    ExternalLink,
-    X
-} from 'lucide-react';
+import React, { useState, Fragment, useEffect } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import {
+  Lock,
+  Shield,
+  Plus,
+  Eye,
+  EyeOff,
+  Trash2,
+  Instagram,
+  Facebook,
+  Linkedin,
+  Youtube,
+  Twitter,
+  ExternalLink,
+  X,
+  KeyRound,
+  CheckCircle,
+  Link as LinkIcon,
+  AlertTriangle,
+  LogOut,
+} from "lucide-react";
+import axios from "axios";
 
 // --- TYPE DEFINITIONS ---
-type Platform = 'Instagram' | 'Facebook' | 'LinkedIn' | 'YouTube' | 'Twitter';
+type Platform = "Instagram" | "Facebook" | "LinkedIn" | "YouTube" | "Twitter";
+type ConnectionType = "oauth" | "manual" | null;
 
 interface SocialAccount {
-    id: number;
-    platform: Platform;
-    username: string;
-    password?: string;
+  id: number;
+  platform: Platform;
+  username?: string;
+  password?: string;
+  connectionType: ConnectionType;
+  status: "connected" | "disconnected";
 }
 
 // --- MOCK DATA ---
 const initialAccounts: SocialAccount[] = [
-    { id: 1, platform: 'Instagram', username: 'nexuscorp_official', password: 'password123' },
-    { id: 2, platform: 'LinkedIn', username: 'Nexus Corporation', password: 'password456' },
+  {
+    id: 1,
+    platform: "Instagram",
+    connectionType: null,
+    status: "disconnected",
+  },
+  {
+    id: 2,
+    platform: "LinkedIn",
+    username: "Nexus Corporation",
+    connectionType: "manual",
+    status: "connected",
+    password: "password456",
+  },
+  { id: 3, platform: "Facebook", connectionType: null, status: "disconnected" },
+  { id: 4, platform: "Twitter", connectionType: null, status: "disconnected" },
+  {
+    id: 5,
+    platform: "YouTube",
+    connectionType: "oauth",
+    status: "connected",
+    username: "NexusCorpTV",
+  },
 ];
 
-const platformConfig = {
-    Instagram: { icon: Instagram, color: 'text-pink-600', url: 'https://instagram.com/' },
-    Facebook: { icon: Facebook, color: 'text-blue-700', url: 'https://facebook.com/' },
-    LinkedIn: { icon: Linkedin, color: 'text-sky-600', url: 'https://linkedin.com/company/' },
-    YouTube: { icon: Youtube, color: 'text-red-600', url: 'https://youtube.com/' },
-    Twitter: { icon: Twitter, color: 'text-blue-400', url: 'https://twitter.com/' },
+const platformConfig: any = {
+  Instagram: {
+    icon: Instagram,
+    color: "text-pink-600",
+    authUrl: "/auth/instagram",
+  },
+  Facebook: {
+    icon: Facebook,
+    color: "text-blue-700",
+    authUrl: "/auth/facebook",
+  },
+  LinkedIn: {
+    icon: Linkedin,
+    color: "text-sky-600",
+    authUrl: "/auth/linkedin",
+  },
+  Twitter: { icon: Twitter, color: "text-blue-400", authUrl: "/auth/twitter" },
+  YouTube: { icon: Youtube, color: "text-red-600", authUrl: "/auth/youtube" },
 };
 
-// --- MODAL FOR ADDING/EDITING ACCOUNTS ---
-const AccountFormModal = ({ isOpen, onClose, onSave, accountToEdit }: any) => {
-    const [platform, setPlatform] = useState<Platform>('Instagram');
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
+const ConnectionEvents = new EventTarget();
 
-    React.useEffect(() => {
-        if (accountToEdit) {
-            setPlatform(accountToEdit.platform);
-            setUsername(accountToEdit.username);
-            setPassword(accountToEdit.password || '');
-        } else {
-            setPlatform('Instagram');
-            setUsername('');
-            setPassword('');
-        }
-    }, [accountToEdit, isOpen]);
+export const dispatchConnectionStatus = (
+  status: "success" | "failure",
+  message: string,
+  redirectToComponent: string
+) => {
+  ConnectionEvents.dispatchEvent(
+    new CustomEvent("meta-connection", {
+      detail: { status, message, redirectToComponent },
+    })
+  );
+};
 
-    const handleSave = () => {
-        onSave({
-            id: accountToEdit ? accountToEdit.id : Date.now(),
-            platform,
-            username,
-            password,
-        });
-        onClose();
-    };
-
-    const PlatformIcon = platformConfig[platform].icon;
-
-    return (
-        <Transition appear show={isOpen} as={Fragment}>
-            <Dialog as="div" className="relative z-50" onClose={onClose}>
-                <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0"><div className="fixed inset-0 bg-black/50" /></Transition.Child>
-                <div className="fixed inset-0 overflow-y-auto"><div className="flex min-h-full items-center justify-center p-4">
-                    <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
-                        <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                            <Dialog.Title as="h3" className="text-lg font-bold leading-6 text-gray-900">{accountToEdit ? 'Edit Account' : 'Add New Account'}</Dialog.Title>
-                            <div className="mt-4 space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Platform</label>
-                                    <div className="relative mt-1">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <PlatformIcon className={`h-5 w-5 ${platformConfig[platform].color}`} />
-                                        </div>
-                                        <select value={platform} onChange={e => setPlatform(e.target.value as Platform)} className="w-full appearance-none rounded-md border border-gray-300 py-2 pl-10 pr-3">
-                                            {Object.keys(platformConfig).map(p => <option key={p}>{p}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Username or Email</label>
-                                    <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="mt-1 w-full p-2 border rounded-md"/>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Password</label>
-                                    <div className="relative mt-1">
-                                        <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} className="w-full p-2 border rounded-md"/>
-                                        <button onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3">
-                                            {showPassword ? <EyeOff className="h-5 w-5 text-gray-400"/> : <Eye className="h-5 w-5 text-gray-400"/>}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="mt-6 flex justify-end space-x-2">
-                                <button onClick={onClose} className="px-4 py-2 bg-gray-100 text-gray-800 font-semibold rounded-lg hover:bg-gray-200">Cancel</button>
-                                <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">Save Credentials</button>
-                            </div>
-                        </Dialog.Panel>
-                    </Transition.Child>
-                </div></div>
-            </Dialog>
-        </Transition>
+export const subscribeToConnectionStatus = (
+  callback: (event: CustomEvent) => void
+) => {
+  ConnectionEvents.addEventListener(
+    "meta-connection",
+    callback as EventListener
+  );
+  return () =>
+    ConnectionEvents.removeEventListener(
+      "meta-connection",
+      callback as EventListener
     );
 };
 
+// --- MODAL FOR ADDING/EDITING ACCOUNTS (MANUAL) ---
+const AccountFormModal = ({ isOpen, onClose, onSave, platform }: any) => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  React.useEffect(() => {
+    setUsername("");
+    setPassword("");
+  }, [isOpen]);
+
+  const handleSave = () => {
+    onSave({ platform, username, password });
+    onClose();
+  };
+
+  const PlatformIcon = platform ? platformConfig[platform].icon : Fragment;
+
+  return (
+    <Transition appear show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/60" />
+        </Transition.Child>
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Title
+                  as="h3"
+                  className="text-lg font-bold leading-6 text-gray-900 flex items-center"
+                >
+                  <PlatformIcon
+                    className={`h-6 w-6 mr-2 ${
+                      platform ? platformConfig[platform].color : ""
+                    }`}
+                  />
+                  Manually Connect {platform}
+                </Dialog.Title>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">
+                    Enter the credentials for your account. This is not
+                    recommended for platforms that support secure connection.
+                  </p>
+                </div>
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Username or Email
+                    </label>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="mt-1 w-full p-2 border rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Password
+                    </label>
+                    <div className="relative mt-1">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full p-2 border rounded-md"
+                      />
+                      <button
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-6 flex justify-end space-x-2">
+                  <button
+                    onClick={onClose}
+                    className="px-4 py-2 bg-gray-100 text-gray-800 font-semibold rounded-lg hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"
+                  >
+                    Save Credentials
+                  </button>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>
+  );
+};
+
+// --- REUSABLE PLATFORM CARD COMPONENT ---
+const PlatformCard = ({
+  account,
+  onManualConnect,
+  onDisconnect,
+  onConnectOAuth,
+}: any) => {
+  const config = platformConfig[account.platform];
+  const PlatformIcon = config.icon;
+
+  return (
+    <div className="bg-white p-5 rounded-lg shadow-sm border flex flex-col justify-between">
+      <div>
+        <div className="flex justify-between items-start">
+          <div className="flex items-center">
+            <PlatformIcon className={`h-10 w-10 mr-4 ${config.color}`} />
+            <div>
+              <p className="text-xl font-bold text-gray-800">
+                {account.platform}
+              </p>
+              {account.status === "connected" ? (
+                <div className="flex items-center text-green-600">
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  <p className="text-sm font-semibold">Connected</p>
+                </div>
+              ) : (
+                <div className="flex items-center text-gray-500">
+                  <X className="h-4 w-4 mr-1" />
+                  <p className="text-sm">Not Connected</p>
+                </div>
+              )}
+            </div>
+          </div>
+          {account.status === "connected" && (
+            <a
+              href={`${config.authUrl}${account.username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-100 rounded-full"
+              title="Visit Profile"
+            >
+              <ExternalLink className="h-5 w-5" />
+            </a>
+          )}
+        </div>
+
+        {account.status === "connected" && (
+          <div className="mt-4 bg-gray-50 p-3 rounded-md text-sm">
+            <p className="font-semibold text-gray-700">Username:</p>
+            <p className="text-gray-600 truncate">{account.username}</p>
+            <p className="font-semibold text-gray-700 mt-2">Connection Type:</p>
+            <p
+              className={`font-medium ${
+                account.connectionType === "oauth"
+                  ? "text-green-700"
+                  : "text-amber-700"
+              }`}
+            >
+              {account.connectionType === "oauth"
+                ? "Secure (OAuth)"
+                : "Manual (Password)"}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6">
+        {account.status === "disconnected" ? (
+          <div className="space-y-2">
+            <button
+              onClick={() => onConnectOAuth(account.platform)}
+              className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <LinkIcon className="h-5 w-5 mr-2" />
+              Connect securely
+            </button>
+            <button
+              onClick={() => onManualConnect(account.platform)}
+              className="w-full text-center text-sm text-gray-600 hover:text-blue-700 py-1"
+            >
+              or enter credentials manually
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => onDisconnect(account.id)}
+            className="w-full flex items-center justify-center px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-red-100 hover:text-red-800 transition-colors"
+          >
+            <LogOut className="h-5 w-5 mr-2" />
+            Disconnect
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
 
 // --- MAIN COMPONENT ---
 const SocialAccountsDashboard = () => {
-    const [accounts, setAccounts] = useState<SocialAccount[]>(initialAccounts);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [accountToEdit, setAccountToEdit] = useState<SocialAccount | null>(null);
+  const [accounts, setAccounts] = useState<SocialAccount[]>(initialAccounts);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(
+    null
+  );
+  const [connectionFeedback, setConnectionFeedback] = useState<{
+    status: "success" | "failure" | null;
+    message: string;
+  }>({ status: null, message: "" });
 
-    const openModal = () => setIsModalOpen(true);
-    const closeModal = () => {
-        setIsModalOpen(false);
-        setAccountToEdit(null);
-    };
+  const appId = import.meta.env.VITE_APP_ID;
+  const appUrl = import.meta.env.VITE_APP_URL;
 
-    const handleEdit = (account: SocialAccount) => {
-        setAccountToEdit(account);
-        openModal();
-    };
+  useEffect(() => {
+    const handleConnectionEvent = (event: CustomEvent) => {
+      const { status, message, redirectToComponent } = event.detail;
 
-    const handleSave = (accountData: SocialAccount) => {
-        if (accountToEdit) {
-            setAccounts(accounts.map(acc => acc.id === accountData.id ? accountData : acc));
-        } else {
-            setAccounts([...accounts, accountData]);
+      // 1. Set the visual feedback (success/failure banner)
+      setConnectionFeedback({ status, message });
+
+      // 2. If successful, update the account status (MOCK: only for Facebook/Instagram)
+      if (status === "success") {
+        const metaPlatforms: Platform[] = ["Instagram", "Facebook"];
+        const updatedAccounts = accounts.map((acc) => {
+          if (metaPlatforms.includes(acc.platform)) {
+            return {
+              ...acc,
+              status: "connected",
+              connectionType: "oauth",
+              username: `user_${acc.platform.toLowerCase()}_meta`, // Mock update
+            };
+          }
+          return acc;
+        });
+        //  setAccounts(updatedAccounts);
+        console.log(updatedAccounts);
+        alert("Done ");
+
+        // 3. Perform internal component switch if requested (e.g., to a "ManageCalendar" view)
+        if (redirectToComponent) {
+          // 🚨 ASSUMPTION: You would set a main component state here to switch views
+          // Example: setMainView(redirectToComponent);
+          console.log(
+            `Internal Navigation requested: Switch to ${redirectToComponent} component.`
+          );
         }
+      }
+
+      // OPTIONAL: Clear the message after a delay
+      setTimeout(
+        () => setConnectionFeedback({ status: null, message: "" }),
+        5000
+      );
     };
 
-    const handleDelete = (accountId: number) => {
-        if (window.confirm("Are you sure you want to delete these credentials?")) {
-            setAccounts(accounts.filter(acc => acc.id !== accountId));
-        }
+    // Subscribe when mounting
+    const unsubscribe = subscribeToConnectionStatus(handleConnectionEvent);
+
+    // Cleanup when unmounting
+    return () => unsubscribe();
+  }, [accounts]);
+
+  const handleManualConnect = (platform: Platform) => {
+    setSelectedPlatform(platform);
+    setIsModalOpen(true);
+  };
+
+  const META_URL =
+    `
+    ${appUrl}` +
+    `?client_id=${appId}` +
+    `&redirect_uri=http://localhost:5173/auth/meta/callback` +
+    `&scope=pages_manage_posts,instagram_content_publish,pages_show_list,pages_read_engagement,instagram_basic,instagram_manage_insights,ads_management,ads_read` +
+    `&response_type=token`;
+
+  const handleConnectOAuth = async (platform: Platform) => {
+    // In a real app, this would redirect to the OAuth URL
+
+    // Example of what would happen after successful OAuth:
+    // const newAccount = { id: Date.now(), platform, username: 'user_from_oauth', connectionType: 'oauth', status: 'connected' };
+    // setAccounts([...accounts.filter(a => a.platform !== platform), newAccount]);
+
+    window.location.href = META_URL;
+  };
+
+  const onManualSave = ({ platform, username, password }: any) => {
+    const newAccount: SocialAccount = {
+      id: Date.now(),
+      platform,
+      username,
+      password,
+      connectionType: "manual",
+      status: "connected",
     };
+    setAccounts([
+      ...accounts.filter((a) => a.platform !== platform),
+      newAccount,
+    ]);
+  };
 
-    return (
-        <div className="p-1 min-h-screen">
-            <div className="max-w-6xl mx-auto">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Social Media Credentials</h1>
-                        <p className="text-gray-500 mt-1">Manage your connected social media accounts.</p>
-                    </div>
-                    <button onClick={openModal} className="flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                        <Plus className="h-5 w-5 mr-2 -ml-1"/>
-                        Add New Account
-                    </button>
-                </div>
+  const handleDisconnect = (accountId: number) => {
+    const accountToDisconnect = accounts.find((acc) => acc.id === accountId);
+    if (
+      accountToDisconnect &&
+      window.confirm(
+        `Are you sure you want to disconnect ${accountToDisconnect.platform}?`
+      )
+    ) {
+      const disconnectedAccount: SocialAccount = {
+        ...accountToDisconnect,
+        status: "disconnected",
+        username: undefined,
+        password: undefined,
+        connectionType: null,
+      };
+      setAccounts(
+        accounts.map((acc) =>
+          acc.id === accountId ? disconnectedAccount : acc
+        )
+      );
+    }
+  };
 
-                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg mb-8 flex items-center">
-                    <Shield className="h-8 w-8 text-blue-600 mr-4 flex-shrink-0"/>
-                    <div>
-                        <h3 className="font-bold text-blue-800">Your Security is Our Priority</h3>
-                        <p className="text-sm text-blue-700">Your credentials are encrypted and will never be shared. They are used solely to manage your marketing campaigns as agreed.</p>
-                    </div>
-                </div>
-
-                <div className="space-y-4">
-                    {accounts.map(account => {
-                        const PlatformIcon = platformConfig[account.platform].icon;
-                        const platformUrl = `${platformConfig[account.platform].url}${account.username}`;
-                        return (
-                            <div key={account.id} className="bg-white p-4 rounded-lg shadow-sm border flex items-center justify-between">
-                                <div className="flex items-center">
-                                    <PlatformIcon className={`h-8 w-8 mr-4 ${platformConfig[account.platform].color}`}/>
-                                    <div>
-                                        <p className="font-bold text-gray-800">{account.platform}</p>
-                                        <p className="text-sm text-gray-600">{account.username}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <a href={platformUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-100 rounded-full" title="Visit Profile">
-                                        <ExternalLink className="h-5 w-5"/>
-                                    </a>
-                                    <button onClick={() => handleEdit(account)} className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 font-semibold rounded-full hover:bg-gray-200">View & Edit</button>
-                                    <button onClick={() => handleDelete(account.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full" title="Delete">
-                                        <Trash2 className="h-5 w-5"/>
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            <AccountFormModal 
-                isOpen={isModalOpen}
-                onClose={closeModal}
-                onSave={handleSave}
-                accountToEdit={accountToEdit}
-            />
+  return (
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between md:items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Social Connections
+            </h1>
+            <p className="text-gray-500 mt-1">
+              Manage your connected social media accounts for auto-posting.
+            </p>
+          </div>
         </div>
-    );
+
+        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg mb-8 flex items-start">
+          <AlertTriangle className="h-8 w-8 text-amber-600 mr-4 flex-shrink-0 mt-1" />
+          <div>
+            <h3 className="font-bold text-amber-800">
+              Security Recommendation
+            </h3>
+            <p className="text-sm text-amber-700">
+              For your security, we strongly recommend using the "Connect
+              securely" (OAuth) option. This method does not require storing
+              your password and provides a more secure connection for
+              auto-posting.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Object.keys(platformConfig).map((platformStr) => {
+            const platform = platformStr as Platform;
+            const account = accounts.find(
+              (acc) => acc.platform === platform && acc.status === "connected"
+            ) || {
+              id: Date.now(),
+              platform,
+              status: "disconnected",
+              connectionType: null,
+            };
+            return (
+              <PlatformCard
+                key={platform}
+                account={account}
+                onManualConnect={handleManualConnect}
+                onDisconnect={handleDisconnect}
+                onConnectOAuth={handleConnectOAuth}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      <AccountFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={onManualSave}
+        platform={selectedPlatform}
+      />
+    </div>
+  );
 };
 
 export default SocialAccountsDashboard;

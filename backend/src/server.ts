@@ -22,7 +22,11 @@ import clientRoute from "./routes/ClientRoute";
 
 import designerRoute from "./routes/designerRoute";
 
-import digitalMarket from "./routes/digitalMarket"
+import digitalMarket from "./routes/digitalMarket";
+
+import cmoRoutes from "./routes/cmo"
+
+import ceoRoute from "./routes/ceoRoute";
 
 import cookieParser from "cookie-parser";
 
@@ -39,6 +43,7 @@ import {
   NewContentFunctionality,
   SendDataToDigitalMarketer,
 } from "./services/contentWriter/RealtimeUpdate";
+import { NewContentAddedInQuterlyProjection } from "./services/CMORealtime/realtimeTaskUpdate";
 
 env.config();
 
@@ -74,6 +79,8 @@ app.use("/api/contentWriter", contentWriter);
 app.use("/api/client", clientRoute);
 app.use("/api/designer", designerRoute);
 app.use("/api/digitalMarket", digitalMarket);
+app.use("/api/ceo", ceoRoute)
+app.use("/api/cmo", cmoRoutes)
 
 // Basic route
 app.get("/", (req, res) => {
@@ -118,6 +125,7 @@ app.listen(PORT, () => {
   NewContentFunctionality();
   ContentStatusChanged();
   SendDataToDigitalMarketer();
+  NewContentAddedInQuterlyProjection();
 });
 
 // client id : 761586733891-m0gojlsauo1q405l5mgrmc3290q2k8nk.apps.googleusercontent.com

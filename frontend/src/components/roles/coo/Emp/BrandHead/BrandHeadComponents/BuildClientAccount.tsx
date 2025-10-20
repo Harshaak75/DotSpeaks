@@ -13,6 +13,7 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../../../../../redux/store";
 import { api } from "../../../../../../utils/api/Employees/api";
+import ToastNotification from "../../../../../ToastMessageComp";
 // import { api } from '../../../../../../utils/api';
 
 // --- HELPER COMPONENTS ---
@@ -113,6 +114,13 @@ const ClientOnboardingForm = () => {
 
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
   const dispatch = useDispatch();
+  const [loading, setloading] = useState(false);
+
+   const [toast, setToast] = useState({
+        show: false,
+        message: "",
+        type: "info",
+      });
 
   const steps = [
     { name: "Company Info", icon: Building },
@@ -203,28 +211,48 @@ const ClientOnboardingForm = () => {
   // ✅ MODIFIED: handleSubmit now sends data to the backend
   const handleSubmit = async () => {
     if (!isStepValid()) {
-      alert("Please complete all required fields before submitting.");
+      setToast({
+        show: true,
+        message: "Please complete all required fields before submitting.",
+        type: "warning"
+      });
       return;
     }
     setIsSubmitting(true);
     console.log("Submitting Onboarding Data:", formData);
 
     try {
+      setloading(true)
       // await api.onboarding.createClient.post(accessToken, dispatch, formData);
       api.BrandHead.BuildClientAccount.post(accessToken, dispatch, formData);
-      alert(
-        `Onboarding for "${formData.companyName}" has been successfully submitted!`
-      );
+      setToast({
+        show: true,
+        message: `Onboarding for "${formData.companyName}" has been successfully submitted!`,
+        type: "success",
+      });
       console.log(formData);
       setCurrentStep(0);
       setFormData(initialFormData);
     } catch (error: any) {
       console.error("Failed to submit onboarding form:", error);
       alert(`Error: ${error.message || "Could not submit form."}`);
+      setToast({
+        show: true,
+        message: `Could not submit form. Please try again.`,
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
+      setloading(false);
     }
   };
+
+    if (loading)
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
 
   
 
@@ -470,6 +498,13 @@ const ClientOnboardingForm = () => {
 
   return (
     <div className="p-4 sm:p-8 bg-gray-50 min-h-screen">
+      {toast.show && (
+        <ToastNotification
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
+      )}
       <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">
         Client Onboarding Form
       </h1>

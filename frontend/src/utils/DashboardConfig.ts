@@ -1,4 +1,6 @@
+import { CEOMainDashboard } from "../components/roles/CEO/CEOMainDashboard";
 import { ClientDashboard } from "../components/roles/Client/ClientDashboard";
+import { CMOMainDashboard } from "../components/roles/CMO/CMOMainDashboard";
 import { BrandDeveloperDashboard } from "../components/roles/coo/BrandDeveloper/BrandDeveloperDashboard";
 import { TellecallerDashboard } from "../components/roles/coo/BrandDeveloper/TeleCaller/TellecallerDashboard";
 import COODashboard from "../components/roles/coo/COODashboardWrapper";
@@ -11,6 +13,10 @@ import { Unauthorized } from "../components/Unathorized";
 
 export const getDashboardComponent = (role: string) => {
   switch (role.toUpperCase()) {
+    case "CEO":
+      return CEOMainDashboard;
+    case "CMO":
+      return CMOMainDashboard;
     case "COO":
       return COODashboard;
     case "CONTENT_WRITER":

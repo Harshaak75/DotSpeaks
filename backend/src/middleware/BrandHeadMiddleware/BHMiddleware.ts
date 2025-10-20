@@ -127,6 +127,15 @@ export const CreateTeam = async (
       })),
     });
 
+    // link EmployeeClientAssignment
+
+    await prisma.employeeClientAssignment.createMany({
+      data: members.map((m: any) =>({
+        profileId: m.profileId,
+        clientId: data[0].clientId
+      }))
+    })
+
     //4. push team id to client
 
     await prisma.clients.update({
@@ -358,12 +367,14 @@ export const CreateClientAccountFromBrandHead = async (
       return res.status(404).json({error: "Brand Head profile not found"})
     }
 
-    await prisma.clientAssignment.create({
-      data:{
-        BH_profile_id: BrandHeadProfileId?.id,
-        clinetId: client.id
-      }
-    })
+    // await prisma.clientAssignment.create({
+    //   data:{
+    //     BH_profile_id: BrandHeadProfileId?.id,
+    //     clinetId: client.id
+    //   }
+    // })
+
+    // assign the employee to client
 
 
     res.status(201).json({

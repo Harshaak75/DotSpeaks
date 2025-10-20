@@ -25,6 +25,20 @@ import {
 
 export const getSidebarItems = (role: string) => {
   switch (role.toUpperCase()) {
+    case "CEO":
+      return [{ id: "profile", label: "Profile", icon: User },
+        {id:"target", label: "Targets", icon:Target},
+        {id:"profitLoss", label: "Profit & Loss", icon:Target},
+        { id: "TargetVsAchive", label: "Target VS Achive", icon: UserPlus },
+        { id: "performace", label: "Performace", icon: UserPlus }
+      ];
+    case "CMO":
+      return [{ id: "profile", label: "Profile", icon: User },
+        { id: "company-goals", label: "Company Goals", icon: Building2 },
+        { id: "LeadSetter", label: "Lead Target Setter", icon: UserPlus }
+        ,{ id: "UploadLeads", label: "Upload Leads", icon: UserPlus },
+        
+      ];
     case "COO":
       return [
         { id: "profile", label: "Profile", icon: User },
@@ -39,14 +53,6 @@ export const getSidebarItems = (role: string) => {
         { id: "team", label: "Team Members", icon: Users },
       ];
 
-    case "CEO":
-      return [
-        { id: "overview", label: "Company Overview", icon: BarChart3 },
-        { id: "reports", label: "Reports", icon: FileText },
-        { id: "meetings", label: "Meetings", icon: Calendar },
-        { id: "documents", label: "Board Docs", icon: FileText },
-      ];
-
     case "HR":
       return [
         { id: "profile", label: "Profile", icon: User },
@@ -56,8 +62,9 @@ export const getSidebarItems = (role: string) => {
       ];
 
     case "CONTENT_WRITER":
-      return [{ id: "profile", label: "Profile", icon: User },
-        { id: "calender", label: "Calender", icon: Calendar }
+      return [
+        { id: "profile", label: "Profile", icon: User },
+        { id: "calender", label: "Calender", icon: Calendar },
       ];
     case "GFX_DESIGNER":
       return [

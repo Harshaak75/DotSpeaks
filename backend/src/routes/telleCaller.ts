@@ -23,7 +23,16 @@ router.get("/getInfo", authenticate_user, async (req, res) => {
         assignedToId: telecommunicatorId,
         status: {not: "Forwarded"}
       },
+      include:{
+        package:{
+          select:{
+            name: true
+          }
+        }
+      }
     });
+
+    console.log(allLeads)
 
     res.status(200).json(allLeads);
   } catch (error) {

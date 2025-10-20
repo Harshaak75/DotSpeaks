@@ -27,6 +27,11 @@ router.get("/getContent", authenticate_user, async (req, res) => {
             },
           },
         },
+        Content:{
+          some:{
+            status: "approved"
+          }
+        }
         // ✅ REMOVED the problematic filter block below
         /*
         Content:{
@@ -42,6 +47,13 @@ router.get("/getContent", authenticate_user, async (req, res) => {
         MarketingContent: {
           // You can add more specific 'where' clauses here if needed,
           // for example, to only fetch tasks with certain statuses.
+          where:{
+            Content:{
+              status: {
+                in: ["approved","Help_requested","rework_requested"]
+              }
+            }
+          },
           orderBy: {
             date: "asc",
           },

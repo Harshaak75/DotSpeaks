@@ -14,37 +14,32 @@ export const GetDataOfGf = async (
       return res.status(401).json({ message: "Authentication required." });
     }
 
-    // 1️⃣ Find the Digital Marketer's profile + team
-    const marketerProfile = await prisma.profiles.findUnique({
-      where: { user_id: requestingUserId },
-      include: {
-        TeamMember: {
-          include: { team: true },
+    // 1️⃣ Find all team IDs for the requesting user
+    const userTeamIds = await prisma.teamMember.findMany({
+      where: {
+        profile: {
+          user_id: requestingUserId,
         },
+      },
+      select: {
+        teamId: true,
       },
     });
 
-    if (!marketerProfile) {
-      return res.status(403).json({ message: "Profile not found." });
+    const teamIds = userTeamIds.map((t) => t.teamId);
+
+    if (teamIds.length === 0) {
+      return res.status(200).json([]); // No teams found, so no content to return
     }
 
-    const marketerTeamMember = marketerProfile.TeamMember.find(
-      (tm) => tm.role === "Digital Marketer"
-    );
-
-    if (!marketerTeamMember) {
-      return res
-        .status(403)
-        .json({ message: "User is not a Digital Marketer." });
-    }
-
-    const marketerTeamId = marketerTeamMember.teamId;
-
-    // 2️⃣ Find all MarketingContent tasks linked to this team’s clients
+    // 2️⃣ Find all MarketingContent tasks where the client's teamId is one of the user's team IDs
     const tasks = await prisma.marketingContent.findMany({
       where: {
         clients: {
-          teamId: marketerTeamId,
+          // Filter tasks by clients that belong to the user's teams
+          teamId: {
+            in: teamIds,
+          },
         },
         DesignerSubmission: {
           some: {
@@ -52,7 +47,10 @@ export const GetDataOfGf = async (
               profile: {
                 TeamMember: {
                   some: {
-                    teamId: marketerTeamId,
+                    // Filter submissions by designers on the same teams
+                    teamId: {
+                      in: teamIds,
+                    },
                     role: "Graphic Designer",
                   },
                 },
@@ -70,14 +68,14 @@ export const GetDataOfGf = async (
             designer: {
               include: {
                 profile: {
-                  select: { name: true }, // ✅ correct field
+                  select: { name: true },
                 },
               },
             },
           },
         },
         clients: {
-          select: { company_name: true, id: true }, // Include client details
+          select: { company_name: true, id: true },
         },
       },
       orderBy: { date: "asc" },
@@ -87,13 +85,15 @@ export const GetDataOfGf = async (
       return res.status(200).json([]);
     }
 
-    // 3️⃣ Attach signed URLs for each designer submission
+    // 3️⃣ Attach signed URLs (as in your original code)
+    // ... (Your existing logic for creating signed URLs) ...
+
     const tasksWithUrls = await Promise.all(
       tasks.map(async (task) => {
         const submissions = await Promise.all(
           task.DesignerSubmission.map(async (submission) => {
             const { data, error } = await supabase.storage
-              .from("designer-uploads") // ✅ bucket name
+              .from("designer-uploads")
               .createSignedUrl(submission.filePath, 3600);
 
             if (error) {
@@ -132,8 +132,6 @@ export const GetDataOfGf = async (
         };
       })
     );
-
-    console.log("Tasks with URLs: ", tasksWithUrls);
 
     return res.status(200).json(tasksWithUrls);
   } catch (error) {

@@ -8,10 +8,8 @@ import pdf from "pdf-parse";
 //     const fileUrl = content.documentUrl;
 //     const clientId = content.clientId;
 
-
 //     if (!fileUrl || !clientId) return;
 
-    
 //     const SignedUrl = await getSignedUrl(fileUrl);
 
 //     const response = await fetch(SignedUrl);
@@ -99,7 +97,6 @@ import pdf from "pdf-parse";
 //     console.error("Error processing and storing marketing content: ", error);
 //   }
 // };
-
 
 export const processAndStoreMarketingContent = async (payload: any) => {
   try {
@@ -208,17 +205,23 @@ export const processAndStoreMarketingContent = async (payload: any) => {
       // Capture designer guide fields
       if (captureDesigner) {
         if (line.startsWith("Objective:")) {
-          tempItem.designerGuide!.objective = line.replace("Objective:", "").trim();
+          tempItem.designerGuide!.objective = line
+            .replace("Objective:", "")
+            .trim();
         } else if (line.startsWith("Visual:")) {
           tempItem.designerGuide!.visual = line.replace("Visual:", "").trim();
         } else if (line.startsWith("Headline:")) {
-          tempItem.designerGuide!.headline = line.replace("Headline:", "").trim();
+          tempItem.designerGuide!.headline = line
+            .replace("Headline:", "")
+            .trim();
         } else if (line.startsWith("Message:")) {
           tempItem.designerGuide!.message = line.replace("Message:", "").trim();
         } else if (line.startsWith("CTA:")) {
           tempItem.designerGuide!.cta = line.replace("CTA:", "").trim();
         } else if (line.startsWith("Branding:")) {
-          tempItem.designerGuide!.branding = line.replace("Branding:", "").trim();
+          tempItem.designerGuide!.branding = line
+            .replace("Branding:", "")
+            .trim();
           captureDesigner = false; // end block
         }
       }
@@ -230,15 +233,14 @@ export const processAndStoreMarketingContent = async (payload: any) => {
       result.push(tempItem);
     }
 
-    console.log("The final result: ", result);
-
     // Store into DB
     for (const post of result) {
       const dateString = post.date.split(" - ")[1];
       const [day, month, year] = dateString.trim().split("/").map(Number);
       const date = new Date(year, month - 1, day);
 
-      let hours = 0, minutes = 0;
+      let hours = 0,
+        minutes = 0;
       if (post.postTime) {
         const timeMatch = post.postTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
         if (timeMatch) {
@@ -246,16 +248,34 @@ export const processAndStoreMarketingContent = async (payload: any) => {
           minutes = parseInt(timeMatch[2], 10);
           const period = timeMatch[3].toUpperCase();
 
-          if (period === 'PM' && hours !== 12) hours += 12;
-          if (period === 'AM' && hours === 12) hours = 0; // Midnight case
+          if (period === "PM" && hours !== 12) hours += 12;
+          if (period === "AM" && hours === 12) hours = 0; // Midnight case
         }
       }
 
       // MODIFIED: Create a combined Date object with date and time
       const combinedDate = new Date(year, month - 1, day, hours, minutes);
 
-      await prisma.marketingContent.create({
-        data: {
+      await prisma.marketingContent.upsert({
+        where: {
+          contentId_date_platform_postType: {
+            contentId: contentId,
+            date: combinedDate,
+            platform: post.platform || "Unknown",
+            postType: post.postType || "Unknown",
+          },
+        },
+        update: {
+          content: post.marketerGuide?.join(" ") || "",
+          hashtags: post.hashtags || [],
+          objective: post.designerGuide?.objective || null,
+          visual: post.designerGuide?.visual || null,
+          headline: post.designerGuide?.headline || null,
+          message: post.designerGuide?.message || null,
+          cta: post.designerGuide?.cta || null,
+          branding: post.designerGuide?.branding || null,
+        },
+        create: {
           clientId,
           campaignTitle: "Campaign Content",
           date: combinedDate,
@@ -281,7 +301,4 @@ export const processAndStoreMarketingContent = async (payload: any) => {
   }
 };
 
-export const fetchDesignerTasks = async (payload: any) =>{
-  
-}
-
+export const fetchDesignerTasks = async (payload: any) => {};

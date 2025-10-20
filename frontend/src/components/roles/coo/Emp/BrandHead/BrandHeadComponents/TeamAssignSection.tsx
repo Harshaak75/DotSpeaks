@@ -14,9 +14,10 @@ import { api } from "../../../../../../utils/api/Employees/api";
 import { useDispatch, useSelector } from "react-redux";
 import { selectAccessToken } from "../../../../../../redux/slice/authSlice";
 import { RootState } from "../../../../../../redux/store";
+import ToastNotification from "../../../../../ToastMessageComp";
 
 // --- TYPE DEFINITIONS ---
-type Role = "Digital Marketer" | "Graphic Designer" | "Content Strategist";
+type Role = "Digital Marketer" | "Graphic Designer" | "Content Writer";
 
 interface MemberType {
   id: string;
@@ -32,64 +33,12 @@ interface TeamType {
   members: MemberType[];
 }
 
-// --- MOCK DATA ---
-const initialTeamsData: TeamType[] = [
-  {
-    teamId: "team-alpha",
-    teamName: "Alpha Squad",
-    client: "Nexus Corp",
-    members: [
-      {
-        id: "emp-1",
-        name: "Rohan Sharma",
-        role: "Digital Marketer",
-        avatarUrl: "https://placehold.co/100x100/E9D5FF/7C3AED?text=RS",
-      },
-      {
-        id: "emp-2",
-        name: "Priya Patel",
-        role: "Graphic Designer",
-        avatarUrl: "https://placehold.co/100x100/FECACA/DC2626?text=PP",
-      },
-      {
-        id: "emp-3",
-        name: "Amit Singh",
-        role: "Content Strategist",
-        avatarUrl: "https://placehold.co/100x100/A7F3D0/059669?text=AS",
-      },
-    ],
-  },
-  {
-    teamId: "team-bravo",
-    teamName: "Bravo Unit",
-    client: "Stellar Solutions",
-    members: [
-      {
-        id: "emp-4",
-        name: "Sneha Reddy",
-        role: "Digital Marketer",
-        avatarUrl: "https://placehold.co/100x100/E9D5FF/7C3AED?text=SR",
-      },
-      {
-        id: "emp-5",
-        name: "Vikram Kumar",
-        role: "Graphic Designer",
-        avatarUrl: "https://placehold.co/100x100/FECACA/DC2626?text=VK",
-      },
-      {
-        id: "emp-6",
-        name: "Anjali Rao",
-        role: "Content Strategist",
-        avatarUrl: "https://placehold.co/100x100/A7F3D0/059669?text=AR",
-      },
-    ],
-  },
-];
+// --- MOCK DATA --
 
 const roleIcons: Record<Role, JSX.Element> = {
   "Digital Marketer": <User className="h-5 w-5 text-purple-600" />,
   "Graphic Designer": <Paintbrush className="h-5 w-5 text-red-600" />,
-  "Content Strategist": <Mic className="h-5 w-5 text-green-600" />,
+  "Content Writer": <Mic className="h-5 w-5 text-green-600" />,
 };
 
 // --- REUSABLE TEAM CARD COMPONENT ---
@@ -171,7 +120,7 @@ const TeamFormModal = ({
   const [members, setMembers] = useState<Record<Role, string>>({
     "Digital Marketer": "",
     "Graphic Designer": "",
-    "Content Strategist": "",
+    "Content Writer": "",
   });
   const [client, setClient] = useState<{ id: string; name: string }>({
     id: "",
@@ -182,37 +131,56 @@ const TeamFormModal = ({
 
   const packageName = useSelector((state: any) => state.profile.PackageName);
 
-const handleSave = async () => {
-  const data = {
-    teamId: Date.now().toString(), // temporary ID until backend returns
-    teamName,
-    clientName: client.name,
-    clientId: client.id,
-    members: Object.entries(members)
-      .filter(([_, id]) => id) // only keep assigned roles
-      .map(([role, id]) => {
-        const emp = selectedEmployee[role].find((e: any) => e.id === id);
-        return { profileId: id, name: emp?.name, role };
-      }),
+  const [loading, setloading] = useState(false);
+
+  const handleSave = async () => {
+    const data = {
+      teamId: Date.now().toString(), // temporary ID until backend returns
+      teamName,
+      clientName: client.name,
+      clientId: client.id,
+      members: Object.entries(members)
+        .filter(([_, id]) => id) // only keep assigned roles
+        .map(([role, id]) => {
+          const emp = selectedEmployee[role].find((e: any) => e.id === id);
+          return { profileId: id, name: emp?.name, role };
+        }),
+    };
+
+    try {
+      setloading(true);
+      const response = await api.BrandHead.team.createTeam(
+        accessToken,
+        dispatch,
+        [data], // API expects array
+        packageName
+      );
+      console.log("Created:", response);
+
+      // update parent state
+      onSave(data);
+
+      onClose(); // Close the modal on success
+
+      // FIX: Show success toast inside the try block
+    } catch (error) {
+      console.error("Error creating team:", error);
+      setToast({
+        show: true,
+        message: `Team creation failed. Please try again.`,
+        type: "error",
+      });
+    } finally {
+      setloading(false);
+    }
   };
 
-  try {
-    const response = await api.BrandHead.team.createTeam(
-      accessToken,
-      dispatch,
-      [data], // API expects array
-      packageName
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
     );
-    console.log("Created:", response);
-
-    // update parent state
-    onSave(data);
-  } catch (error) {
-    console.error("Error creating team:", error);
-  }
-  onClose();
-};
-
 
   const renderSelectForClient = (clients: any) => {
     if (clients.length === 0) {
@@ -357,8 +325,6 @@ type Employee = {
 // edit model
 
 const EditTeamModal = ({ isOpen1, onClose1, onSave1, teamToEdit }: any) => {
-  // --- Dummy Data Inside the Component ---
-  console.log("info", teamToEdit);
   const dummyTeamData = {
     teamId: "t1",
     teamName: "Alpha Project Team",
@@ -550,6 +516,14 @@ const TeamAssignSection = () => {
   const accessToken = useSelector(selectAccessToken);
   const dispatch = useDispatch();
 
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "info",
+  });
+
+  
+
   const [loading, setLoading] = useState(false);
 
   const [employees, setEmployees] = useState<
@@ -603,6 +577,45 @@ const TeamAssignSection = () => {
     });
   }
 
+function formatApiResponse(apiData: any) {
+        // Define the roles you explicitly want to display
+        const desiredRoles = [
+            "Digital Marketer",
+            "Graphic Designer",
+            "Content Writer",
+        ];
+
+        const formattedData: any = {};
+
+        // Iterate over your predefined roles
+        desiredRoles.forEach((role) => {
+            // Check if the API data has a corresponding key.
+            // Note: The API likely uses camelCase (e.g., 'graphicDesigners').
+            // You must map your role names to the correct API key.
+            // Let's assume a simple mapping for now.
+            const apiRoleKey =
+                role === "Digital Marketer"
+                    ? "digitalMarketers"
+                    : role === "Graphic Designer"
+                    ? "graphicDesigners"
+                    : role === "Content Writer"
+                    ? "contentWriters"
+                    : null;
+
+            if (apiRoleKey && apiData[apiRoleKey]) {
+                // If a key exists, map the employee data
+                formattedData[role] = apiData[apiRoleKey].map((employee: any) => ({
+                    id: employee.id,
+                    name: employee.name,
+                }));
+            } else {
+                // If the role isn't in the API response, initialize it as an empty array
+                formattedData[role] = [];
+            }
+        });
+        return formattedData;
+    }
+
   const openModal = async () => {
     setIsModalOpen(true);
     // (true);
@@ -611,10 +624,11 @@ const TeamAssignSection = () => {
         api.BrandHead.team.getEmployee(accessToken, dispatch, PackageName),
         api.BrandHead.team.getClient(accessToken, dispatch),
       ]);
-      setEmployees(groupByRole(empRes));
-      setClients(formatClient(cliRes));
-      // console.log(cliRes)
-      // console.log(formatClient(cliRes));
+
+    setEmployees(formatApiResponse(empRes));
+
+    // Your existing client formatting is likely still correct
+    setClients(formatClient(cliRes));
     } catch (error) {
       console.log(error);
     }
@@ -622,6 +636,12 @@ const TeamAssignSection = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setTeamToEdit(null);
+
+    setToast({
+      show: true,
+      message: `Team  created successfully!`,
+      type: "success",
+    });
   };
 
   const handleEdit = (team: any) => {
@@ -651,6 +671,13 @@ const TeamAssignSection = () => {
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
+      {toast.show && (
+        <ToastNotification
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
+      )}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Team Assignments</h1>
         <button
@@ -689,3 +716,10 @@ const TeamAssignSection = () => {
 };
 
 export default TeamAssignSection;
+
+// Remove the erroneous setToast function below.
+// setToast is already managed as a state setter from useState in TeamAssignSection and passed down as needed.
+// No additional implementation is required here.
+function setToast(arg0: { show: boolean; message: string; type: string }) {
+  throw new Error("Function not implemented.");
+}

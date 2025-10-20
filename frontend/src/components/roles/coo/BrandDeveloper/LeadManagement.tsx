@@ -323,6 +323,7 @@ import {
 import { api } from "../../../../utils/api/Employees/api";
 import { useDispatch, useSelector } from "react-redux";
 import { selectAccessToken } from "../../../../redux/slice/authSlice";
+import ToastNotification from "../../../ToastMessageComp";
 
 // --- TYPE DEFINITIONS ---
 interface ProspectiveClient {
@@ -373,6 +374,13 @@ const BusinessDeveloperDashboard = ({ info }: any) => {
   const [forwarded, setForwarded] = useState(0);
 
   const [convertionRate, setConvertionRate] = useState(0);
+
+  const [toast, setToast] = useState({
+      show: false,
+      message: "",
+      type: "info",
+    });
+  
 
   // Removed Redux hooks
   const accessToken = useSelector(selectAccessToken);
@@ -460,18 +468,32 @@ const BusinessDeveloperDashboard = ({ info }: any) => {
     setSelectedProspect(null);
   };
 
-  const ScheduleMeet = async(id: string) =>{
+  const ScheduleMeet = async (id: string) => {
     try {
+      setloading(true);
       const data = await api.brandDeveloper.scheduleMeet.post(
         accessToken,
         dispatch,
         id
       );
       console.log("Meeting scheduled successfully:", data);
+      setToast({
+        show: true,
+        message: "Meeting scheduled successfully.",
+        type: "success",
+      });
     } catch (error) {
+      setToast({
+        show: true,
+        message: "Error in scheduling meeting. Please try again.",
+        type: "error",
+      });
       console.error("Error scheduling meeting:", error);
     }
-  }
+    finally{
+      setloading(false)
+    }
+  };
 
   const handleCreateAccount = async () => {
     if (!selectedProspect) return;
@@ -489,6 +511,7 @@ const BusinessDeveloperDashboard = ({ info }: any) => {
     console.log(newAccountPayload);
 
     try {
+      setloading(true)
       const data = await api.brandDeveloper.CreateAccount.post(
         accessToken,
         dispatch,
@@ -500,24 +523,33 @@ const BusinessDeveloperDashboard = ({ info }: any) => {
       );
 
       console.log("data", data);
-    } catch (error) {
-      console.log(error);
-    }
-
-    console.log("Sending to backend:", newAccountPayload);
-
-    // MODIFIED: The alert message is now generic and does not expose sensitive info.
-    alert(
-      `Account for ${selectedProspect?.company} will be created with package "${selectedPackage}".\nAn invite will be sent to the registered contact.`
-    );
-
-    // This part remains the same, assuming you want to optimistically remove from the UI
-    setSelectedTelecommunicator((prev: any) => ({
+        setToast({
+        show: true,
+        message: `${newAccountPayload.companyName} Successfully sent to the Brand Head.`,
+        type: "success",
+      });
+          setSelectedTelecommunicator((prev: any) => ({
       ...prev,
       forwardedLeads: prev.forwardedLeads.filter(
         (p: any) => p.id !== selectedProspect.id
       ),
     }));
+    } catch (error) {
+      setToast({
+        show: true,
+        message: `Failed to send ${newAccountPayload.companyName} to Brand Head. Please try again.`,
+        type: "error",
+      });
+      console.log(error);
+    }
+    finally{
+      setloading(false)
+    }
+
+    console.log("Sending to backend:", newAccountPayload);
+
+    // This part remains the same, assuming you want to optimistically remove from the UI
+
 
     closeModal();
   };
@@ -541,6 +573,13 @@ const BusinessDeveloperDashboard = ({ info }: any) => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      {toast.show && (
+        <ToastNotification
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
+      )}
       <h1 className="text-3xl font-bold text-gray-900 mb-6">
         Business Developer Dashboard
       </h1>
@@ -673,7 +712,8 @@ const BusinessDeveloperDashboard = ({ info }: any) => {
                                   onClick={() => alert(prospect.id)}
                                   className="flex items-center px-4 py-2 text-sm bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"
                                 >
-                                  <UserPlus className="h-4 w-4 mr-2" /> Contact Lead
+                                  <UserPlus className="h-4 w-4 mr-2" /> Contact
+                                  Lead
                                 </button>
                               </td>
                               <td className="px-6 py-4">
@@ -681,7 +721,8 @@ const BusinessDeveloperDashboard = ({ info }: any) => {
                                   onClick={() => ScheduleMeet(prospect.id)}
                                   className="flex items-center px-4 py-2 text-sm bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"
                                 >
-                                  <UserPlus className="h-4 w-4 mr-2" /> Schedule Meet
+                                  <UserPlus className="h-4 w-4 mr-2" /> Schedule
+                                  Meet
                                 </button>
                               </td>
                               <td className="px-6 py-4">

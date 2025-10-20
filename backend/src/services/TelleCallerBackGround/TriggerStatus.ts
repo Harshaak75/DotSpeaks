@@ -12,10 +12,6 @@ export function listenForLeadChanges() {
       table: "TelecommunicatorLeads",
     },
     (payload) => {
-      console.log(
-        "🚀 Backend detected change on TelecommunicatorLeads:",
-        payload
-      );
 
       // --- You can add any backend logic here ---
       // For example: log the change, send a Slack notification, etc.

@@ -27,6 +27,7 @@ import { api } from "../../../../../../utils/api/Employees/api";
 import { RootState } from "../../../../../../redux/store";
 import { useDispatch, useSelector } from "react-redux";
 import { supabase } from "../../../../../../utils/supabase";
+import ToastNotification from "../../../../../ToastMessageComp";
 
 // --- TYPE DEFINITIONS ---
 
@@ -69,18 +70,33 @@ const ContentWriterCalender = () => {
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
   const dispatch = useDispatch();
 
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "info",
+  });
+
   // --- DATA FETCHING & REAL-TIME ---
 
   const handleUpdateContent = async (id: string, newContent: string) => {
-    // For now, we'll just show an alert as requested.
-    // Later, you will replace this with your API call.
-    // alert(`Content updated!
-    // ID: ${id}
-    // New Content: "${newContent}"`);
-
     try {
-      const response = await api.ContentWriter.UpdateContent.update(accessToken,dispatch, id, newContent)
+      const response = await api.ContentWriter.UpdateContent.update(
+        accessToken,
+        dispatch,
+        id,
+        newContent
+      );
+      setToast({
+        show: true,
+        message: `The Market Content Successfully Updated.`,
+        type: "success",
+      });
     } catch (error) {
+      setToast({
+        show: true,
+        message: `Failed to update Market Content. Please try again.`,
+        type: "error",
+      });
       console.error("Failed to update content:", error);
     }
 
@@ -199,13 +215,6 @@ const ContentWriterCalender = () => {
       // We trigger a refresh to see the new item on the calendar.
       setNeedsRefresh((prev) => !prev);
 
-      alert(
-        `Content "${title}" has been scheduled for ${format(
-          selectedDateForUpload,
-          "MMMM d"
-        )}!`
-      );
-
       closeAddModal(); // Close the modal after submission
     } catch (error) {
       console.error("Failed to add content:", error);
@@ -214,6 +223,11 @@ const ContentWriterCalender = () => {
   };
 
   const closeAddModal = () => {
+    setToast({
+      show: true,
+      message: `The Market Content Successfully Updated.`,
+      type: "success",
+    });
     setIsAddModalOpen(false);
     setSelectedDateForUpload(null);
   };
@@ -269,6 +283,13 @@ const ContentWriterCalender = () => {
 
     return (
       <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200 flex-grow flex flex-col">
+        {toast.show && (
+          <ToastNotification
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast({ ...toast, show: false })}
+          />
+        )}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-gray-900">
             {format(currentDate, "MMMM yyyy")}

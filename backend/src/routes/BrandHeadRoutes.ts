@@ -63,20 +63,75 @@ router.get(
         return res.status(404).json({ error: "Package not found" });
       }
 
-      const employees = await prisma.packageEmployee.findMany({
+      const thresholds = await prisma.roleAssignmentThreshold.findMany({
+        where: {
+          role: {
+            in: ["Graphic Designer", "Digital Marketer", "Content Writer"],
+          },
+        },
+      });
+
+      // Convert the array to an easier-to-use object, like:
+      // { 'Graphic Designer': 10, 'Digital Marketer': 10, 'Content Writer': 30 }
+      const thresholdMap = thresholds.reduce((acc: any, curr: any) => {
+        acc[curr.role] = curr.max_clients;
+        return acc;
+      }, {});
+
+      const allCandidates = await prisma.packageEmployee.findMany({
         where: {
           packageId: packageData.id,
           profile: {
-            TeamMember: {
-              none: {},
+            designation: {
+              in: ["Graphic Designer", "Digital Marketer", "Content Writer"],
             },
           },
         },
         include: {
-          profile: true,
+          profile: {
+            include: {
+              _count: {
+                select: {
+                  EmployeeClientAssignment: true,
+                },
+              },
+            },
+          },
         },
       });
-      res.status(200).json(employees);
+
+      if (!allCandidates) {
+        return res
+          .status(404)
+          .json({ error: "No employees found for this package" });
+      }
+
+      // 2. Filter the results in your application and group them by role
+      const availableEmployees: any = {
+        graphicDesigners: [],
+        digitalMarketers: [],
+        contentWriters: [],
+      };
+
+      for (const candidate of allCandidates) {
+        const role = candidate.profile.designation;
+        const currentClientCount =
+          candidate.profile._count.EmployeeClientAssignment;
+        const maxClientsForRole = thresholdMap[role];
+
+        // Check if the employee has capacity
+        if (currentClientCount <= maxClientsForRole) {
+          if (role === "Graphic Designer") {
+            availableEmployees.graphicDesigners.push(candidate.profile);
+          } else if (role === "Digital Marketer") {
+            availableEmployees.digitalMarketers.push(candidate.profile);
+          } else if (role === "Content Writer") {
+            availableEmployees.contentWriters.push(candidate.profile);
+          }
+        }
+      }
+
+      res.status(200).json(availableEmployees);
     } catch (error) {
       console.error("Error fetching employees:", error);
       res.status(500).json({ error: "Failed to fetch employees" });
@@ -145,7 +200,7 @@ router.get("/open-tickets", authenticate_user, async (req, res) => {
       task: ticket.task.campaignTitle,
       client: ticket.task.clients?.company_name || "Unknown Client",
       details: ticket.message, // The actual help request comment
-      taskDetails: ticket.task 
+      taskDetails: ticket.task,
     }));
 
     res.status(200).json(formattedTickets);
@@ -177,12 +232,10 @@ router.post("/resolve-ticket", authenticate_user, async (req, res) => {
     });
 
     if (!ticket) {
-      return res
-        .status(403)
-        .json({
-          message:
-            "Access denied: Ticket not found or you are not authorized to resolve it.",
-        });
+      return res.status(403).json({
+        message:
+          "Access denied: Ticket not found or you are not authorized to resolve it.",
+      });
     }
 
     // --- DATABASE TRANSACTION ---
@@ -225,18 +278,20 @@ router.post("/resolve-ticket", authenticate_user, async (req, res) => {
       `📢 Response notification sent to Designer on channel: ${privateChannelName}`
     );
 
-    res
-      .status(200)
-      .json({
-        message: "Ticket resolved successfully.",
-        ticket: updatedTicket,
-      });
+    res.status(200).json({
+      message: "Ticket resolved successfully.",
+      ticket: updatedTicket,
+    });
   } catch (error) {
     console.error("Error resolving ticket:", error);
     res.status(500).json({ message: "Failed to resolve ticket." });
   }
 });
 
-router.post("/Create-Client-Account", authenticate_user, CreateClientAccountFromBrandHead);
+router.post(
+  "/Create-Client-Account",
+  authenticate_user,
+  CreateClientAccountFromBrandHead
+);
 
 export default router;
