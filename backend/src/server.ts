@@ -24,7 +24,7 @@ import designerRoute from "./routes/designerRoute";
 
 import digitalMarket from "./routes/digitalMarket";
 
-import cmoRoutes from "./routes/cmo"
+import cmoRoutes from "./routes/cmo";
 
 import ceoRoute from "./routes/ceoRoute";
 
@@ -59,7 +59,7 @@ console.log(io);
 app.use(
   cors({
     // origin: "http://localhost:5173",
-    origin: process.env.FRONTEND_URL,
+    origin: ["http://localhost:5173", "https://dot-speaks.vercel.app"],
     credentials: true,
     exposedHeaders: ["x-new-access-token", "x-user-role"], // <-- Add this
   })
@@ -81,8 +81,8 @@ app.use("/api/contentWriter", contentWriter);
 app.use("/api/client", clientRoute);
 app.use("/api/designer", designerRoute);
 app.use("/api/digitalMarket", digitalMarket);
-app.use("/api/ceo", ceoRoute)
-app.use("/api/cmo", cmoRoutes)
+app.use("/api/ceo", ceoRoute);
+app.use("/api/cmo", cmoRoutes);
 
 // Basic route
 app.get("/", (req, res) => {
