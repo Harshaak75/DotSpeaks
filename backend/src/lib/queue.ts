@@ -1,8 +1,10 @@
 import { Queue } from "bullmq";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Define your Redis connection options
 const redisConnection = {
-  host: "127.0.0.1",
+  host: process.env.docker_ip,
   port: 6379,
 };
 

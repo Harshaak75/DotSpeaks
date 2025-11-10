@@ -2,9 +2,13 @@
 import { Worker, Job } from "bullmq";
 import prisma from "../lib/prismaClient";
 import { SendRemainderEmail } from "../utils/Functionality/Functions1";
+import dotenv from "dotenv";
+dotenv.config();
+
+// docker run -d --name redis-bullmq -p 6379:6379 redis
 
 const redisConnection = {
-  host: "127.0.0.1",
+  host: process.env.docker_ip,
   port: 6379,
 };
 
