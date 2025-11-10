@@ -84,6 +84,19 @@ const TargetSetter = ({ revenue, setRevenue, onFinalize }: any) => {
   const [isSaving, setIsSaving] = useState(false); // Local saving state for UX feedback
   const quarters = ["Q1", "Q2", "Q3", "Q4"];
 
+  const cached = localStorage.getItem("cmo_target_cache");
+
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached); // convert back from JSON
+      revenue = parsed?.data?.revenue;   // safely access quarter
+
+      console.log("✅ Quarter from cache:", revenue);
+    } catch (err) {
+      console.error("❌ Failed to parse cached data:", err);
+    }
+  }
+
   const accessToken = useSelector((state: any) => state.auth.accessToken);
   const dispatch = useDispatch();
 
@@ -139,13 +152,15 @@ const TargetSetter = ({ revenue, setRevenue, onFinalize }: any) => {
       monthlyUnits: Math.round(minPackagesSold), // optional if you want to store total
       packages: packageData.map((pkg: any) => ({
         name: pkg.key,
-        target: Math.ceil((leadsTarget * (parseFloat(pkg.percentageInput) || 0)) / 100),
+        target: Math.ceil(
+          (leadsTarget * (parseFloat(pkg.percentageInput) || 0)) / 100
+        ),
         achieved: 0,
-        percentage: parseFloat(pkg.percentageInput) || 0
+        percentage: parseFloat(pkg.percentageInput) || 0,
       })),
     };
 
-    console.log(payload)
+    console.log(payload);
 
     try {
       await api.cmo.addcmoTargets.post(accessToken, dispatch, payload);
@@ -540,7 +555,18 @@ const CMOTracker = () => {
 
   const GetTargets = async () => {
     if (!Quarter) {
-      Quarter = localStorage.getItem("CMO_quarter");
+      const cached = localStorage.getItem("cmo_target_cache");
+
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached); // convert back from JSON
+          Quarter = parsed?.data?.quarter; // safely access quarter
+
+          console.log("✅ Quarter from cache:", Quarter);
+        } catch (err) {
+          console.error("❌ Failed to parse cached data:", err);
+        }
+      }
     }
     try {
       const response = await api.cmo.getTargets.get(
