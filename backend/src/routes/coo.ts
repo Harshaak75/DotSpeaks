@@ -72,7 +72,7 @@ router.get("/attendance", authenticate_user, async (req, res) => {
     const absentDays = attendanceData.filter(
       (a: any) => a.status === "Absent"
     ).length;
-    const leaveDays = attendanceData.filter((a) => a.status === "Leave").length;
+    const leaveDays = attendanceData.filter((a: any) => a.status === "Leave").length;
     const totalHours = attendanceData.reduce(
       (sum: any, a: any) => sum + (a.hours_worked || 0),
       0
