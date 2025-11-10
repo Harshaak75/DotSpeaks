@@ -584,8 +584,19 @@ const CMOTracker = () => {
   useEffect(() => {
     const fetchTargets = async () => {
       if (!Quarter) {
-        Quarter = localStorage.getItem("CMO_quarter");
+      const cached = localStorage.getItem("cmo_target_cache");
+
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached); // convert back from JSON
+          Quarter = parsed?.data?.quarter; // safely access quarter
+
+          console.log("✅ Quarter from cache:", Quarter);
+        } catch (err) {
+          console.error("❌ Failed to parse cached data:", err);
+        }
       }
+    }
       try {
         const response: any = await api.cmo.getTargets.get(
           accessToken,
