@@ -44,6 +44,7 @@ import {
   SendDataToDigitalMarketer,
 } from "./services/contentWriter/RealtimeUpdate";
 import { NewContentAddedInQuterlyProjection } from "./services/CMORealtime/realtimeTaskUpdate";
+import { addEmailReminderJob } from "./Testing/addWork";
 
 env.config();
 
@@ -57,7 +58,8 @@ console.log(io);
 // Middleware
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    // origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_URL,
     credentials: true,
     exposedHeaders: ["x-new-access-token", "x-user-role"], // <-- Add this
   })
@@ -110,6 +112,17 @@ io.on("connection", (socket) => {
   socket.on("typing", ({ chatId, userId }) => {
     socket.to(`chat_${chatId}`).emit("typing", { userId });
   });
+});
+
+app.post("/add-reminder", async (req, res) => {
+  const { meetingId } = req.body;
+
+  if (!meetingId) {
+    return res.status(400).json({ error: "meetingId required" });
+  }
+
+  await addEmailReminderJob(meetingId);
+  res.json({ status: "Job added successfully!" });
 });
 
 server.listen(5001, () => {
