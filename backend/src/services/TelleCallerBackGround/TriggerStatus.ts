@@ -1,40 +1,72 @@
 import supabase from "../../config/supabase";
+import {
+  ensureSupabaseConnected,
+  registerRealtimeChannel,
+} from "../../lib/realtimeManager";
 
 export function listenForLeadChanges() {
-  const channel = supabase.channel("lead-changes-channel");
+  let channel: any;
 
-  // 1. Backend listens for ANY change on the TelecommunicatorLeads table.
-  channel.on(
-    "postgres_changes",
-    {
-      event: "*", // Listen for INSERT, UPDATE, DELETE
-      schema: "public",
-      table: "TelecommunicatorLeads",
-    },
-    (payload) => {
-
-      // --- You can add any backend logic here ---
-      // For example: log the change, send a Slack notification, etc.
-      // ------------------------------------------
-
-      // 2. After processing, broadcast a custom message to all clients.
-      console.log("📢 Broadcasting 'leads_updated' event to all clients...");
-      channel.send({
-        type: "broadcast",
-        event: "leads_updated", // This is our custom event name
-        payload: { message: "The leads data has been modified." }, // You can send any data you want
-      });
+  function subscribeToChannel() {
+    // 🧹 cleanup
+    if (channel) {
+      try {
+        if (typeof channel.unsubscribe === "function") {
+          console.log("🧹 Unsubscribing old 'lead-changes' channel...");
+          channel.unsubscribe();
+        } else {
+          console.log("⚠️ Channel not active or already removed.");
+        }
+      } catch (err: any) {
+        console.warn("⚠️ Cleanup error (ignored):", err.message);
+      }
     }
-  );
 
-  channel.subscribe((status, err) => {
-    if (status === "SUBSCRIBED") {
-      console.log("✅ Backend successfully subscribed to lead changes!");
-    }
-    if (status === "CHANNEL_ERROR") {
-      console.error("❌ Backend error subscribing to lead changes:", err);
-    }
-  });
+    console.log("🔗 Subscribing to lead changes channel...");
+
+    channel = supabase.channel("lead-changes-channel");
+
+    // 1️⃣ Listen to any insert/update/delete event
+    channel.on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "TelecommunicatorLeads",
+      },
+      (payload: any) => {
+        console.log("📢 Broadcasting 'leads_updated' event...");
+        channel.send({
+          type: "broadcast",
+          event: "leads_updated",
+          payload: { message: "The leads data has been modified." },
+        });
+      }
+    );
+
+    // 2️⃣ Handle subscription status
+    channel.subscribe(async (status: string, err: any) => {
+      if (status === "SUBSCRIBED") {
+        console.log("✅ Backend subscribed to lead changes!");
+      } else if (
+        status === "CHANNEL_ERROR" ||
+        status === "CLOSED" ||
+        status === "TIMED_OUT"
+      ) {
+        console.warn(
+          `⚠️ Lead changes channel ${status}. Requesting global reconnect...`,
+          err || ""
+        );
+        await ensureSupabaseConnected(); // ✅ Let global manager handle reconnect + resubscribe
+      }
+    });
+  }
+
+  // Register this channel for future resubscriptions after reconnect
+  registerRealtimeChannel(subscribeToChannel);
+
+  // Initial subscription
+  subscribeToChannel();
 
   return channel;
 }

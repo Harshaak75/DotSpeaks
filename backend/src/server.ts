@@ -140,7 +140,3 @@ app.listen(PORT, () => {
   SendDataToDigitalMarketer();
   NewContentAddedInQuterlyProjection();
 });
-
-// client id : 761586733891-m0gojlsauo1q405l5mgrmc3290q2k8nk.apps.googleusercontent.com
-
-// client serect: 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

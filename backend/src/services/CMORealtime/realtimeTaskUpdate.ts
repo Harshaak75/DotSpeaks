@@ -1,5 +1,9 @@
 import supabase from "../../config/supabase";
 import prisma from "../../lib/prismaClient";
+import {
+  ensureSupabaseConnected,
+  registerRealtimeChannel,
+} from "../../lib/realtimeManager";
 
 const convertBigIntsToString = (obj: any): any => {
   if (typeof obj !== "object" || obj === null) {
@@ -69,161 +73,191 @@ const determineCMOTargetQuarter = (
 };
 
 export const NewContentAddedInQuterlyProjection = async () => {
-  const channel = supabase.channel("projections");
+  let channel: any = [];
 
-  channel.on(
-    "postgres_changes",
-    {
-      event: "INSERT",
-      schema: "public",
-      table: "QuarterlyProjection",
-    },
-    async (payload: any) => {
-      const newProjection = payload.new;
-      const yearlyTargetId = newProjection.yearlyTargetId;
-      const quarterBeingInserted = newProjection.quarterName;
-
-      console.log(
-        `🚀 Backend detected change on QuarterlyProjection (Event: ${payload.eventType}): ${quarterBeingInserted}`
-      );
-
-      // --- Anchor Logic: Only run the full lookup and broadcast when Q1 is inserted ---
-      if (quarterBeingInserted !== "Q1") {
-        // If it's Q2, Q3, or Q4 being inserted, we trust the logic ran when Q1 arrived.
-        return;
-      }
-
-      // --- Step 1: Fetch all 4 projections for the new yearly target ID ---
-      let allProjections: any[] = [];
+  const subscribe = () => {
+    if (channel) {
       try {
-        // Fetch all 4 quarters related to the target ID that was just inserted
-        allProjections = await prisma.quarterlyProjection.findMany({
-          where: {
-            yearlyTargetId: yearlyTargetId,
-          },
-          orderBy: {
-            quarterName: "asc", // Ensures Q1, Q2, Q3, Q4 order if needed
-          },
-        });
-
-        if (allProjections.length < 4) {
-          console.warn(
-            `⏳ Target fetch incomplete (found ${allProjections.length}/4 quarters). Waiting for more inserts...`
+        if (typeof channel.unsubscribe === "function") {
+          console.log("🧹 Unsubscribing old channel safely...");
+          channel.unsubscribe(); // ✅ safer direct call
+        } else {
+          console.log(
+            "⚠️ Channel is not active or already removed, skipping cleanup."
           );
-          // We must wait for all 4 to be visible in the DB before proceeding with logic
+        }
+      } catch (err: any) {
+        console.warn("⚠️ Error during channel cleanup (ignored):", err.message);
+      }
+    }
+    channel = supabase.channel("projections");
+
+    channel.on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "QuarterlyProjection",
+      },
+      async (payload: any) => {
+        const newProjection = payload.new;
+        const yearlyTargetId = newProjection.yearlyTargetId;
+        const quarterBeingInserted = newProjection.quarterName;
+
+        console.log(
+          `🚀 Backend detected change on QuarterlyProjection (Event: ${payload.eventType}): ${quarterBeingInserted}`
+        );
+
+        // --- Anchor Logic: Only run the full lookup and broadcast when Q1 is inserted ---
+        if (quarterBeingInserted !== "Q1") {
+          // If it's Q2, Q3, or Q4 being inserted, we trust the logic ran when Q1 arrived.
           return;
         }
-      } catch (error) {
-        console.error(
-          "❌ Prisma fetch failed during target processing:",
-          error
+
+        // --- Step 1: Fetch all 4 projections for the new yearly target ID ---
+        let allProjections: any[] = [];
+        try {
+          // Fetch all 4 quarters related to the target ID that was just inserted
+          allProjections = await prisma.quarterlyProjection.findMany({
+            where: {
+              yearlyTargetId: yearlyTargetId,
+            },
+            orderBy: {
+              quarterName: "asc", // Ensures Q1, Q2, Q3, Q4 order if needed
+            },
+          });
+
+          if (allProjections.length < 4) {
+            console.warn(
+              `⏳ Target fetch incomplete (found ${allProjections.length}/4 quarters). Waiting for more inserts...`
+            );
+            // We must wait for all 4 to be visible in the DB before proceeding with logic
+            return;
+          }
+        } catch (error) {
+          console.error(
+            "❌ Prisma fetch failed during target processing:",
+            error
+          );
+          return;
+        }
+
+        // --- Step 2: Determine the CMO's required target quarter (e.g., 'Q2') ---
+        // We use the Q1 record's creation date as the anchor for timing all calculations.
+        const q1Projection = allProjections.find((p) => p.quarterName === "Q1");
+
+        if (!q1Projection) return; // Safety check
+
+        // NOTE: q1Projection.createdAt is a Date object from Prisma, so we use toISOString()
+        // to pass the date consistently to determineCMOTargetQuarter.
+        const cmoTargetQuarterName = determineCMOTargetQuarter(
+          q1Projection.quarterName, // Q1
+          q1Projection.createdAt.toISOString() // Use the Q1 creation date
         );
-        return;
-      }
 
-      // --- Step 2: Determine the CMO's required target quarter (e.g., 'Q2') ---
-      // We use the Q1 record's creation date as the anchor for timing all calculations.
-      const q1Projection = allProjections.find((p) => p.quarterName === "Q1");
-
-      if (!q1Projection) return; // Safety check
-
-      // NOTE: q1Projection.createdAt is a Date object from Prisma, so we use toISOString()
-      // to pass the date consistently to determineCMOTargetQuarter.
-      const cmoTargetQuarterName = determineCMOTargetQuarter(
-        q1Projection.quarterName, // Q1
-        q1Projection.createdAt.toISOString() // Use the Q1 creation date
-      );
-
-      // --- Step 3: Find the actual data for the required CMO quarter ---
-      const cmoTargetData = allProjections.find(
-        (p) => p.quarterName === cmoTargetQuarterName
-      );
-
-      if (!cmoTargetData) {
-        console.error(
-          `❌ Data missing for CMO target quarter: ${cmoTargetQuarterName}`
+        // --- Step 3: Find the actual data for the required CMO quarter ---
+        const cmoTargetData = allProjections.find(
+          (p) => p.quarterName === cmoTargetQuarterName
         );
-        return;
-      }
 
-      // --- Step 4: Broadcast the single, definitive target to the CMO ---
-      // FIX: Convert BigInts to strings before sending payload over the channel
-      const cmoPayload = convertBigIntsToString(cmoTargetData);
+        if (!cmoTargetData) {
+          console.error(
+            `❌ Data missing for CMO target quarter: ${cmoTargetQuarterName}`
+          );
+          return;
+        }
 
-      console.log(
-        `✅ Broadcasting 'target_for_cmo' (Single Target: ${cmoTargetQuarterName}) && ${cmoPayload}`
-      );
+        // --- Step 4: Broadcast the single, definitive target to the CMO ---
+        // FIX: Convert BigInts to strings before sending payload over the channel
+        const cmoPayload = convertBigIntsToString(cmoTargetData);
 
-      // const response = await prisma.quarterlyProjection.findFirst({
-      //     where:{
-      //         id: cmoPayload.id
-      //     },
-      //     include:{
-      //         yearlyTarget:{
-      //             select:{
-      //                 c
-      //             }
-      //         }
-      //     }
-      // })
+        console.log(
+          `✅ Broadcasting 'target_for_cmo' (Single Target: ${cmoTargetQuarterName}) && ${cmoPayload}`
+        );
 
-      const latestVersion = await prisma.broadcastLog.findMany({
-        where: { type: "target_for_cmo" },
-        orderBy: { version: "desc" },
-        take: 1,
-      });
-      const nextVersion = latestVersion[0]?.version
-        ? latestVersion[0].version + 1
-        : 1;
+        // const response = await prisma.quarterlyProjection.findFirst({
+        //     where:{
+        //         id: cmoPayload.id
+        //     },
+        //     include:{
+        //         yearlyTarget:{
+        //             select:{
+        //                 c
+        //             }
+        //         }
+        //     }
+        // })
 
-      await prisma.broadcastLog.create({
-        data: {
-          type: "target_for_cmo",
-          version: nextVersion,
-          payload: cmoPayload,
-        },
-      });
+        const latestVersion = await prisma.broadcastLog.findMany({
+          where: { type: "target_for_cmo" },
+          orderBy: { version: "desc" },
+          take: 1,
+        });
+        const nextVersion = latestVersion[0]?.version
+          ? latestVersion[0].version + 1
+          : 1;
 
-      channel.send({
-        type: "broadcast",
-        event: "target_for_cmo",
-        payload: {
-          // This is the only data the client needs to update the dashboard
-          quarter: cmoTargetQuarterName,
-          data: cmoPayload,
-          version: nextVersion,
-        },
-      });
-
-      // --- Optional: Broadcast the current quarter to the Team (Q1) ---
-      const teamTargetData = allProjections.find(
-        (p) => p.quarterName === q1Projection.quarterName
-      );
-      if (teamTargetData) {
-        // FIX: Convert BigInts to strings before sending payload
-        const teamPayload = convertBigIntsToString(teamTargetData);
-
-        console.log(`📢 Broadcasting 'target_for_team' (Current Target: Q1)`);
-        channel.send({
-          type: "broadcast",
-          event: "target_for_team",
-          payload: {
-            quarter: q1Projection.quarterName,
-            data: teamPayload,
+        await prisma.broadcastLog.create({
+          data: {
+            type: "target_for_cmo",
+            version: nextVersion,
+            payload: cmoPayload,
           },
         });
-      }
-    }
-  );
 
-  channel.subscribe((status, err) => {
-    if (status === "SUBSCRIBED") {
-      console.log("✅ Backend successfully subscribed to projection changes!");
-    }
-    if (status === "CHANNEL_ERROR") {
-      console.error("❌ Backend error subscribing to projection changes:", err);
-    }
-  });
+        channel.send({
+          type: "broadcast",
+          event: "target_for_cmo",
+          payload: {
+            // This is the only data the client needs to update the dashboard
+            quarter: cmoTargetQuarterName,
+            data: cmoPayload,
+            version: nextVersion,
+          },
+        });
+
+        // --- Optional: Broadcast the current quarter to the Team (Q1) ---
+        const teamTargetData = allProjections.find(
+          (p) => p.quarterName === q1Projection.quarterName
+        );
+        if (teamTargetData) {
+          // FIX: Convert BigInts to strings before sending payload
+          const teamPayload = convertBigIntsToString(teamTargetData);
+
+          console.log(`📢 Broadcasting 'target_for_team' (Current Target: Q1)`);
+          channel.send({
+            type: "broadcast",
+            event: "target_for_team",
+            payload: {
+              quarter: q1Projection.quarterName,
+              data: teamPayload,
+            },
+          });
+        }
+      }
+    );
+
+    channel.subscribe(async (status: string, err: any) => {
+      if (status === "SUBSCRIBED") {
+        console.log("✅ Backend subscribed to lead changes!");
+      } else if (
+        status === "CHANNEL_ERROR" ||
+        status === "CLOSED" ||
+        status === "TIMED_OUT"
+      ) {
+        console.warn(
+          `⚠️ Lead changes channel ${status}. Requesting global reconnect...`,
+          err || ""
+        );
+        await ensureSupabaseConnected(); // ✅ Let global manager handle reconnect + resubscribe
+      }
+    });
+  };
+
+  registerRealtimeChannel(subscribe);
+
+  // Start initial subscription
+  subscribe();
 
   return channel;
 };

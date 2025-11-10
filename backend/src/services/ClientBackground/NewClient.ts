@@ -1,6 +1,11 @@
 import supabase from "../../config/supabase";
 import prisma from "../../lib/prismaClient";
+import {
+  ensureSupabaseConnected,
+  registerRealtimeChannel,
+} from "../../lib/realtimeManager";
 import { SendEmailToClient } from "../../utils/Functionality/Functions1";
+
 async function handleNewClient(payload: any) {
   try {
     console.log("🚀 Realtime Trigger: New client detected!", payload.new);
@@ -224,25 +229,50 @@ async function handleNewClient(payload: any) {
 }
 
 export function ListenNewClient() {
-  const channel = supabase
-    .channel("new-client-inserts")
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "clients",
-      },
-      handleNewClient
-    )
-    .subscribe((status, err) => {
-      if (status === "SUBSCRIBED") {
-        console.log("✅ Successfully subscribed to new client channel!");
+  let channel: any = null;
+  let isRetrying = false;
+
+  const subscribe = () => {
+    // 🧹 cleanup old channel
+    if (channel) {
+      try {
+        if (typeof channel.unsubscribe === "function") {
+          console.log("🧹 Unsubscribing old channel safely...");
+          channel.unsubscribe();
+        }
+      } catch (err: any) {
+        console.warn("⚠️ Cleanup error (ignored):", err.message);
       }
-      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-        console.error("❌ Error subscribing to channel:", err);
-      }
-    });
+    }
+
+    console.log("🔗 Subscribing to Supabase channel: new-client-inserts...");
+    channel = supabase.channel("new-client-inserts");
+
+    channel
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "clients" },
+        handleNewClient
+      )
+      .subscribe(async (status: string, err: any) => {
+        if (status === "SUBSCRIBED") {
+          console.log("✅ Subscribed to new client inserts!");
+        } else if (
+          status === "CHANNEL_ERROR" ||
+          status === "TIMED_OUT" ||
+          status === "CLOSED"
+        ) {
+          console.warn(`⚠️ Channel ${status}. Retrying soon...`, err || "");
+          await ensureSupabaseConnected();
+        }
+      });
+  };
+
+  // 🔁 retry logic with socket + network awareness
+  registerRealtimeChannel(subscribe);
+
+  // initial subscribe
+  subscribe();
 
   return channel;
 }
