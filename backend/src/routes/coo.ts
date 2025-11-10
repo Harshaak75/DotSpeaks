@@ -67,19 +67,19 @@ router.get("/attendance", authenticate_user, async (req, res) => {
     // Calculate summary statistics
     const totalDays = attendanceData.length;
     const presentDays = attendanceData.filter(
-      (a) => a.status === "Present"
+      (a: any) => a.status === "Present"
     ).length;
     const absentDays = attendanceData.filter(
-      (a) => a.status === "Absent"
+      (a: any) => a.status === "Absent"
     ).length;
     const leaveDays = attendanceData.filter((a) => a.status === "Leave").length;
     const totalHours = attendanceData.reduce(
-      (sum, a) => sum + (a.hours_worked || 0),
+      (sum: any, a: any) => sum + (a.hours_worked || 0),
       0
     );
 
     const response = {
-      dailyAttendance: attendanceData.map((record) => ({
+      dailyAttendance: attendanceData.map((record: any) => ({
         date: record.date,
         login: record.login_time || "-",
         logout: record.logout_time || "-",
@@ -118,7 +118,7 @@ router.get("/goals/company", authenticate_user, async (req, res) => {
 
     if (error) throw error;
 
-    const formattedData = data.map((goal) => ({
+    const formattedData = data.map((goal: any) => ({
       id: goal.id,
       title: goal.title,
       description: goal.description,
@@ -153,7 +153,7 @@ router.get("/goals/department", authenticate_user, async (req, res) => {
 
     if (error) throw error;
 
-    const formattedData = data.map((goal) => ({
+    const formattedData = data.map((goal: any) => ({
       id: goal.id,
       title: goal.title,
       description: goal.description,
@@ -259,7 +259,7 @@ router.get("/reports", authenticate_user, async (req, res) => {
 
     if (error) throw error;
 
-    const formattedData = data.map((report) => ({
+    const formattedData = data.map((report: any) => ({
       id: report.id,
       title: report.title,
       type: report.type,
@@ -306,7 +306,7 @@ router.get("/calendar", authenticate_user, async (req, res) => {
 
     if (error) throw error;
 
-    const formattedData = data.map((meeting) => ({
+    const formattedData = data.map((meeting: any) => ({
       id: meeting.id,
       title: meeting.title,
       date: meeting.date,
@@ -354,7 +354,7 @@ router.get("/documents", authenticate_user, async (req, res) => {
 
     if (error) throw error;
 
-    const formattedData = data.map((doc) => ({
+    const formattedData = data.map((doc: any) => ({
       id: doc.id,
       title: doc.title,
       type: doc.type,
@@ -385,7 +385,7 @@ router.get("/tutorials", authenticate_user, async (req, res) => {
 
     if (error) throw error;
 
-    const formattedData = data.map((tutorial) => ({
+    const formattedData = data.map((tutorial: any) => ({
       id: tutorial.id,
       title: tutorial.title,
       category: tutorial.category,
@@ -437,7 +437,7 @@ router.get("/team-members", authenticate_user, async (req, res) => {
 
     if (error) throw error;
 
-    const formattedData = data.map((member) => ({
+    const formattedData = data.map((member: any) => ({
       id: member.id,
       name: member.name,
       title: member.position,

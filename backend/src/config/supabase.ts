@@ -1,4 +1,3 @@
-// const { createClient } = require('@supabase/supabase-js');
 import { createClient } from "@supabase/supabase-js";
 import env from "dotenv";
 

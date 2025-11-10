@@ -170,7 +170,7 @@ export const GetTheDesign = async (
         // Return the content object with the new `imageUrls` array
         return {
           ...content,
-          imageUrls: imageUrls.filter((url) => url !== null), // Filter out any nulls from errors
+          imageUrls: imageUrls.filter((url: any) => url !== null), // Filter out any nulls from errors
         };
       })
     );
