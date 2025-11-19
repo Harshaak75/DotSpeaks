@@ -191,7 +191,7 @@ const CEOYearlyTargetDashboard = () => {
               <div className="text-center mt-12">
                 <button
                   onClick={handleSendTargets}
-                  className="px-8 py-4 text-white font-bold rounded-full shadow-lg hover:opacity-90 transition-all focus:outline-none focus:ring-4 flex items-center justify-center space-x-2 mx-auto"
+                  className="px-8 py-4 text-white font-bold rounded-lg shadow-lg hover:opacity-90 transition-all focus:outline-none focus:ring-4 flex items-center justify-center space-x-2 mx-auto"
                   style={{ backgroundColor: '#0000CC', '--tw-ring-color': '#0000CC' } as React.CSSProperties}
                 >
                   <Send className="h-5 w-5" />

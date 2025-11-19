@@ -217,7 +217,7 @@ const LogoutModal = ({
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-8 text-center align-middle shadow-xl transition-all">
-                <Sparkles className="mx-auto h-12 w-12 text-pink-500" />
+                <Sparkles className="mx-auto h-12 w-12 text-[#d70707]" />
                 <Dialog.Title
                   as="h3"
                   className="text-2xl mt-4 font-bold text-gray-800"
