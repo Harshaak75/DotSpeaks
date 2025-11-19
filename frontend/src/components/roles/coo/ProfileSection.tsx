@@ -60,7 +60,7 @@ const OnboardingBanner = ({ daysLeft, onStart }: any) => (
       <FileText className="h-8 w-8 text-white mr-4" />
       <div>
         <h3 
-          className="text-white text-lg mb-1"
+          className="text-white text-[1.4rem] mb-1"
           style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
         >
           Complete Your Profile Onboarding
@@ -90,7 +90,7 @@ const OnboardingBanner = ({ daysLeft, onStart }: any) => (
       </div>
       <button
         onClick={onStart}
-        className="flex items-center px-4 py-1.5 bg-white rounded-lg hover:opacity-90 transition-opacity shadow"
+        className="flex items-center text-[0.9rem] px-4 py-1.5 bg-white rounded-lg hover:opacity-90 transition-opacity shadow"
         style={{ color: '#0000CC', fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
       >
         Start Form <ChevronRight className="h-4 w-4 ml-1" />
@@ -426,7 +426,7 @@ const ProfileSection: React.FC = () => {
             {/* Header Section */}
             <div className="p-6 flex justify-between items-center">
                 <h2 
-                  className="text-2xl text-white"
+                  className="text-2xl text-white text-[1.4rem]"
                   style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
                 >
                   Profile Information
@@ -434,7 +434,7 @@ const ProfileSection: React.FC = () => {
                 {!isEditing ? (
                     <button 
                       onClick={() => setIsEditing(true)} 
-                      className="flex items-center px-4 py-2 bg-white rounded-lg hover:opacity-90 transition-opacity"
+                      className="flex items-center px-4 py-2 text-[0.9rem] bg-white rounded-lg hover:opacity-90 transition-opacity"
                       style={{ 
                         color: '#0000CC',
                         fontFamily: 'Inter, sans-serif',
@@ -477,7 +477,7 @@ const ProfileSection: React.FC = () => {
                     </div>
                     <div className="ml-6">
                         <h3 
-                          className="text-xl"
+                          className="text-[1.25rem]"
                           style={{ 
                             fontFamily: 'Inter, sans-serif',
                             fontWeight: 'bold',
@@ -487,7 +487,7 @@ const ProfileSection: React.FC = () => {
                           {profile.name}
                         </h3>
                         <p 
-                          className="text-gray-700"
+                          className="text-gray-700 text-sm"
                           style={{ fontFamily: 'Roboto, sans-serif' }}
                         >
                           {profile.designation}
@@ -505,38 +505,8 @@ const ProfileSection: React.FC = () => {
                     {/* Column 1 */}
                     <div>
                         <label 
-                          className="block text-sm font-medium text-gray-500 mb-1"
-                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
-                        >
-                          Full Name
-                        </label>
-                        {isEditing ? (
-                            <input 
-                              type="text" 
-                              value={editedProfile.name} 
-                              onChange={(e) => handleInputChange("name", e.target.value)} 
-                              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
-                              style={{ 
-                                fontFamily: 'Roboto, sans-serif',
-                                borderColor: '#0000CC'
-                              }}
-                            />
-                        ) : (
-                            <p 
-                              className="mt-1 font-semibold"
-                              style={{ 
-                                fontFamily: 'Roboto, sans-serif',
-                                color: '#333'
-                              }}
-                            >
-                              {profile.name}
-                            </p>
-                        )}
-                    </div>
-                    <div>
-                        <label 
-                          className="block text-sm font-medium text-gray-500 mb-1"
-                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                          className="block text-[0.9rem] font-medium text-gray-500 mb-1"
+                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold', color: '#0000CC' }}
                         >
                           Email Address
                         </label>
@@ -562,8 +532,8 @@ const ProfileSection: React.FC = () => {
                     </div>
                     <div>
                         <label 
-                          className="block text-sm font-medium text-gray-500 mb-1"
-                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                          className="block text-[0.9rem] font-medium text-gray-500 mb-1"
+                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold', color: '#0000CC' }}
                         >
                           Contact Number
                         </label>
@@ -591,8 +561,8 @@ const ProfileSection: React.FC = () => {
                     {/* Column 2 */}
                     <div>
                         <label 
-                          className="block text-sm font-medium text-gray-500 mb-1"
-                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                          className="block text-[0.9rem] font-medium text-gray-500 mb-1"
+                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold', color: '#0000CC' }}
                         >
                           Employee Code
                         </label>
@@ -608,8 +578,8 @@ const ProfileSection: React.FC = () => {
                     </div>
                     <div>
                         <label 
-                          className="block text-sm font-medium text-gray-500 mb-1"
-                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                          className="block text-[0.9rem] font-medium text-gray-500 mb-1"
+                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold', color: '#0000CC' }}
                         >
                           Designation
                         </label>
@@ -635,8 +605,8 @@ const ProfileSection: React.FC = () => {
                     </div>
                     <div>
                         <label 
-                          className="block text-sm font-medium text-gray-500 mb-1"
-                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                          className="block text-[0.9rem] font-medium text-gray-500 mb-1"
+                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold', color: '#0000CC' }}
                         >
                           Join Date
                         </label>

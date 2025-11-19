@@ -12,7 +12,7 @@ interface WorkCountdownProps {
   autoStart?: boolean;
 }
 
-const STORAGE_KEY = import.meta.env.STORAGE_KEY
+
 
 const pad2 = (n: number) => n.toString().padStart(2, "0");
 
@@ -30,6 +30,10 @@ type SavedState = {
   lastUpdated: number; // unix ms
   initialSeconds: number;
 };
+
+const STORAGE_KEY = "WorkStoragev1"
+const st = import.meta.env.STORAGE_KEY;
+console.log("The time storage value: ",localStorage.getItem(st))
 
 const safeLoad = (initialSeconds: number): SavedState | null => {
   try {
@@ -180,20 +184,20 @@ const WorkCountdown: React.FC<WorkCountdownProps> = ({
 
   const isOvertime = remaining <= 0;
   const display = isOvertime ? `${formatHMS(-remaining)}` : formatHMS(remaining);
-  const timeColor = isOvertime ? "text-emerald-600" : "text-red-600";
+  const timeColor = isOvertime ? "text-[#d70707]" : "text-[#0000cc]";
 
   return (
     <div className="flex items-center space-x-4">
       <div className="flex flex-col items-start">
         <div
-          className={`text-xl md:text-xl lg:text-[1.5rem] font-extrabold tracking-wide ${timeColor}`}
+          className={`text-xl md:text-xl lg:text-[1.25rem] font-extrabold tracking-wide ${timeColor}`}
           style={{ fontFamily: "Inter, sans-serif", letterSpacing: "0.02em" }}
           aria-live="polite"
         >
           {display}
         </div>
 
-        <div className="text-[0.8rem] pl-[0.2rem] text-gray-500" style={{ fontFamily: "Roboto, sans-serif" }}>
+        <div className="text-[0.8rem] font-semibold text-gray-500" style={{ fontFamily: "Roboto, sans-serif" }}>
           {isOvertime ? "Overtime active" : "Work time remaining"}
         </div>
       </div>

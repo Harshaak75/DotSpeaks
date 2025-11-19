@@ -45,34 +45,7 @@ interface Task {
   completed: boolean;
 }
 
-// --- A reusable, minimalistic Clock component for the header (NO ICON) ---
-const HeaderClock = () => {
-  const [time, setTime] = useState(new Date());
-
-  useEffect(() => {
-    const timerId = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timerId);
-  }, []);
-
-  return (
-    <div
-      className="px-4 py-2 rounded-lg"
-      style={{
-        backgroundColor: "#0000CC",
-        fontFamily: "Inter, sans-serif",
-        fontWeight: "bold",
-      }}
-    >
-      <span className="text-sm font-semibold text-white font-mono tracking-wider">
-        {time.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        })}
-      </span>
-    </div>
-  );
-};
+const BREAK_STORAGE_KEY = import.meta.env.BREAK_STORAGE_KEY;
 
 // Greeting Modal
 const GreetingModal = ({ isOpen, onClose, userName }: GreetingModalProps) => {
@@ -350,7 +323,7 @@ const BreakModal = ({ isOpen, onStartBreak, onEndBreak }: BreakModalProps) => {
                 </Dialog.Title>
                 <div className="mt-4">
                   <p
-                    className="text-lg text-white/70"
+                    className="text-[1rem] text-white/70"
                     style={{ fontFamily: "Roboto, sans-serif" }}
                   >
                     Step away and recharge. A clear mind creates amazing work.
@@ -359,7 +332,7 @@ const BreakModal = ({ isOpen, onStartBreak, onEndBreak }: BreakModalProps) => {
                 <div className="mt-10">
                   <button
                     type="button"
-                    className="inline-flex items-center justify-center rounded-full border-2 border-white/80 bg-white/20 px-8 py-3 text-lg font-semibold text-white hover:bg-white/30 focus:outline-none transition-all duration-300"
+                    className="inline-flex bg-[#0000cc] items-center justify-center rounded-md border-2 border-white/80 px-8 py-3 text-lg font-semibold text-white hover:bg-[#0000cc]/70 focus:outline-none transition-all duration-300"
                     style={{
                       fontFamily: "Inter, sans-serif",
                       fontWeight: "bold",
@@ -407,14 +380,65 @@ const DashboardWrapper: React.FC<Props> = ({ userRole }) => {
   const accessToken = useSelector(selectAccessToken);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const BREAK_STORAGE_KEY = "WorkBreakKeyv1";
+  console.log("The break id is:", BREAK_STORAGE_KEY);
 
-  const SERECT_KEY = import.meta.env.STORAGE_KEY
+  const SERECT_KEY = "WorkStoragev1";
+
+  // load persisted break state on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(BREAK_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { open?: boolean; breakId?: string };
+        if (parsed?.open) {
+          setIsBreakModalOpen(true);
+          if (parsed?.breakId) {
+            setBreakId(parsed.breakId);
+          } else {
+            // if break was open but breakId missing, we'll initiate start break to obtain an id
+            (async () => {
+              try {
+                const data = await api.attendance.StartBreak.post(
+                  accessToken,
+                  dispatch
+                );
+                setBreakId(data.break_id);
+                // save updated breakId
+                console.log("The break id is:", BREAK_STORAGE_KEY);
+                localStorage.setItem(
+                  BREAK_STORAGE_KEY,
+                  JSON.stringify({ open: true, breakId: data.break_id })
+                );
+              } catch (err) {
+                console.error(
+                  "Failed to restore breakId, will keep modal open:",
+                  err
+                );
+              }
+            })();
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load break state", e);
+    }
+  }, [accessToken, dispatch]);
 
   // IMPORTANT: All hooks must be called before any conditional returns
   const handleStartBreak = useCallback(async () => {
     try {
       const data = await api.attendance.StartBreak.post(accessToken, dispatch);
       setBreakId(data.break_id);
+      // persist that break is open and store breakId
+      try {
+        localStorage.setItem(
+          BREAK_STORAGE_KEY,
+          JSON.stringify({ open: true, breakId: data.break_id })
+        );
+      } catch (e) {
+        console.warn("Failed to persist break state", e);
+      }
     } catch (error) {
       console.error("Error starting break:", error);
     }
@@ -423,11 +447,25 @@ const DashboardWrapper: React.FC<Props> = ({ userRole }) => {
   const handleEndBreak = useCallback(async () => {
     if (!breakId) {
       console.error("No break ID found to end the break.");
+      // Still clear persisted open flag to avoid stuck UI
+      try {
+        localStorage.removeItem(BREAK_STORAGE_KEY);
+      } catch (e) {
+        /* ignore */
+      }
+      setIsBreakModalOpen(false);
       return;
     }
     try {
       await api.attendance.EndBreak.post(accessToken, dispatch, breakId);
       console.log("Break ended");
+      // clear persisted break info
+      try {
+        localStorage.removeItem(BREAK_STORAGE_KEY);
+      } catch (e) {
+        console.warn("Failed to remove break state", e);
+      }
+      setBreakId("");
       setIsBreakModalOpen(false);
     } catch (error) {
       console.error("Error ending break:", error);
@@ -467,6 +505,12 @@ const DashboardWrapper: React.FC<Props> = ({ userRole }) => {
         await api.auth.logout.post(accessToken);
         localStorage.removeItem("activeSection");
         localStorage.removeItem(SERECT_KEY);
+        // clear break storage on logout
+        try {
+          localStorage.removeItem(BREAK_STORAGE_KEY);
+        } catch (e) {
+          /* ignore */
+        }
         dispatch(logout());
         sessionStorage.removeItem("greetingInfo");
         navigate("/");
@@ -532,16 +576,6 @@ const DashboardWrapper: React.FC<Props> = ({ userRole }) => {
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6">
-            <h2
-              className="text-xs font-semibold uppercase tracking-wide mb-4"
-              style={{
-                fontFamily: "Inter, sans-serif",
-                fontWeight: "bold",
-                color: "rgba(255,255,255,0.7)",
-              }}
-            >
-              Dashboard
-            </h2>
             <ul className="space-y-2">
               {sidebarItems.map((item) => {
                 const Icon = item.icon;
@@ -549,9 +583,9 @@ const DashboardWrapper: React.FC<Props> = ({ userRole }) => {
                   <li key={item.id}>
                     <button
                       onClick={() => setActiveSection(item.id)}
-                      className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      className={`w-full text-[1.1rem] flex font-medium items-center px-3 py-2 text-sm rounded-lg transition-colors ${
                         activeSection === item.id
-                          ? "bg-white text-[#0000CC]"
+                          ? "bg-white text-[#0000CC] font-semibold"
                           : "text-white hover:bg-white/20"
                       }`}
                       style={{ fontFamily: "Roboto, sans-serif" }}
@@ -595,12 +629,13 @@ const DashboardWrapper: React.FC<Props> = ({ userRole }) => {
                   className="px-4 py-2 rounded-lg"
                   style={{
                     backgroundColor: "#0000CC",
-                    fontFamily: "Inter, sans-serif",
+                    
                     fontWeight: "bold",
                   }}
                 >
-                  <span className="text-sm font-semibold text-white">
-                    {userRole}
+                  <span className="text-sm text-[1.25rem] font-bold text-white">
+                    {userRole.split(" ").map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(" ")}
+                    {/* {userRole.toLowerCase()} */}
                   </span>
                 </div>
               </div>
@@ -610,7 +645,19 @@ const DashboardWrapper: React.FC<Props> = ({ userRole }) => {
                 <div className="w-auto flex justify-end items-center space-x-4">
                   {/* Take a Break Button - NOW RED */}
                   <button
-                    onClick={() => setIsBreakModalOpen(true)}
+                    onClick={() => {
+                      setIsBreakModalOpen(true);
+                      // persist open flag now; breakId will be set after API returns inside handleStartBreak
+                      try {
+                        console.log("The break id is:", BREAK_STORAGE_KEY);
+                        localStorage.setItem(
+                          BREAK_STORAGE_KEY,
+                          JSON.stringify({ open: true })
+                        );
+                      } catch (e) {
+                        console.warn("Failed to persist break open state", e);
+                      }
+                    }}
                     className="flex items-center space-x-2 px-4 py-2.5 rounded-lg text-white hover:opacity-90 transition-opacity shadow-md"
                     style={{
                       fontFamily: "Inter, sans-serif",
@@ -641,10 +688,8 @@ const DashboardWrapper: React.FC<Props> = ({ userRole }) => {
                     initialSeconds={
                       process.env.NODE_ENV === "development" ? 60 : 8 * 3600
                     }
-                    paused={isBreakModalOpen} // when you open Take a Break modal, parent sets isBreakModalOpen true -> timer pauses
+                    paused={isBreakModalOpen}
                     onOvertime={() => {
-                      // called once when overtime starts — call your API here
-                      // example: api.attendance.markOvertime(accessToken).catch(console.error)
                       console.log("OVERTIME STARTED - call your API here");
                     }}
                   />
