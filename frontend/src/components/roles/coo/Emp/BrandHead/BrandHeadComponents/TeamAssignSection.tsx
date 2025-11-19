@@ -1,4 +1,4 @@
-import React, { useState, Fragment, useEffect } from "react";
+import { useState, Fragment, useEffect } from "react";
 import {
   Users,
   User,
@@ -7,7 +7,6 @@ import {
   Settings,
   Plus,
   X,
-  Trash2,
 } from "lucide-react";
 import { Dialog, Transition } from "@headlessui/react";
 import { api } from "../../../../../../utils/api/Employees/api";
@@ -33,8 +32,6 @@ interface TeamType {
   members: MemberType[];
 }
 
-// --- MOCK DATA --
-
 const roleIcons: Record<Role, JSX.Element> = {
   "Digital Marketer": <User className="h-5 w-5 text-purple-600" />,
   "Graphic Designer": <Paintbrush className="h-5 w-5 text-red-600" />,
@@ -46,18 +43,16 @@ const TeamCard = ({
   team,
   onEdit,
 }: {
-  // You might want to define this TeamType properly
   team: any;
   onEdit: (team: any) => void;
 }) => (
-  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+  <div className="bg-white rounded-lg shadow-sm border-l-4 hover:shadow-md transition-shadow overflow-hidden" style={{ borderLeftColor: '#0000CC' }}>
     <div className="p-6">
       <div className="flex justify-between items-start">
         <div>
-          {/* Unchanged: team.teamName already matches */}
           <h3 className="text-xl font-bold text-gray-900">{team.teamName}</h3>
           <p className="text-sm text-gray-500">
-            Assigned to: {/* CHANGED: Use team.clientName now */}
+            Assigned to:{" "}
             <span className="font-semibold text-gray-700">
               {team.clientName}
             </span>
@@ -66,8 +61,9 @@ const TeamCard = ({
         <button
           onClick={() => onEdit(team)}
           className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+          style={{ color: '#0000CC' }}
         >
-          <Settings className="h-5 w-5 text-gray-400" />
+          <Settings className="h-5 w-5" />
         </button>
       </div>
     </div>
@@ -78,10 +74,8 @@ const TeamCard = ({
       </h4>
       <div className="space-y-3">
         {team.members.map((member: any) => (
-          // CHANGED: Use the unique profileId for the key
           <div key={member.profileId} className="flex items-center">
             <img
-              // CHANGED: Generate an avatar since avatarUrl is not in the data
               src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
                 member.name
               )}&background=random`}
@@ -89,12 +83,10 @@ const TeamCard = ({
               className="h-10 w-10 rounded-full"
             />
             <div className="ml-3">
-              {/* Unchanged: member.name matches */}
               <p className="text-sm font-semibold text-gray-800">
                 {member.name}
               </p>
               <div className="flex items-center">
-                {/* Unchanged: member.role matches */}
                 {roleIcons[member.role as Role]}
                 <p className="ml-1.5 text-xs text-gray-600">{member.role}</p>
               </div>
@@ -113,8 +105,6 @@ const TeamFormModal = ({
   onSave,
   selectedEmployee,
   selectedClients,
-  teamToEdit,
-  onDelete,
 }: any) => {
   const [teamName, setTeamName] = useState("");
   const [members, setMembers] = useState<Record<Role, string>>({
@@ -126,21 +116,24 @@ const TeamFormModal = ({
     id: "",
     name: "",
   });
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "info",
+  });
   const accessToken = useSelector(selectAccessToken);
   const dispatch = useDispatch();
-
   const packageName = useSelector((state: any) => state.profile.PackageName);
-
   const [loading, setloading] = useState(false);
 
   const handleSave = async () => {
     const data = {
-      teamId: Date.now().toString(), // temporary ID until backend returns
+      teamId: Date.now().toString(),
       teamName,
       clientName: client.name,
       clientId: client.id,
       members: Object.entries(members)
-        .filter(([_, id]) => id) // only keep assigned roles
+        .filter(([_, id]) => id)
         .map(([role, id]) => {
           const emp = selectedEmployee[role].find((e: any) => e.id === id);
           return { profileId: id, name: emp?.name, role };
@@ -152,17 +145,12 @@ const TeamFormModal = ({
       const response = await api.BrandHead.team.createTeam(
         accessToken,
         dispatch,
-        [data], // API expects array
+        [data],
         packageName
       );
       console.log("Created:", response);
-
-      // update parent state
       onSave(data);
-
-      onClose(); // Close the modal on success
-
-      // FIX: Show success toast inside the try block
+      onClose();
     } catch (error) {
       console.error("Error creating team:", error);
       setToast({
@@ -178,7 +166,7 @@ const TeamFormModal = ({
   if (loading)
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderBottomColor: '#0000CC' }}></div>
       </div>
     );
 
@@ -198,8 +186,9 @@ const TeamFormModal = ({
             if (selected) setClient(selected);
           }}
           className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 
-               focus:outline-none focus:ring-blue-500 focus:border-blue-500 
+               focus:outline-none focus:ring-2 focus:border-transparent 
                sm:text-sm rounded-md"
+          style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
         >
           <option value="">Select Clients</option>
           {clients.map((c: any) => (
@@ -224,7 +213,8 @@ const TeamFormModal = ({
           onChange={(e) =>
             setMembers((prev) => ({ ...prev, [role]: e.target.value }))
           }
-          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-2 focus:border-transparent sm:text-sm rounded-md"
+          style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
         >
           <option value="">Select Employee</option>
           {filteredEmployees.map((emp: any) => (
@@ -262,12 +252,13 @@ const TeamFormModal = ({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all border-2" style={{ borderColor: '#0000CC' }}>
                 <Dialog.Title
                   as="h3"
-                  className="text-lg font-bold leading-6 text-gray-900"
+                  className="text-lg font-bold leading-6"
+                  style={{ color: '#0000CC' }}
                 >
-                  {teamToEdit ? "Edit Team" : "Assign New Team"}
+                  Assign New Team
                 </Dialog.Title>
                 <div className="mt-4 space-y-4">
                   <div>
@@ -278,7 +269,8 @@ const TeamFormModal = ({
                       type="text"
                       value={teamName}
                       onChange={(e) => setTeamName(e.target.value)}
-                      className="mt-1 w-full p-2 border border-gray-300 rounded-md"
+                      className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+                      style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
                     />
                   </div>
                   {renderSelectForClient(selectedClients)}
@@ -297,7 +289,8 @@ const TeamFormModal = ({
                   </button>
                   <button
                     onClick={handleSave}
-                    className="px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+                    className="px-4 py-2 rounded-lg text-white hover:opacity-90"
+                    style={{ backgroundColor: '#0000CC' }}
                   >
                     Save Team
                   </button>
@@ -322,16 +315,15 @@ type Employee = {
   };
 };
 
-// edit model
-
-const EditTeamModal = ({ isOpen1, onClose1, onSave1, teamToEdit }: any) => {
+// Edit Modal
+const EditTeamModal = ({ isOpen1, onClose1, onSave1 }: any) => {
   const dummyTeamData = {
     teamId: "t1",
     teamName: "Alpha Project Team",
     clientName: "Innovate Corp",
     members: [
-      { profileId: "m1", name: "Alice Johnson" },
-      { profileId: "m3", name: "Charlie Brown" },
+      { profileId: "m1", name: "Alice Johnson", role: "Graphic Designer" },
+      { profileId: "m3", name: "Charlie Brown", role: "Graphic Designer" },
     ],
   };
 
@@ -349,74 +341,57 @@ const EditTeamModal = ({ isOpen1, onClose1, onSave1, teamToEdit }: any) => {
     { profileId: "m5", name: "Edward Garcia", role: "Project Manager" },
   ];
 
-  // --- Group members by their role ---
   const groupedMembers = allMembers.reduce((acc: any, member: any) => {
-    const role = member.role || "Unassigned"; // Group members without a role under 'Unassigned'
+    const role = member.role || "Unassigned";
     if (!acc[role]) {
       acc[role] = [];
     }
     acc[role].push(member);
     return acc;
   }, {});
-  // --- End of Dummy Data ---
 
   const handleMemberChange = (role: any, selectedProfileId: any) => {
     setFormData((prev: any) => {
       if (!prev) return null;
 
-      // 1. Filter out any member that previously held this role
       const otherMembers = prev.members.filter((m: any) => m.role !== role);
 
-      // 2. If a new member was selected (and not the "None" option)
       if (selectedProfileId) {
-        // Find the full member object from the master list
         const newMember = allMembers.find(
           (m: any) => m.profileId === selectedProfileId
         );
-        // Add the new member to the team
         return { ...prev, members: [...otherMembers, newMember] };
       }
 
-      // 3. If "None" was selected, just return the team without anyone in that role
       return { ...prev, members: otherMembers };
     });
   };
 
-  const [formData, setFormData] = React.useState(dummyTeamData);
+  const [formData, setFormData] = useState(dummyTeamData);
 
-  // Don't render if the modal isn't open
   if (!isOpen1) {
     return null;
   }
 
-  // Find the current client ID for the dropdown default value
   const currentClientId = allClients.find(
     (c) => c.company_name === formData.clientName
   )?.id;
-  const currentMemberIds = formData.members.map((m) => m.profileId);
 
   const handleClientChange = (e: any) => {
     const selectedClientName = e.target.options[e.target.selectedIndex].text;
     setFormData((prev) => ({ ...prev, clientName: selectedClientName }));
   };
 
-  const handleMembersChange = (e: any) => {
-    const selectedMembers = Array.from(
-      e.target.selectedOptions,
-      (option: any) => allMembers.find((m) => m.profileId === option.value)
-    );
-    setFormData((prev: any) => ({ ...prev, members: selectedMembers }));
-  };
-
   const handleSave = () => {
-    // In a real app, you'd pass the updated formData
     onSave1(formData);
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6">Edit Team</h2>
+      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md border-2" style={{ borderColor: '#0000CC' }}>
+        <h2 className="text-2xl font-bold mb-6" style={{ color: '#0000CC' }}>
+          Edit Team
+        </h2>
 
         {/* Team Name (Display Only) */}
         <div className="mb-4">
@@ -436,7 +411,8 @@ const EditTeamModal = ({ isOpen1, onClose1, onSave1, teamToEdit }: any) => {
           <select
             value={currentClientId || ""}
             onChange={handleClientChange}
-            className="w-full px-3 py-2 border rounded-lg bg-white"
+            className="w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:border-transparent"
+            style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
           >
             {allClients.map((client) => (
               <option key={client.id} value={client.id}>
@@ -452,9 +428,7 @@ const EditTeamModal = ({ isOpen1, onClose1, onSave1, teamToEdit }: any) => {
             Team Members
           </label>
 
-          {/* Iterate over the groups (e.g., "Graphic Designer") */}
           {Object.keys(groupedMembers).map((role) => {
-            // Find which member (if any) is currently assigned to this role
             const currentMemberForRole = formData.members.find(
               (m: any) => m.role === role
             );
@@ -470,12 +444,11 @@ const EditTeamModal = ({ isOpen1, onClose1, onSave1, teamToEdit }: any) => {
                 <select
                   value={currentMemberId}
                   onChange={(e) => handleMemberChange(role, e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg bg-white"
+                  className="w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:border-transparent"
+                  style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
                 >
-                  {/* Add a default "None" option */}
                   <option value="">-- Not Assigned --</option>
 
-                  {/* Map over the members available for this specific role */}
                   {groupedMembers[role].map((member: any) => (
                     <option key={member.profileId} value={member.profileId}>
                       {member.name}
@@ -497,7 +470,8 @@ const EditTeamModal = ({ isOpen1, onClose1, onSave1, teamToEdit }: any) => {
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+            className="px-4 py-2 rounded-lg text-white hover:opacity-90"
+            style={{ backgroundColor: '#0000CC' }}
           >
             Save Changes
           </button>
@@ -522,10 +496,7 @@ const TeamAssignSection = () => {
     type: "info",
   });
 
-  
-
   const [loading, setLoading] = useState(false);
-
   const [employees, setEmployees] = useState<
     Record<string, { id: string; name: string }[]>
   >({});
@@ -554,20 +525,6 @@ const TeamAssignSection = () => {
     fetchCard();
   }, []);
 
-  function groupByRole(data: Employee[]) {
-    return data.reduce((acc, emp) => {
-      const role = emp.role;
-      if (!acc[role]) {
-        acc[role] = [];
-      }
-      acc[role].push({
-        id: emp.profile.id,
-        name: emp.profile.name,
-      });
-      return acc;
-    }, {} as Record<string, { id: string; name: string }[]>);
-  }
-
   function formatClient(data: any) {
     return data.map((item: any) => {
       return {
@@ -577,69 +534,59 @@ const TeamAssignSection = () => {
     });
   }
 
-function formatApiResponse(apiData: any) {
-        // Define the roles you explicitly want to display
-        const desiredRoles = [
-            "Digital Marketer",
-            "Graphic Designer",
-            "Content Writer",
-        ];
+  function formatApiResponse(apiData: any) {
+    const desiredRoles = [
+      "Digital Marketer",
+      "Graphic Designer",
+      "Content Writer",
+    ];
 
-        const formattedData: any = {};
+    const formattedData: any = {};
 
-        // Iterate over your predefined roles
-        desiredRoles.forEach((role) => {
-            // Check if the API data has a corresponding key.
-            // Note: The API likely uses camelCase (e.g., 'graphicDesigners').
-            // You must map your role names to the correct API key.
-            // Let's assume a simple mapping for now.
-            const apiRoleKey =
-                role === "Digital Marketer"
-                    ? "digitalMarketers"
-                    : role === "Graphic Designer"
-                    ? "graphicDesigners"
-                    : role === "Content Writer"
-                    ? "contentWriters"
-                    : null;
+    desiredRoles.forEach((role) => {
+      const apiRoleKey =
+        role === "Digital Marketer"
+          ? "digitalMarketers"
+          : role === "Graphic Designer"
+          ? "graphicDesigners"
+          : role === "Content Writer"
+          ? "contentWriters"
+          : null;
 
-            if (apiRoleKey && apiData[apiRoleKey]) {
-                // If a key exists, map the employee data
-                formattedData[role] = apiData[apiRoleKey].map((employee: any) => ({
-                    id: employee.id,
-                    name: employee.name,
-                }));
-            } else {
-                // If the role isn't in the API response, initialize it as an empty array
-                formattedData[role] = [];
-            }
-        });
-        return formattedData;
-    }
+      if (apiRoleKey && apiData[apiRoleKey]) {
+        formattedData[role] = apiData[apiRoleKey].map((employee: any) => ({
+          id: employee.id,
+          name: employee.name,
+        }));
+      } else {
+        formattedData[role] = [];
+      }
+    });
+    return formattedData;
+  }
 
   const openModal = async () => {
     setIsModalOpen(true);
-    // (true);
     try {
       const [empRes, cliRes] = await Promise.all([
         api.BrandHead.team.getEmployee(accessToken, dispatch, PackageName),
         api.BrandHead.team.getClient(accessToken, dispatch),
       ]);
 
-    setEmployees(formatApiResponse(empRes));
-
-    // Your existing client formatting is likely still correct
-    setClients(formatClient(cliRes));
+      setEmployees(formatApiResponse(empRes));
+      setClients(formatClient(cliRes));
     } catch (error) {
       console.log(error);
     }
   };
+
   const closeModal = () => {
     setIsModalOpen(false);
     setTeamToEdit(null);
 
     setToast({
       show: true,
-      message: `Team  created successfully!`,
+      message: `Team created successfully!`,
       type: "success",
     });
   };
@@ -657,15 +604,10 @@ function formatApiResponse(apiData: any) {
     }
   };
 
-  const handleDeleteTeam = (teamId: string) => {
-    setTeams(teams.filter((t) => t.teamId !== teamId));
-    closeModal();
-  };
-
   if (loading)
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderBottomColor: '#0000CC' }}></div>
       </div>
     );
 
@@ -679,10 +621,13 @@ function formatApiResponse(apiData: any) {
         />
       )}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Team Assignments</h1>
+        <h1 className="text-3xl font-bold" style={{ color: '#0000CC' }}>
+          Team Assignments
+        </h1>
         <button
           onClick={openModal}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+          className="flex items-center px-4 py-2 text-white font-semibold rounded-lg hover:opacity-90 transition-all shadow-sm"
+          style={{ backgroundColor: '#0000CC' }}
         >
           <Plus className="h-5 w-5 mr-2 -ml-1" />
           Assign New Team
@@ -709,17 +654,9 @@ function formatApiResponse(apiData: any) {
         onSave={handleSaveTeam}
         selectedEmployee={employees}
         selectedClients={clients}
-        onDelete={handleDeleteTeam}
       />
     </div>
   );
 };
 
 export default TeamAssignSection;
-
-// Remove the erroneous setToast function below.
-// setToast is already managed as a state setter from useState in TeamAssignSection and passed down as needed.
-// No additional implementation is required here.
-function setToast(arg0: { show: boolean; message: string; type: string }) {
-  throw new Error("Function not implemented.");
-}

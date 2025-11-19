@@ -3,7 +3,7 @@
 import ProfileSection from "../coo/ProfileSection";
 import CEOYearlyTargetDashboard from "./CEOYearlyTargetDashboard";
 import ExecutiveDashboard from "./Performace";
-import PerformanceDashboard from "./Performace";
+// import PerformanceDashboard from "./Performace";
 import CEOProfitAndLoss from "./profitAndLoss";
 import TargetVsAchive from "./TargetVsAchive";
 

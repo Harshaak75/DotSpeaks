@@ -1,4 +1,4 @@
-import React, { useState, Fragment, useRef, useEffect } from "react";
+import { useState, Fragment, useRef, useEffect } from "react";
 import {
   format,
   addMonths,
@@ -30,22 +30,39 @@ import { supabase } from "../../../../../../utils/supabase";
 import ToastNotification from "../../../../../ToastMessageComp";
 
 // --- TYPE DEFINITIONS ---
-
 interface ClientType {
   id: string;
   company_name: string;
   avatarUrl?: string;
 }
 
-// This is the new primary data type for our calendar items
 interface MarketingContentItem {
   id: string;
   clientId: string;
   title: string;
-  content?: string; // The actual marketing text from the parsed document
+  content?: string;
   date: Date;
   status: "pending_review" | "approved" | "rework_requested";
   reworkComment?: string;
+}
+
+interface PayloadData {
+  payload: {
+    data: unknown;
+  };
+}
+
+interface ClientResponse {
+  id: string;
+  company_name: string;
+  MarketingContent?: Array<{
+    id: string;
+    campaignTitle?: string;
+    content?: string;
+    date: string;
+    status: "pending_review" | "approved" | "rework_requested";
+    reworkComment?: string;
+  }>;
 }
 
 // --- MAIN COMPONENT ---
@@ -77,10 +94,9 @@ const ContentWriterCalender = () => {
   });
 
   // --- DATA FETCHING & REAL-TIME ---
-
   const handleUpdateContent = async (id: string, newContent: string) => {
     try {
-      const response = await api.ContentWriter.UpdateContent.update(
+      await api.ContentWriter.UpdateContent.update(
         accessToken,
         dispatch,
         id,
@@ -100,19 +116,14 @@ const ContentWriterCalender = () => {
       console.error("Failed to update content:", error);
     }
 
-    // Your API call will look something like this:
-    // await api.ContentWriter.updateContent.post(accessToken, dispatch, { id, content: newContent });
-
-    // Close the modal and trigger a refresh after updating
     setIsViewModalOpen(false);
     setNeedsRefresh((prev) => !prev);
   };
 
   useEffect(() => {
-    // Listen for backend broadcasts that content has been processed
     const channel = supabase
       .channel("Content-Functionality")
-      .on("broadcast", { event: "content_processed" }, (payload) => {
+      .on("broadcast", { event: "content_processed" }, (payload: PayloadData) => {
         console.log(
           "📩 Real-time update received, refreshing calendar...",
           payload
@@ -130,22 +141,22 @@ const ContentWriterCalender = () => {
     const getClientData = async () => {
       if (!accessToken) return;
       try {
-        const response = await api.ContentWriter.getClientData.get(
+        const response: ClientResponse[] = await api.ContentWriter.getClientData.get(
           accessToken,
           dispatch
         );
 
-        console.log("Respone: ", response);
+        console.log("Response: ", response);
 
-        const clientDetails: ClientType[] = response.map((client: any) => ({
+        const clientDetails: ClientType[] = response.map((client: ClientResponse) => ({
           id: client.id,
           company_name: client.company_name,
         }));
         setClients(clientDetails);
 
         const flattenedContent: MarketingContentItem[] = response.flatMap(
-          (client: any) =>
-            (client.MarketingContent || []).map((item: any) => ({
+          (client: ClientResponse) =>
+            (client.MarketingContent || []).map((item) => ({
               id: item.id,
               clientId: client.id,
               title: item.campaignTitle || "Untitled Content",
@@ -170,13 +181,11 @@ const ContentWriterCalender = () => {
   }, [accessToken, dispatch, needsRefresh, selectedClient]);
 
   // --- DERIVED STATE ---
-
   const filteredContent = allMarketingContent.filter(
     (item) => item.clientId === selectedClient?.id
   );
 
   // --- EVENT HANDLERS ---
-
   const handleDayClick = (day: Date) => {
     const contentOnDay = filteredContent.filter((item) =>
       isSameDay(item.date, day)
@@ -191,14 +200,11 @@ const ContentWriterCalender = () => {
   };
 
   const handleAddContent = async (title: string, file: File) => {
-    // We use selectedDateForUpload from the state, which is set when the user clicks an empty day
     if (!title || !file || !selectedDateForUpload) {
       alert("Please provide a title, a file, and select a date.");
       return;
     }
 
-    // Your backend endpoint must take these arguments and create a
-    // single entry in the "MarketingContent" table.
     try {
       const response = await api.ContentWriter.uploadDocument.post(
         accessToken,
@@ -206,16 +212,14 @@ const ContentWriterCalender = () => {
         title,
         selectedClient?.id,
         file,
-        selectedDateForUpload // Use the date from the state
+        selectedDateForUpload
       );
 
       console.log("data: ", response);
 
-      // This part assumes the backend immediately creates the item.
-      // We trigger a refresh to see the new item on the calendar.
       setNeedsRefresh((prev) => !prev);
 
-      closeAddModal(); // Close the modal after submission
+      closeAddModal();
     } catch (error) {
       console.error("Failed to add content:", error);
       alert("There was an error adding the content.");
@@ -233,11 +237,10 @@ const ContentWriterCalender = () => {
   };
 
   // --- SUB-COMPONENTS ---
-
   const ClientSelector = () => (
-    <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div className="p-6 bg-white rounded-lg shadow-sm border-l-4" style={{ borderLeftColor: '#0000CC' }}>
       <div className="flex items-center mb-4">
-        <Users className="h-6 w-6 text-gray-500 mr-3" />
+        <Users className="h-6 w-6 mr-3" style={{ color: '#0000CC' }} />
         <h2 className="text-xl font-bold text-gray-800">Select a Client</h2>
       </div>
       <div className="client-selector-container flex items-center space-x-2 pb-2 -mb-2 overflow-x-auto">
@@ -247,9 +250,17 @@ const ContentWriterCalender = () => {
             onClick={() => setSelectedClient(client)}
             className={`flex-shrink-0 flex items-center space-x-2 px-3 py-1.5 rounded-full border-2 transition-all duration-200 ${
               selectedClient?.id === client.id
-                ? "bg-blue-600 border-blue-600 text-white shadow-md"
-                : "bg-white border-gray-200 text-gray-600 hover:border-blue-500 hover:bg-blue-50"
+                ? "text-white shadow-md"
+                : "bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
             }`}
+            style={
+              selectedClient?.id === client.id
+                ? {
+                    backgroundColor: '#0000CC',
+                    borderColor: '#0000CC',
+                  }
+                : {}
+            }
           >
             <span className="font-semibold text-sm whitespace-nowrap">
               {client.company_name}
@@ -282,7 +293,7 @@ const ContentWriterCalender = () => {
     };
 
     return (
-      <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200 flex-grow flex flex-col">
+      <div className="p-6 bg-white rounded-lg shadow-sm border-l-4 flex-grow flex flex-col" style={{ borderLeftColor: '#0000CC' }}>
         {toast.show && (
           <ToastNotification
             message={toast.message}
@@ -291,7 +302,7 @@ const ContentWriterCalender = () => {
           />
         )}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold" style={{ color: '#0000CC' }}>
             {format(currentDate, "MMMM yyyy")}
           </h2>
           <div className="flex items-center space-x-2">
@@ -303,7 +314,8 @@ const ContentWriterCalender = () => {
             </button>
             <button
               onClick={() => setCurrentDate(new Date())}
-              className="px-4 py-2 text-sm font-semibold border rounded-md hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-semibold border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
             >
               Today
             </button>
@@ -332,7 +344,7 @@ const ContentWriterCalender = () => {
               <div
                 key={day.toString()}
                 onClick={() => handleDayClick(day)}
-                className={`relative p-2 h-36 border-t border-l flex flex-col group cursor-pointer ${
+                className={`relative p-2 h-36 border-t border-l flex flex-col group cursor-pointer transition-colors ${
                   isSameMonth(day, monthStart)
                     ? "bg-white hover:bg-blue-50"
                     : "bg-gray-50"
@@ -341,9 +353,14 @@ const ContentWriterCalender = () => {
                 <span
                   className={`font-medium ${
                     isSameDay(day, new Date())
-                      ? "text-blue-600"
+                      ? "font-bold"
                       : "text-gray-800"
                   }`}
+                  style={
+                    isSameDay(day, new Date())
+                      ? { color: '#0000CC' }
+                      : {}
+                  }
                 >
                   {format(day, "d")}
                 </span>
@@ -361,7 +378,7 @@ const ContentWriterCalender = () => {
                   ))}
                 </div>
                 {isSameMonth(day, monthStart) && (
-                  <button className="absolute bottom-2 right-2 p-1 bg-blue-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button className="absolute bottom-2 right-2 p-1 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: '#0000CC' }}>
                     <PlusCircle className="h-5 w-5" />
                   </button>
                 )}
@@ -374,7 +391,6 @@ const ContentWriterCalender = () => {
   };
 
   const AddContentModal = () => {
-    // Restored the 'title' state to capture user input
     const [title, setTitle] = useState("");
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -385,15 +401,12 @@ const ContentWriterCalender = () => {
       }
     };
 
-    // This function now calls your original handleAddContent function
     const handleSubmit = () => {
       if (uploadedFile && title) {
-        // It passes both the title from the input and the uploaded file
         handleAddContent(title, uploadedFile);
       }
     };
 
-    // The modal will not open if this state is not set
     if (!isAddModalOpen || !selectedDateForUpload) return null;
 
     return (
@@ -413,12 +426,12 @@ const ContentWriterCalender = () => {
 
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4">
-              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl">
+              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl border-2" style={{ borderColor: '#0000CC' }}>
                 <Dialog.Title
                   as="h3"
                   className="text-xl font-bold flex justify-between"
+                  style={{ color: '#0000CC' }}
                 >
-                  {/* The title now reflects the date the user clicked on */}
                   Add Content for{" "}
                   {format(selectedDateForUpload, "MMMM d, yyyy")}
                   <button onClick={closeAddModal}>
@@ -427,7 +440,6 @@ const ContentWriterCalender = () => {
                 </Dialog.Title>
 
                 <div className="mt-4 space-y-4">
-                  {/* 👇 RESTORED: The input field for the content title */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Content Title
@@ -436,13 +448,14 @@ const ContentWriterCalender = () => {
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="e.g., Guide to SEO Basics"
-                      className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                      style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
                     />
                   </div>
 
-                  {/* File upload section */}
                   <div
-                    className="mt-2 flex justify-center items-center w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                    className="mt-2 flex justify-center items-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                    style={{ borderColor: '#0000CC' }}
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <div className="text-center">
@@ -475,12 +488,16 @@ const ContentWriterCalender = () => {
                     </div>
                   )}
 
-                  {/* The button is now disabled if either title or file is missing */}
                   <button
                     type="button"
                     onClick={handleSubmit}
                     disabled={!uploadedFile || !title}
-                    className="w-full inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    className="w-full inline-flex justify-center rounded-md border border-transparent px-4 py-3 text-sm font-medium text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={
+                      !uploadedFile || !title
+                        ? { backgroundColor: '#9CA3AF' }
+                        : { backgroundColor: '#0000CC' }
+                    }
                   >
                     Add Content for Review
                   </button>
@@ -498,19 +515,16 @@ const ContentWriterCalender = () => {
   }: {
     onUpdateContent: (id: string, newContent: string) => void;
   }) => {
-    // NEW: State to manage the editable content
     const [editableContent, setEditableContent] = useState("");
 
-    // This effect syncs the modal's state with the active content when it opens
     useEffect(() => {
       if (activeContent) {
         setEditableContent(activeContent.content || "");
       }
-    }, [activeContent]);
+    }, [isViewModalOpen]);
 
     if (!isViewModalOpen || !activeContent) return null;
 
-    // Handler for the new "Update" button
     const handleUpdate = () => {
       onUpdateContent(activeContent.id, editableContent);
     };
@@ -524,7 +538,6 @@ const ContentWriterCalender = () => {
           className="relative z-50"
           onClose={() => setIsViewModalOpen(false)}
         >
-          {/* Backdrop */}
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -539,10 +552,11 @@ const ContentWriterCalender = () => {
 
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4">
-              <Dialog.Panel className="w-full max-w-2xl transform rounded-2xl bg-white p-6 shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-2xl transform rounded-2xl bg-white p-6 shadow-xl transition-all border-2" style={{ borderColor: '#0000CC' }}>
                 <Dialog.Title
                   as="h3"
                   className="text-xl font-bold flex justify-between"
+                  style={{ color: '#0000CC' }}
                 >
                   {activeContent.title}
                   <button onClick={() => setIsViewModalOpen(false)}>
@@ -551,7 +565,6 @@ const ContentWriterCalender = () => {
                 </Dialog.Title>
 
                 <div className="mt-4 space-y-4">
-                  {/* Rework comment is always visible for context */}
                   {isRework && (
                     <div className="p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-r-lg">
                       <h4 className="font-bold text-yellow-900 flex items-center">
@@ -566,18 +579,16 @@ const ContentWriterCalender = () => {
                     </div>
                   )}
 
-                  {/* --- CONDITIONAL CONTENT AREA --- */}
                   <div className="bg-gray-50 border rounded-lg p-1">
                     {isRework ? (
-                      // If rework, show an editable textarea
                       <textarea
                         value={editableContent}
                         onChange={(e) => setEditableContent(e.target.value)}
                         rows={10}
-                        className="w-full p-3 bg-white border-2 border-transparent rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        className="w-full p-3 bg-white border-2 rounded-md focus:outline-none focus:ring-2 focus:border-transparent transition"
+                        style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
                       />
                     ) : (
-                      // Otherwise, show read-only text
                       <p className="p-3 text-gray-800 whitespace-pre-line">
                         {activeContent.content || "No content available."}
                       </p>
@@ -585,14 +596,13 @@ const ContentWriterCalender = () => {
                   </div>
                 </div>
 
-                {/* --- CONDITIONAL UPDATE BUTTON --- */}
                 {isRework && (
                   <div className="mt-6 flex justify-end">
                     <button
                       onClick={handleUpdate}
-                      // Disable button if no changes have been made
                       disabled={editableContent === activeContent.content}
-                      className="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="px-5 py-2 text-white font-semibold rounded-lg shadow-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: '#0000CC' }}
                     >
                       Update & Resubmit
                     </button>

@@ -1,22 +1,18 @@
-import React, { useState, Fragment } from 'react';
+import { useState, Fragment } from 'react';
 import { 
-    Users, 
     Target, 
     TrendingUp, 
     Plus, 
-    Flag,
     Calendar,
     X,
     CheckCircle,
     AlertTriangle,
-    Loader
 } from 'lucide-react';
 import { Dialog, Transition } from '@headlessui/react';
 
 // --- TYPE DEFINITIONS ---
 type Health = 'On Track' | 'At Risk' | 'Off Track';
 type Status = 'In Progress' | 'Completed' | 'Pending';
-
 
 // --- MOCK DATA ---
 const clients = [
@@ -126,7 +122,7 @@ const KeyResultCard = ({ title, target, current, health }: KeyResultCardProps) =
     const healthTextColor = healthStyles[health].text;
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex items-center space-x-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 hover:shadow-md transition-shadow flex items-center space-x-6" style={{ borderLeftColor: '#0000CC' }}>
             <RadialProgress progress={progress} health={health} />
             <div>
                 <h4 className="font-bold text-gray-800">{title}</h4>
@@ -148,22 +144,29 @@ const ClientGoalsSection = () => {
     
     const clientData = goalsData[selectedClient.id] || { mainObjective: 'No goals set.', timeline: '', keyResults: [], initiatives: [] };
     const overallProgress = clientData.keyResults.length > 0 
-        ? clientData.keyResults.reduce((acc: any, kr: any) => acc + (kr.current / kr.target) * 100, 0) / clientData.keyResults.length
+        ? clientData.keyResults.reduce((acc: number, kr: any) => acc + (kr.current / kr.target) * 100, 0) / clientData.keyResults.length
         : 0;
 
     return (
-        <div className="p-2 bg-gray-50 min-h-screen">
+        <div className="p-8 bg-gray-50 min-h-screen">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-900">Client Targets & Goals</h1>
+                <h1 className="text-3xl font-bold" style={{ color: '#0000CC' }}>
+                    Client Targets & Goals
+                </h1>
                 <div className="flex items-center space-x-4">
                     <select 
                         value={selectedClient.id} 
                         onChange={(e) => setSelectedClient(clients.find(c => c.id === e.target.value) || clients[0])}
-                        className="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                        style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
                     >
                         {clients.map(client => <option key={client.id} value={client.id}>{client.name}</option>)}
                     </select>
-                    <button onClick={() => setIsModalOpen(true)} className="flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                    <button 
+                        onClick={() => setIsModalOpen(true)} 
+                        className="flex items-center px-4 py-2 text-white font-semibold rounded-lg hover:opacity-90 transition-all shadow-sm"
+                        style={{ backgroundColor: '#0000CC' }}
+                    >
                         <Plus className="h-5 w-5 mr-2 -ml-1"/>
                         Add Goal
                     </button>
@@ -172,15 +175,15 @@ const ClientGoalsSection = () => {
 
             {/* Main Objective */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm border-l-4" style={{ borderLeftColor: '#0000CC' }}>
                     <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Main Objective</h2>
                     <p className="text-2xl font-bold text-gray-800 mt-2">{clientData.mainObjective}</p>
                     <div className="flex items-center mt-2 text-sm text-gray-500">
-                        <Calendar className="h-4 w-4 mr-2"/>
+                        <Calendar className="h-4 w-4 mr-2" style={{ color: '#0000CC' }}/>
                         <span>{clientData.timeline}</span>
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="bg-white p-6 rounded-lg shadow-sm border-l-4" style={{ borderLeftColor: '#0000CC' }}>
                      <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Objective Health</h2>
                      <div className="flex items-center space-x-4">
                         <RadialProgress progress={overallProgress} health="On Track" />
@@ -200,7 +203,7 @@ const ClientGoalsSection = () => {
 
             {/* Initiatives */}
             <h3 className="text-xl font-bold text-gray-800 mb-4">Supporting Initiatives</h3>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-white rounded-lg shadow-sm border-l-4" style={{ borderLeftColor: '#0000CC' }}>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
@@ -213,7 +216,7 @@ const ClientGoalsSection = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {clientData.initiatives.map((init: { id: string; title: string; team: string; status: Status; dueDate: string; }) => (
-                                <tr key={init.id}>
+                                <tr key={init.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{init.title}</td>
                                     <td className="px-6 py-4 text-sm text-gray-500">{init.team}</td>
                                     <td className="px-6 py-4 text-sm text-gray-500">{new Date(init.dueDate).toLocaleDateString()}</td>
@@ -238,26 +241,59 @@ const ClientGoalsSection = () => {
                     <div className="fixed inset-0 overflow-y-auto">
                         <div className="flex min-h-full items-center justify-center p-4">
                             <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
-                                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                                    <Dialog.Title as="h3" className="text-lg font-bold leading-6 text-gray-900">Add New Goal for {selectedClient.name}</Dialog.Title>
+                                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all border-2" style={{ borderColor: '#0000CC' }}>
+                                    <Dialog.Title as="h3" className="text-lg font-bold leading-6" style={{ color: '#0000CC' }}>
+                                        Add New Goal for {selectedClient.name}
+                                    </Dialog.Title>
                                     <div className="mt-4 space-y-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700">Main Objective</label>
-                                            <input placeholder="e.g., Increase Brand Awareness..." className="mt-1 w-full p-2 border rounded-md"/>
+                                            <input 
+                                                placeholder="e.g., Increase Brand Awareness..." 
+                                                className="mt-1 w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+                                                style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
+                                            />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700">Key Result 1</label>
                                             <div className="flex items-center space-x-2">
-                                                <input placeholder="Title (e.g., Website Traffic)" className="flex-grow p-2 border rounded-md"/>
-                                                <input type="number" placeholder="Start" className="w-20 p-2 border rounded-md"/>
-                                                <input type="number" placeholder="Target" className="w-20 p-2 border rounded-md"/>
+                                                <input 
+                                                    placeholder="Title (e.g., Website Traffic)" 
+                                                    className="flex-grow p-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+                                                    style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
+                                                />
+                                                <input 
+                                                    type="number" 
+                                                    placeholder="Start" 
+                                                    className="w-20 p-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+                                                    style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
+                                                />
+                                                <input 
+                                                    type="number" 
+                                                    placeholder="Target" 
+                                                    className="w-20 p-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+                                                    style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
+                                                />
                                             </div>
                                         </div>
-                                         <button className="text-sm text-blue-600 font-semibold hover:underline">+ Add another key result</button>
+                                         <button className="text-sm font-semibold hover:opacity-80" style={{ color: '#0000CC' }}>
+                                             + Add another key result
+                                         </button>
                                     </div>
                                     <div className="mt-6 flex justify-end space-x-2">
-                                        <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-gray-100 text-gray-800 font-semibold rounded-lg hover:bg-gray-200">Cancel</button>
-                                        <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">Save Goal</button>
+                                        <button 
+                                            onClick={() => setIsModalOpen(false)} 
+                                            className="px-4 py-2 bg-gray-100 text-gray-800 font-semibold rounded-lg hover:bg-gray-200"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button 
+                                            onClick={() => setIsModalOpen(false)} 
+                                            className="px-4 py-2 text-white font-semibold rounded-lg hover:opacity-90"
+                                            style={{ backgroundColor: '#0000CC' }}
+                                        >
+                                            Save Goal
+                                        </button>
                                     </div>
                                 </Dialog.Panel>
                             </Transition.Child>

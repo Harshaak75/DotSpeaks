@@ -3,15 +3,13 @@ import {
   Target,
   Plus,
   Edit3,
-  Save,
-  X,
   Users,
-  Trash,
   Trash2,
 } from "lucide-react";
 import { api } from "../../../utils/api/Employees/api";
 import { useDispatch, useSelector } from "react-redux";
 import { selectAccessToken } from "../../../redux/slice/authSlice";
+
 
 interface DepartmentGoal {
   id: string;
@@ -27,18 +25,11 @@ interface DepartmentGoal {
   editable: boolean;
 }
 
-interface Department {
-  id: string;
-  name: string;
-  head: string;
-  accessible: boolean;
-}
 
 const DepartmentGoalsSection: React.FC = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("Operations");
   const [goals, setGoals] = useState<DepartmentGoal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState<string | null>(null);
   const [newGoal, setNewGoal] = useState({
@@ -51,7 +42,6 @@ const DepartmentGoalsSection: React.FC = () => {
   });
 
   const accessToken = useSelector(selectAccessToken);
-
   const dispatch = useDispatch();
 
   const departments = [
@@ -79,38 +69,23 @@ const DepartmentGoalsSection: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-        return "bg-green-100 text-green-800";
-      case "on track":
-        return "bg-blue-100 text-blue-800";
-      case "behind":
-        return "bg-yellow-100 text-yellow-800";
-      case "at risk":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  const getStatusColor = () => {
+    // All statuses now have white background with blue text
+    return "bg-white";
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority.toLowerCase()) {
-      case "high":
-        return "bg-red-100 text-red-800";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800";
-      case "low":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  const getPriorityColor = () => {
+    // All priorities now have white background with blue text
+    return "bg-white";
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div 
+          className="animate-spin rounded-full h-12 w-12 border-b-2"
+          style={{ borderColor: '#0000CC' }}
+        ></div>
       </div>
     );
   }
@@ -171,11 +146,10 @@ const DepartmentGoalsSection: React.FC = () => {
   };
 
   const handleEdit = (goalId: string) => {
-    // setEditingGoal(goalId)
     const goalToEdit = goals.find((goal) => goal.id == goalId);
 
     if (goalToEdit) {
-      setEditingGoal(goalId); // Set the ID of the goal being edited
+      setEditingGoal(goalId);
       setNewGoal({
         title: goalToEdit.title,
         description: goalToEdit.description,
@@ -184,7 +158,7 @@ const DepartmentGoalsSection: React.FC = () => {
         end_date: goalToEdit.end_date,
         assigned_to: goalToEdit.assigned_to,
       });
-      setShowAddForm(true); // Show the form to edit
+      setShowAddForm(true);
     }
   };
 
@@ -207,18 +181,33 @@ const DepartmentGoalsSection: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div 
+      className="min-h-screen p-6 space-y-6"
+      style={{ backgroundColor: '#FEF9F5' }}
+    >
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h1 
+          className="text-3xl"
+          style={{ 
+            fontFamily: 'Inter, sans-serif', 
+            fontWeight: 'bold',
+            color: '#0000CC'
+          }}
+        >
           Department Goals & Targets
-        </h2>
+        </h1>
         {selectedDepartment && (
           <button
             onClick={() => {
               setEditingGoal(null);
               setShowAddForm(true);
             }}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity"
+            style={{ 
+              backgroundColor: '#0000CC',
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: 'bold'
+            }}
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Goal
@@ -232,11 +221,18 @@ const DepartmentGoalsSection: React.FC = () => {
           <button
             key={dept}
             onClick={() => setSelectedDepartment(dept)}
-            className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+            className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
               selectedDepartment === dept
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? "text-white shadow-lg"
+                : "bg-white text-gray-700 hover:bg-gray-50 shadow-sm"
             }`}
+            style={selectedDepartment === dept ? { 
+              backgroundColor: '#0000CC',
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: 'bold'
+            } : {
+              fontFamily: 'Roboto, sans-serif'
+            }}
           >
             {dept}
           </button>
@@ -244,128 +240,172 @@ const DepartmentGoalsSection: React.FC = () => {
       </div>
 
       {showAddForm && (
-        <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          {/* Delete icon row (only visible while editing) */}
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              {editingGoal ? "Save Goal" : "Add New Goal"}
+        <div 
+          className="rounded-xl shadow-lg overflow-hidden"
+          style={{ backgroundColor: '#0000CC' }}
+        >
+          {/* Form Header */}
+          <div className="p-6 flex items-center justify-between">
+            <h3 
+              className="text-xl text-white"
+              style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+            >
+              {editingGoal ? "Edit Goal" : "Add New Goal"}
             </h3>
-
             {editingGoal && (
-              <div className="flex justify-end mb-4">
-                <button
-                  onClick={() => handleDeleteGoal(editingGoal)} // You'll define this function
-                  className="text-red-600 hover:text-red-800 transition-colors"
-                  title="Delete this goal"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
+              <button
+                onClick={() => handleDeleteGoal(editingGoal)}
+                className="text-white hover:text-red-300 transition-colors"
+                title="Delete this goal"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
             )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Title
-              </label>
-              <input
-                type="text"
-                value={newGoal.title}
-                onChange={(e) =>
-                  setNewGoal({ ...newGoal, title: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter goal title"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Assigned To
-              </label>
-              <input
-                type="text"
-                value={newGoal.assigned_to}
-                onChange={(e) =>
-                  setNewGoal({ ...newGoal, assigned_to: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter assignee"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
-                value={newGoal.description}
-                onChange={(e) =>
-                  setNewGoal({ ...newGoal, description: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows={3}
-                placeholder="Enter goal description"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Priority
-              </label>
-              <select
-                value={newGoal.priority}
-                onChange={(e) =>
-                  setNewGoal({
-                    ...newGoal,
-                    priority: e.target.value as "High" | "Medium" | "Low",
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-              </select>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Start Date
-              </label>
-              <input
-                type="date"
-                value={newGoal.start_date}
-                onChange={(e) =>
-                  setNewGoal({ ...newGoal, start_date: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+          {/* Form Content */}
+          <div className="bg-white p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label 
+                  className="block text-sm mb-2 text-gray-700"
+                  style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                >
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={newGoal.title}
+                  onChange={(e) =>
+                    setNewGoal({ ...newGoal, title: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                  style={{ 
+                    fontFamily: 'Roboto, sans-serif',
+                    borderColor: '#D1D5DB'
+                  }}
+                  placeholder="Enter goal title"
+                />
+              </div>
+              <div>
+                <label 
+                  className="block text-sm mb-2 text-gray-700"
+                  style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                >
+                  Assigned To
+                </label>
+                <input
+                  type="text"
+                  value={newGoal.assigned_to}
+                  onChange={(e) =>
+                    setNewGoal({ ...newGoal, assigned_to: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                  style={{ fontFamily: 'Roboto, sans-serif' }}
+                  placeholder="Enter assignee"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label 
+                  className="block text-sm mb-2 text-gray-700"
+                  style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                >
+                  Description
+                </label>
+                <textarea
+                  value={newGoal.description}
+                  onChange={(e) =>
+                    setNewGoal({ ...newGoal, description: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                  style={{ fontFamily: 'Roboto, sans-serif' }}
+                  rows={3}
+                  placeholder="Enter goal description"
+                />
+              </div>
+              <div>
+                <label 
+                  className="block text-sm mb-2 text-gray-700"
+                  style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                >
+                  Priority
+                </label>
+                <select
+                  value={newGoal.priority}
+                  onChange={(e) =>
+                    setNewGoal({
+                      ...newGoal,
+                      priority: e.target.value as "High" | "Medium" | "Low",
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                  style={{ fontFamily: 'Roboto, sans-serif' }}
+                >
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+
+              <div>
+                <label 
+                  className="block text-sm mb-2 text-gray-700"
+                  style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                >
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={newGoal.start_date}
+                  onChange={(e) =>
+                    setNewGoal({ ...newGoal, start_date: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                  style={{ fontFamily: 'Roboto, sans-serif' }}
+                />
+              </div>
+              <div>
+                <label 
+                  className="block text-sm mb-2 text-gray-700"
+                  style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                >
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={newGoal.end_date}
+                  onChange={(e) =>
+                    setNewGoal({ ...newGoal, end_date: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                  style={{ fontFamily: 'Roboto, sans-serif' }}
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                End Date
-              </label>
-              <input
-                type="date"
-                value={newGoal.end_date}
-                onChange={(e) =>
-                  setNewGoal({ ...newGoal, end_date: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+            <div className="flex justify-end space-x-3 mt-4">
+              <button
+                onClick={() => setShowAddForm(false)}
+                className="px-4 py-2 text-sm bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                style={{ 
+                  fontFamily: 'Inter, sans-serif',
+                  fontWeight: 'bold',
+                  color: '#666'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddGoal}
+                className="px-4 py-2 text-sm text-white rounded-lg hover:opacity-90 transition-opacity"
+                style={{ 
+                  backgroundColor: '#0000CC',
+                  fontFamily: 'Inter, sans-serif',
+                  fontWeight: 'bold'
+                }}
+              >
+                {editingGoal ? "Save Changes" : "Add Goal"}
+              </button>
             </div>
-          </div>
-          <div className="flex justify-end space-x-3 mt-4">
-            <button
-              onClick={() => setShowAddForm(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleAddGoal}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              {editingGoal ? "Save Changes" : "Add Goal"}
-            </button>
           </div>
         </div>
       )}
@@ -375,81 +415,142 @@ const DepartmentGoalsSection: React.FC = () => {
         {goals.map((goal) => (
           <div
             key={goal.id}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+            className="rounded-xl shadow-lg overflow-hidden"
+            style={{ backgroundColor: '#0000CC' }}
           >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center">
-                <Target className="h-5 w-5 text-blue-600 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {goal.title}
-                </h3>
-              </div>
-              <div className="flex items-center space-x-2">
-                {goal.editable && selectedDepartment === "Operations" && (
-                  <button
-                    onClick={() => handleEdit(goal.id)}
-                    className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+            {/* Goal Header */}
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center flex-1">
+                  <Target className="h-5 w-5 text-white mr-2" />
+                  <h3 
+                    className="text-lg text-white"
+                    style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
                   >
-                    <Edit3 className="h-4 w-4" />
-                  </button>
-                )}
-                <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(
-                    goal.priority
-                  )}`}
+                    {goal.title}
+                  </h3>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {goal.editable && selectedDepartment === "Operations" && (
+                    <button
+                      onClick={() => handleEdit(goal.id)}
+                      className="p-1 text-white hover:text-gray-200 transition-colors"
+                    >
+                      <Edit3 className="h-4 w-4" />
+                    </button>
+                  )}
+                  <span
+                    className={`inline-flex px-3 py-1 text-xs rounded-lg ${getPriorityColor()}`}
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif', 
+                      fontWeight: 'bold',
+                      color: '#0000CC'
+                    }}
+                  >
+                    {goal.priority}
+                  </span>
+                  <span
+                    className={`inline-flex px-3 py-1 text-xs rounded-lg ${getStatusColor()}`}
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif', 
+                      fontWeight: 'bold',
+                      color: '#0000CC'
+                    }}
+                  >
+                    {goal.status}
+                  </span>
+                </div>
+              </div>
+
+              <p 
+                className="text-sm text-white mb-4"
+                style={{ fontFamily: 'Roboto, sans-serif', opacity: 0.9 }}
+              >
+                {goal.description}
+              </p>
+            </div>
+
+            {/* Goal Content */}
+            <div className="bg-white p-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span 
+                    className="text-gray-600"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  >
+                    Progress
+                  </span>
+                  <span 
+                    className="font-medium"
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif',
+                      fontWeight: 'bold',
+                      color: '#333'
+                    }}
+                  >
+                    {goal.progress}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="h-2 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${goal.progress}%`,
+                      backgroundColor: '#0000CC'
+                    }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between text-sm">
+                <div className="flex items-center">
+                  <Users 
+                    className="h-4 w-4 mr-2"
+                    style={{ color: '#0000CC' }}
+                  />
+                  <span 
+                    className="text-gray-600"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  >
+                    Assigned to: {goal.assigned_to}
+                  </span>
+                </div>
+                <span 
+                  className="text-gray-600"
+                  style={{ fontFamily: 'Roboto, sans-serif' }}
                 >
-                  {goal.priority}
+                  Due: {new Date(goal.end_date).toLocaleDateString()}
                 </span>
-                <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                    goal.status
-                  )}`}
+              </div>
+
+              {!goal.editable && (
+                <div 
+                  className="mt-3 text-xs px-3 py-2 rounded-lg"
+                  style={{ 
+                    backgroundColor: '#E6E6FF',
+                    color: '#0000CC',
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 'bold'
+                  }}
                 >
-                  {goal.status}
-                </span>
-              </div>
+                  Read-only goal
+                </div>
+              )}
             </div>
-
-            <p className="text-gray-600 text-sm mb-4">{goal.description}</p>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Progress</span>
-                <span className="font-medium">{goal.progress}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${goal.progress}%` }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between text-sm">
-              <div className="flex items-center">
-                <Users className="h-4 w-4 text-gray-400 mr-2" />
-                <span className="text-gray-600">
-                  Assigned to: {goal.assigned_to}
-                </span>
-              </div>
-              <span className="text-gray-600">
-                Due: {new Date(goal.end_date).toLocaleDateString()}
-              </span>
-            </div>
-
-            {!goal.editable && (
-              <div className="mt-3 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                Read-only goal
-              </div>
-            )}
           </div>
         ))}
       </div>
 
       {goals.length === 0 && (
-        <div className="text-center py-12">
-          <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">
+        <div className="text-center py-12 bg-white rounded-xl shadow-lg">
+          <Target 
+            className="h-12 w-12 mx-auto mb-4"
+            style={{ color: '#0000CC' }}
+          />
+          <p 
+            className="text-gray-500"
+            style={{ fontFamily: 'Roboto, sans-serif' }}
+          >
             No goals found for {selectedDepartment} department
           </p>
         </div>

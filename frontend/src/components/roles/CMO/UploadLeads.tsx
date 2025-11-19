@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { FileUp, TrendingUp, Calendar, Upload, Table, Users, Loader, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FileUp, TrendingUp, Upload, Table, Loader, FileText } from 'lucide-react';
 import { api } from '../../../utils/api/Employees/api';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -49,22 +49,21 @@ const formatDate = (timestamp: number) => {
 };
 
 // --- MAIN COMPONENT ---
-const CMOLeadDataUploader: React.FC = () => {
+const CMOLeadDataUploader = () => {
     // --- State Initialization ---
     const [allHistory, setAllHistory] = useState<UploadHistoryItem[]>(initialHistory);
     const [history, setHistory] = useState<UploadHistoryItem[]>([]);
     const [selectedQuarter, setSelectedQuarter] = useState('Q3');
     const [selectedPackage, setSelectedPackage] = useState('SPARK');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [isLoading, setIsLoading] = useState(false); // No longer loading from DB
+    const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
 
     const accessToken = useSelector((state: any) => state.auth.accessToken);
-  const dispatch = useDispatch();
-
+    const dispatch = useDispatch();
 
     const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
-    const packages = ["SPARK", "RISE", "SCALE", "LEAD", "SIGNATURE", ]
+    const packages = ["SPARK", "RISE", "SCALE", "LEAD", "SIGNATURE"];
 
     // Update displayed history whenever selectedQuarter or allHistory changes
     useEffect(() => {
@@ -81,7 +80,6 @@ const CMOLeadDataUploader: React.FC = () => {
 
         return () => clearTimeout(timer);
     }, [selectedQuarter, allHistory]);
-
 
     // --- Simulated Upload Function ---
     const handleSimulatedUpload = async () => {
@@ -104,19 +102,16 @@ const CMOLeadDataUploader: React.FC = () => {
         };
 
         try {
-            console.log(selectedQuarter, selectedFile)
-            const response = await api.cmo.uploadLeads.post(accessToken, dispatch, selectedQuarter, selectedFile, selectedPackage)
-            console.log("response from backend: ", response)
+            console.log(selectedQuarter, selectedFile);
+            const response = await api.cmo.uploadLeads.post(accessToken, dispatch, selectedQuarter, selectedFile, selectedPackage);
+            console.log("response from backend: ", response);
             // 2. Update Local State
             setAllHistory(prev => [...prev, newUpload]);
             
             // 3. Reset state
             setSelectedFile(null);
-
             
-            
-            // Show success message (using alert as temporary placeholder for success modal)
-            // Changed alert to a better placeholder message since alert is discouraged
+            // Show success message
             console.log(`Success! File "${newUpload.fileName}" uploaded for ${selectedQuarter}. Leads: ${newUpload.leadCount.toLocaleString('en-IN')}`);
             alert(`Upload successful! File: ${newUpload.fileName}, Leads: ${newUpload.leadCount.toLocaleString('en-IN')}`);
 
@@ -129,31 +124,74 @@ const CMOLeadDataUploader: React.FC = () => {
 
     // --- RENDER FUNCTIONS ---
     const renderUploadForm = () => (
-        <div className="bg-white p-6 rounded-2xl shadow-xl border border-blue-100 space-y-4">
-            <h2 className="text-xl font-bold text-blue-700 flex items-center border-b pb-3">
-                <FileUp className="h-5 w-5 mr-2"/>
+        <div 
+            className="p-6 rounded-2xl shadow-xl border-2 space-y-4"
+            style={{ 
+                backgroundColor: 'white',
+                borderColor: '#E6E6FF'
+            }}
+        >
+            <h2 
+                className="text-xl flex items-center border-b pb-3"
+                style={{ 
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 'bold',
+                    color: '#0000CC'
+                }}
+            >
+                <FileUp 
+                    className="h-5 w-5 mr-2"
+                    style={{ color: '#0000CC' }}
+                />
                 Upload New Leads Data Sheet
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Quarter Selector */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Target Quarter</label>
+                    <label 
+                        className="block text-sm mb-1"
+                        style={{ 
+                            fontFamily: 'Inter, sans-serif',
+                            fontWeight: 'bold',
+                            color: '#4B5563'
+                        }}
+                    >
+                        Target Quarter
+                    </label>
                     <select
                         value={selectedQuarter}
                         onChange={(e) => setSelectedQuarter(e.target.value)}
-                        className="w-full p-3 border-2 border-blue-200 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-3 border-2 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2"
+                        style={{ 
+                            borderColor: '#E6E6FF',
+                            fontFamily: 'Roboto, sans-serif'
+                        }}
                     >
                         {quarters.map(q => <option key={q} value={q}>{q}</option>)}
                     </select>
                 </div>
 
-                                <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Target Quarter</label>
+                {/* Package Selector */}
+                <div>
+                    <label 
+                        className="block text-sm mb-1"
+                        style={{ 
+                            fontFamily: 'Inter, sans-serif',
+                            fontWeight: 'bold',
+                            color: '#4B5563'
+                        }}
+                    >
+                        Target Package
+                    </label>
                     <select
                         value={selectedPackage}
                         onChange={(e) => setSelectedPackage(e.target.value)}
-                        className="w-full p-3 border-2 border-blue-200 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-3 border-2 rounded-lg bg-white text-gray-800 focus:outline-none focus:ring-2"
+                        style={{ 
+                            borderColor: '#E6E6FF',
+                            fontFamily: 'Roboto, sans-serif'
+                        }}
                     >
                         {packages.map(q => <option key={q} value={q}>{q}</option>)}
                     </select>
@@ -161,7 +199,16 @@ const CMOLeadDataUploader: React.FC = () => {
 
                 {/* File Input */}
                 <div className="md:col-span-1">
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Select Excel File (.xlsx, .csv)</label>
+                    <label 
+                        className="block text-sm mb-1"
+                        style={{ 
+                            fontFamily: 'Inter, sans-serif',
+                            fontWeight: 'bold',
+                            color: '#4B5563'
+                        }}
+                    >
+                        Select Excel File (.xlsx, .csv)
+                    </label>
                     <div className="flex items-center space-x-2">
                         <input
                             type="file"
@@ -172,11 +219,16 @@ const CMOLeadDataUploader: React.FC = () => {
                         />
                         <label 
                             htmlFor="file-upload" 
-                            className={`flex-grow p-3 border-2 rounded-lg cursor-pointer transition-all text-sm font-medium ${
+                            className={`flex-grow p-3 border-2 rounded-lg cursor-pointer transition-all text-sm flex items-center justify-between ${
                                 selectedFile 
                                     ? 'border-green-500 bg-green-50 text-green-700' 
-                                    : 'border-blue-200 bg-gray-50 text-gray-700 hover:bg-gray-100'
-                            } flex items-center justify-between`}
+                                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                            }`}
+                            style={{ 
+                                borderColor: selectedFile ? undefined : '#E6E6FF',
+                                fontFamily: 'Roboto, sans-serif',
+                                fontWeight: '500'
+                            }}
                         >
                             <div className="truncate">
                                 {selectedFile ? selectedFile.name : 'Choose File...'}
@@ -190,7 +242,12 @@ const CMOLeadDataUploader: React.FC = () => {
             <button
                 onClick={handleSimulatedUpload}
                 disabled={!selectedFile || isUploading}
-                className="w-full mt-4 px-5 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 flex items-center justify-center space-x-2"
+                className="w-full mt-4 px-5 py-3 text-white rounded-lg shadow-md hover:opacity-90 transition-all disabled:bg-gray-400 flex items-center justify-center space-x-2"
+                style={{ 
+                    backgroundColor: '#0000CC',
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 'bold'
+                }}
             >
                 {isUploading ? (
                     <>
@@ -209,14 +266,39 @@ const CMOLeadDataUploader: React.FC = () => {
 
     const renderHistoryTable = () => {
         if (isLoading) {
-            return <div className="p-8 text-center text-blue-600 font-semibold"><Loader className="h-6 w-6 inline animate-spin mr-2" /> Loading History...</div>;
+            return (
+                <div 
+                    className="p-8 text-center"
+                    style={{ 
+                        fontFamily: 'Inter, sans-serif',
+                        fontWeight: 'bold',
+                        color: '#0000CC'
+                    }}
+                >
+                    <Loader className="h-6 w-6 inline animate-spin mr-2" /> Loading History...
+                </div>
+            );
         }
 
         if (history.length === 0) {
             return (
-                <div className="text-center p-12 text-gray-500">
-                    <Table className="h-10 w-10 mx-auto mb-3" />
-                    <p className="text-xl font-semibold">No upload records found for {selectedQuarter}.</p>
+                <div 
+                    className="text-center p-12 text-gray-500"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                >
+                    <Table 
+                        className="h-10 w-10 mx-auto mb-3"
+                        style={{ color: '#0000CC' }}
+                    />
+                    <p 
+                        className="text-xl mb-1"
+                        style={{ 
+                            fontFamily: 'Inter, sans-serif',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        No upload records found for {selectedQuarter}.
+                    </p>
                     <p className="mt-1">Upload your first leads sheet above to create a record.</p>
                 </div>
             );
@@ -224,29 +306,90 @@ const CMOLeadDataUploader: React.FC = () => {
 
         return (
             <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-blue-200">
-                    <thead className="bg-blue-50">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead style={{ backgroundColor: '#F9FAFB' }}>
                         <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">File Name</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Leads Count</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Date Uploaded</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Quarter</th>
+                            <th 
+                                className="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                style={{ 
+                                    fontFamily: 'Inter, sans-serif',
+                                    fontWeight: 'bold',
+                                    color: '#0000CC'
+                                }}
+                            >
+                                File Name
+                            </th>
+                            <th 
+                                className="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                style={{ 
+                                    fontFamily: 'Inter, sans-serif',
+                                    fontWeight: 'bold',
+                                    color: '#0000CC'
+                                }}
+                            >
+                                Leads Count
+                            </th>
+                            <th 
+                                className="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                style={{ 
+                                    fontFamily: 'Inter, sans-serif',
+                                    fontWeight: 'bold',
+                                    color: '#0000CC'
+                                }}
+                            >
+                                Date Uploaded
+                            </th>
+                            <th 
+                                className="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                style={{ 
+                                    fontFamily: 'Inter, sans-serif',
+                                    fontWeight: 'bold',
+                                    color: '#0000CC'
+                                }}
+                            >
+                                Quarter
+                            </th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
                         {history.map((item) => (
                             <tr key={item.id} className="hover:bg-blue-50/50 transition-colors">
-                                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center space-x-2">
-                                    <FileText className="h-4 w-4 text-blue-500"/>
+                                <td 
+                                    className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 flex items-center space-x-2"
+                                    style={{ 
+                                        fontFamily: 'Roboto, sans-serif',
+                                        fontWeight: '500'
+                                    }}
+                                >
+                                    <FileText 
+                                        className="h-4 w-4"
+                                        style={{ color: '#0000CC' }}
+                                    />
                                     <span>{item.fileName}</span>
                                 </td>
-                                <td className="px-4 py-4 whitespace-nowrap text-sm text-green-600 font-bold">
+                                <td 
+                                    className="px-4 py-4 whitespace-nowrap text-sm text-green-600"
+                                    style={{ 
+                                        fontFamily: 'Inter, sans-serif',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
                                     {item.leadCount.toLocaleString('en-IN')}
                                 </td>
-                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td 
+                                    className="px-4 py-4 whitespace-nowrap text-sm text-gray-500"
+                                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                                >
                                     {formatDate(item.uploadDate)}
                                 </td>
-                                <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600 font-semibold">
+                                <td 
+                                    className="px-4 py-4 whitespace-nowrap text-sm"
+                                    style={{ 
+                                        fontFamily: 'Inter, sans-serif',
+                                        fontWeight: 'bold',
+                                        color: '#0000CC'
+                                    }}
+                                >
                                     {item.quarter}
                                 </td>
                             </tr>
@@ -258,25 +401,62 @@ const CMOLeadDataUploader: React.FC = () => {
     };
 
     return (
-        <div className=" min-h-screen font-sans">
+        <div 
+            className="min-h-screen p-8"
+            style={{ 
+                backgroundColor: '#FEF9F5',
+                fontFamily: 'Roboto, sans-serif'
+            }}
+        >
             <div className="max-w-6xl mx-auto space-y-10">
                 <header className="mb-8 border-b pb-4">
-                    <h1 className="text-4xl font-extrabold text-blue-800 flex items-center">
-                        <TrendingUp className="h-7 w-7 mr-3 text-blue-600"/> 
+                    <h1 
+                        className="text-4xl flex items-center"
+                        style={{ 
+                            fontFamily: 'Inter, sans-serif',
+                            fontWeight: 'bold',
+                            color: '#0000CC'
+                        }}
+                    >
+                        <TrendingUp 
+                            className="h-7 w-7 mr-3"
+                            style={{ color: '#0000CC' }}
+                        /> 
                         Lead Data Credit Portal
                     </h1>
-                    <p className="mt-2 text-lg text-gray-600">Document and track successful lead sheet uploads against quarterly targets. Data is temporary and stored locally.</p>
+                    <p 
+                        className="mt-2 text-lg text-gray-600"
+                        style={{ fontFamily: 'Roboto, sans-serif' }}
+                    >
+                        Document and track successful lead sheet uploads against quarterly targets. Data is temporary and stored locally.
+                    </p>
                 </header>
                 
                 {renderUploadForm()}
 
                 {/* Upload History Display */}
                 <div className="space-y-4">
-                    <h2 className="text-2xl font-bold text-blue-800 flex items-center">
-                        <Table className="h-6 w-6 mr-2 text-blue-600"/>
+                    <h2 
+                        className="text-2xl flex items-center"
+                        style={{ 
+                            fontFamily: 'Inter, sans-serif',
+                            fontWeight: 'bold',
+                            color: '#0000CC'
+                        }}
+                    >
+                        <Table 
+                            className="h-6 w-6 mr-2"
+                            style={{ color: '#0000CC' }}
+                        />
                         Upload History for {selectedQuarter}
                     </h2>
-                    <div className="bg-white p-6 rounded-2xl shadow-xl border border-blue-100">
+                    <div 
+                        className="p-6 rounded-2xl shadow-xl border-2"
+                        style={{ 
+                            backgroundColor: 'white',
+                            borderColor: '#E6E6FF'
+                        }}
+                    >
                         {renderHistoryTable()}
                     </div>
                 </div>

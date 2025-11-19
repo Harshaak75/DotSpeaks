@@ -20,7 +20,7 @@ const COODashboard: React.FC<COODashboardProps> = ({ activeSection }) => {
       case 'profile':
         return <ProfileSection />;
       case 'dashboard':
-        return <CooDashboardReview/>
+        return <CooDashboardReview />;
       case 'attendance':
         return <AttendanceSection />;
       case 'company-goals':
@@ -38,15 +38,11 @@ const COODashboard: React.FC<COODashboardProps> = ({ activeSection }) => {
       case 'team':
         return <TeamMembersSection />;
       default:
-        return <ProfileSection />;
+        return <CooDashboardReview />;
     }
   };
 
-  return (
-    <div className="max-w-7xl mx-auto">
-      {renderSection()}
-    </div>
-  );
+  return <div>{renderSection()}</div>;
 };
 
 export default COODashboard;

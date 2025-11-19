@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { api } from '../../../utils/api/Employees/api';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectAccessToken } from '../../../redux/slice/authSlice';
+
 
 interface AttendanceRecord {
   date: string;
@@ -12,6 +13,7 @@ interface AttendanceRecord {
   hoursWorked: number;
 }
 
+
 interface LeaveRecord {
   type: string;
   taken: number;
@@ -19,13 +21,13 @@ interface LeaveRecord {
   total: number;
 }
 
+
 const AttendanceSection: React.FC = () => {
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [leaveData, setLeaveData] = useState<LeaveRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   const accessToken = useSelector(selectAccessToken);
-
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -94,37 +96,99 @@ const AttendanceSection: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div 
+          className="animate-spin rounded-full h-12 w-12 border-b-2"
+          style={{ borderColor: '#0000CC' }}
+        ></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">HR Attendance</h2>
+    <div 
+      className="min-h-screen p-6 space-y-6"
+      style={{ backgroundColor: '#FEF9F5' }}
+    >
+      <h1 
+        className="text-3xl mb-6"
+        style={{ 
+          fontFamily: 'Inter, sans-serif', 
+          fontWeight: 'bold', 
+          color: '#0000CC' 
+        }}
+      >
+        HR Attendance
+      </h1>
 
       {/* Leave Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {leaveData.map((leave, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">{leave.type}</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Total:</span>
-                <span className="font-medium">{leave.total}</span>
+          <div 
+            key={index} 
+            className="rounded-xl shadow-lg overflow-hidden"
+            style={{ backgroundColor: '#0000CC' }}
+          >
+            {/* Card Header */}
+            <div className="p-4 pb-3">
+              <h3 
+                className="text-white text-lg"
+                style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+              >
+                {leave.type}
+              </h3>
+            </div>
+            
+            {/* Card Content */}
+            <div className="bg-white p-4 space-y-3">
+              <div className="flex justify-between">
+                <span 
+                  className="text-gray-600"
+                  style={{ fontFamily: 'Roboto, sans-serif', fontSize: '14px' }}
+                >
+                  Total:
+                </span>
+                <span 
+                  className="font-semibold"
+                  style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold', color: '#333' }}
+                >
+                  {leave.total}
+                </span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Used:</span>
-                <span className="font-medium text-red-600">{leave.taken}</span>
+              <div className="flex justify-between">
+                <span 
+                  className="text-gray-600"
+                  style={{ fontFamily: 'Roboto, sans-serif', fontSize: '14px' }}
+                >
+                  Used:
+                </span>
+                <span 
+                  className="font-semibold text-red-600"
+                  style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                >
+                  {leave.taken}
+                </span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Remaining:</span>
-                <span className="font-medium text-green-600">{leave.remaining}</span>
+              <div className="flex justify-between">
+                <span 
+                  className="text-gray-600"
+                  style={{ fontFamily: 'Roboto, sans-serif', fontSize: '14px' }}
+                >
+                  Remaining:
+                </span>
+                <span 
+                  className="font-semibold text-green-600"
+                  style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                >
+                  {leave.remaining}
+                </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                 <div
-                  className="bg-blue-600 h-2 rounded-full"
-                  style={{ width: `${(leave.taken / leave.total) * 100}%` }}
+                  className="h-2 rounded-full"
+                  style={{ 
+                    width: `${(leave.taken / leave.total) * 100}%`,
+                    backgroundColor: '#0000CC'
+                  }}
                 ></div>
               </div>
             </div>
@@ -133,58 +197,121 @@ const AttendanceSection: React.FC = () => {
       </div>
 
       {/* Daily Attendance Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Daily Attendance Records</h3>
+      <div 
+        className="rounded-xl shadow-lg overflow-hidden"
+        style={{ backgroundColor: '#0000CC' }}
+      >
+        {/* Table Header */}
+        <div className="px-6 py-4">
+          <h3 
+            className="text-xl text-white"
+            style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+          >
+            Daily Attendance Records
+          </h3>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Login Time
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Logout Time
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Hours Worked
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {attendanceData.map((record, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(record.date).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {record.loginTime}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {record.logoutTime}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {getStatusIcon(record.status)}
-                      <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(record.status)}`}>
-                        {record.status}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {record.hoursWorked}h
-                  </td>
+        
+        {/* Table Content */}
+        <div className="bg-white overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead style={{ backgroundColor: '#f7f7f7ff' }}>
+                <tr>
+                  <th 
+                    className="px-6 py-3 text-left text-xs uppercase tracking-wider"
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif', 
+                      fontWeight: 'bold',
+                      color: '#0000CC'
+                    }}
+                  >
+                    Date
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs uppercase tracking-wider"
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif', 
+                      fontWeight: 'bold',
+                      color: '#0000CC'
+                    }}
+                  >
+                    Login Time
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs uppercase tracking-wider"
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif', 
+                      fontWeight: 'bold',
+                      color: '#0000CC'
+                    }}
+                  >
+                    Logout Time
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs uppercase tracking-wider"
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif', 
+                      fontWeight: 'bold',
+                      color: '#0000CC'
+                    }}
+                  >
+                    Status
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs uppercase tracking-wider"
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif', 
+                      fontWeight: 'bold',
+                      color: '#0000CC'
+                    }}
+                  >
+                    Hours Worked
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {attendanceData.map((record, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td 
+                      className="px-6 py-4 whitespace-nowrap"
+                      style={{ fontFamily: 'Roboto, sans-serif', color: '#333' }}
+                    >
+                      {new Date(record.date).toLocaleDateString()}
+                    </td>
+                    <td 
+                      className="px-6 py-4 whitespace-nowrap"
+                      style={{ fontFamily: 'Roboto, sans-serif', color: '#333' }}
+                    >
+                      {record.loginTime}
+                    </td>
+                    <td 
+                      className="px-6 py-4 whitespace-nowrap"
+                      style={{ fontFamily: 'Roboto, sans-serif', color: '#333' }}
+                    >
+                      {record.logoutTime}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {getStatusIcon(record.status)}
+                        <span 
+                          className={`ml-2 inline-flex px-2 py-1 text-xs rounded-lg ${getStatusColor(record.status)}`}
+                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                        >
+                          {record.status}
+                        </span>
+                      </div>
+                    </td>
+                    <td 
+                      className="px-6 py-4 whitespace-nowrap"
+                      style={{ fontFamily: 'Roboto, sans-serif', color: '#333' }}
+                    >
+                      {record.hoursWorked}h
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

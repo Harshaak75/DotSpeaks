@@ -1,4 +1,4 @@
-import React, { useState, Fragment } from 'react';
+import { useState, Fragment } from 'react';
 import { 
     FileText, 
     BarChart2, 
@@ -14,10 +14,8 @@ import {
     Sparkles,
     UserCheck,
     UserX,
-    TrendingUp,
     AlertTriangle,
     DollarSign,
-    Target as TargetIcon,
     Briefcase,
     Send
 } from 'lucide-react';
@@ -137,21 +135,39 @@ const GenerateReportModal = ({ isOpen, onClose, onGenerate }: any) => {
                 <div className="fixed inset-0 overflow-y-auto">
                     <div className="flex min-h-full items-center justify-center p-4">
                         <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
-                            <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-gray-50 text-left align-middle shadow-xl transition-all">
+                            <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-gray-50 text-left align-middle shadow-xl transition-all border-2" style={{ borderColor: '#0000CC' }}>
                                 <div className="p-6">
-                                    <Dialog.Title as="h3" className="text-xl font-bold leading-6 text-gray-900">Generate Client Performance Report</Dialog.Title>
+                                    <Dialog.Title as="h3" className="text-xl font-bold leading-6" style={{ color: '#0000CC' }}>
+                                        Generate Client Performance Report
+                                    </Dialog.Title>
                                     <div className="mt-4 flex items-end space-x-4 p-4 bg-white rounded-lg border">
                                         <div className="flex-grow">
                                             <label className="block text-sm font-medium text-gray-700">Client</label>
-                                            <select value={selectedClientName} onChange={e => setSelectedClientName(e.target.value)} className="mt-1 w-full p-2 border rounded-md">
+                                            <select 
+                                                value={selectedClientName} 
+                                                onChange={e => setSelectedClientName(e.target.value)} 
+                                                className="mt-1 w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+                                                style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
+                                            >
                                                 {clients.map(c => <option key={c.id}>{c.name}</option>)}
                                             </select>
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700">Month</label>
-                                            <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="mt-1 p-2 border rounded-md"/>
+                                            <input 
+                                                type="month" 
+                                                value={selectedMonth} 
+                                                onChange={e => setSelectedMonth(e.target.value)} 
+                                                className="mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+                                                style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
+                                            />
                                         </div>
-                                        <button onClick={handleFetchData} disabled={isLoading} className="px-4 py-2 flex items-center justify-center bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-blue-400">
+                                        <button 
+                                            onClick={handleFetchData} 
+                                            disabled={isLoading} 
+                                            className="px-4 py-2 flex items-center justify-center text-white font-semibold rounded-lg hover:opacity-90 disabled:opacity-50"
+                                            style={{ backgroundColor: isLoading ? '#9CA3AF' : '#0000CC' }}
+                                        >
                                             {isLoading ? <><Loader className="h-4 w-4 mr-2 animate-spin"/> Fetching...</> : 'Fetch Data'}
                                         </button>
                                     </div>
@@ -177,14 +193,16 @@ const GenerateReportModal = ({ isOpen, onClose, onGenerate }: any) => {
                                         <div>
                                             <label className="text-sm font-medium text-gray-600">Overall Task Completion</label>
                                             <div className="flex items-center mt-1">
-                                                <div className="w-full bg-gray-200 rounded-full h-4"><div className="bg-green-500 h-4 rounded-full" style={{width: `${completionPercentage}%`}}></div></div>
+                                                <div className="w-full bg-gray-200 rounded-full h-4">
+                                                    <div className="h-4 rounded-full" style={{ width: `${completionPercentage}%`, backgroundColor: '#0000CC' }}></div>
+                                                </div>
                                                 <span className="ml-4 font-bold text-lg">{Math.round(completionPercentage)}%</span>
                                             </div>
                                         </div>
                                         <div className="mt-6">
                                             <h4 className="font-semibold text-gray-800">Key Initiatives</h4>
                                             <ul className="mt-2 space-y-2">
-                                                {reportData.tasks.map((task : any) => (
+                                                {reportData.tasks.map((task: any) => (
                                                     <li key={task.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md border">
                                                         <div className="flex items-center">
                                                             {task.status === 'Completed' ? <CheckCircle className="h-5 w-5 mr-3 text-green-500"/> : <MessageSquare className="h-5 w-5 mr-3 text-yellow-500"/>}
@@ -198,7 +216,7 @@ const GenerateReportModal = ({ isOpen, onClose, onGenerate }: any) => {
                                         {completionPercentage < 100 && (
                                             <div className="mt-6">
                                                 <h4 className="font-semibold text-red-700">Analysis of Shortfall</h4>
-                                                {reportData.blockers.map((blocker: any, i: any) => (
+                                                {reportData.blockers.map((blocker: any, i: number) => (
                                                     <div key={i} className="mt-2 p-3 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
                                                         <p className="font-semibold text-sm text-gray-800 flex items-center">
                                                             {blocker.role === 'Digital Marketer' ? <UserCheck className="h-4 w-4 mr-2"/> : <UserX className="h-4 w-4 mr-2"/>}
@@ -215,21 +233,38 @@ const GenerateReportModal = ({ isOpen, onClose, onGenerate }: any) => {
                                                 value={brandHeadReview}
                                                 onChange={(e) => setBrandHeadReview(e.target.value)}
                                                 placeholder="Add your final comments, strategic recommendations, or next steps here..."
-                                                className="w-full mt-2 p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+                                                className="w-full mt-2 p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                                                style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
                                                 rows={3}
                                             />
                                         </div>
                                         <div className="mt-4">
-                                            <button onClick={generateAISummary} disabled={isGeneratingSummary || !brandHeadReview} className="flex items-center text-sm font-semibold text-purple-600 hover:text-purple-800 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <button 
+                                                onClick={generateAISummary} 
+                                                disabled={isGeneratingSummary || !brandHeadReview} 
+                                                className="flex items-center text-sm font-semibold hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                style={{ color: '#0000CC' }}
+                                            >
                                                 <Sparkles className="h-4 w-4 mr-2"/> {isGeneratingSummary ? 'Generating...' : 'Generate AI Executive Summary'}
                                             </button>
-                                            {aiSummary && <div className="mt-2 p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm text-gray-700">{aiSummary}</div>}
+                                            {aiSummary && <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-gray-700">{aiSummary}</div>}
                                         </div>
                                     </div>
                                 )}
                                 <div className="p-6 flex justify-end space-x-2 bg-gray-100 border-t">
-                                    <button onClick={onClose} className="px-4 py-2 bg-white border rounded-lg font-semibold hover:bg-gray-200">Cancel</button>
-                                    <button onClick={() => { onGenerate(reportData); onClose(); }} className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">Generate & Send</button>
+                                    <button 
+                                        onClick={onClose} 
+                                        className="px-4 py-2 bg-white border rounded-lg font-semibold hover:bg-gray-200"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        onClick={() => { onGenerate(reportData); onClose(); }} 
+                                        className="px-4 py-2 text-white font-semibold rounded-lg hover:opacity-90"
+                                        style={{ backgroundColor: '#0000CC' }}
+                                    >
+                                        Generate & Send
+                                    </button>
                                 </div>
                             </Dialog.Panel>
                         </Transition.Child>
@@ -240,10 +275,8 @@ const GenerateReportModal = ({ isOpen, onClose, onGenerate }: any) => {
     );
 };
 
-
 // --- COMPONENT TO DISPLAY THE FINAL GENERATED REPORT ---
 const GeneratedReport = ({ report, onClose }: any) => {
-    // This would be fetched based on the report, but we'll use mock data for now
     const reportDetails = {
         objective: "Increase Brand Awareness by 20% in Q3",
         completion: 60,
@@ -271,7 +304,7 @@ const GeneratedReport = ({ report, onClose }: any) => {
             <div className="relative h-20 w-20">
                 <svg className="transform -rotate-90" width="100%" height="100%" viewBox="0 0 80 80">
                     <circle className="text-gray-200" strokeWidth="8" stroke="currentColor" fill="transparent" r={radius} cx="40" cy="40" />
-                    <circle className="text-blue-600" strokeWidth="8" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" fill="transparent" r={radius} cx="40" cy="40" />
+                    <circle strokeWidth="8" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" fill="transparent" r={radius} cx="40" cy="40" style={{ stroke: '#0000CC' }} />
                 </svg>
                 <span className="absolute inset-0 flex items-center justify-center text-xl font-bold text-gray-800">{Math.round(progress)}%</span>
             </div>
@@ -290,19 +323,24 @@ const GeneratedReport = ({ report, onClose }: any) => {
 
             <div className="space-y-8">
                 {/* Executive Summary */}
-                <div className="p-4 bg-gray-50 rounded-lg border">
-                    <h3 className="font-semibold text-gray-800 flex items-center"><Sparkles className="h-5 w-5 mr-2 text-purple-500"/>Executive Summary</h3>
+                <div className="p-4 bg-blue-50 rounded-lg border-l-4" style={{ borderLeftColor: '#0000CC' }}>
+                    <h3 className="font-semibold text-gray-800 flex items-center" style={{ color: '#0000CC' }}>
+                        <Sparkles className="h-5 w-5 mr-2"/>
+                        Executive Summary
+                    </h3>
                     <p className="mt-2 text-sm text-gray-600 leading-relaxed">{reportDetails.aiSummary}</p>
                 </div>
 
                 {/* Objective & Progress */}
-                <div className="p-4 bg-white rounded-lg border flex items-center justify-between">
+                <div className="p-4 bg-white rounded-lg border-l-4 flex items-center justify-between" style={{ borderLeftColor: '#0000CC' }}>
                     <div>
                         <h3 className="font-semibold text-gray-800">Main Objective</h3>
                         <p className="text-lg text-gray-600">{reportDetails.objective}</p>
                     </div>
                     <div className="text-center">
-                        <p className="font-semibold text-gray-800">{Math.round(reportDetails.completion)}%</p>
+                        <p className="text-2xl font-bold" style={{ color: '#0000CC' }}>
+                            {Math.round(reportDetails.completion)}%
+                        </p>
                         <p className="text-xs text-gray-500">Completed</p>
                     </div>
                 </div>
@@ -312,7 +350,7 @@ const GeneratedReport = ({ report, onClose }: any) => {
                     <h3 className="font-semibold text-gray-800 mb-2">Key Results Breakdown</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {reportDetails.keyResults.map(kr => (
-                            <div key={kr.title} className="bg-gray-50 p-4 rounded-lg border flex items-center space-x-4">
+                            <div key={kr.title} className="bg-gray-50 p-4 rounded-lg border-l-4 flex items-center space-x-4" style={{ borderLeftColor: '#0000CC' }}>
                                 <RadialProgress progress={kr.progress} />
                                 <div>
                                     <p className="font-semibold text-gray-700">{kr.title}</p>
@@ -323,21 +361,21 @@ const GeneratedReport = ({ report, onClose }: any) => {
                     </div>
                 </div>
 
-                {/* NEW: Financial & ROI Analysis */}
+                {/* Financial & ROI Analysis */}
                 <div>
                     <h3 className="font-semibold text-gray-800 mb-2">Financial & ROI Analysis</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-gray-50 p-4 rounded-lg border">
+                        <div className="bg-gray-50 p-4 rounded-lg border-l-4" style={{ borderLeftColor: '#0000CC' }}>
                             <h4 className="text-sm font-medium text-gray-500">Budget vs. Spend</h4>
                             <p className="text-2xl font-bold text-gray-900 mt-1">${reportDetails.financials.spend.toLocaleString()}</p>
                             <p className="text-sm text-gray-500">of ${reportDetails.financials.budget.toLocaleString()} budget</p>
                         </div>
-                         <div className="bg-gray-50 p-4 rounded-lg border">
+                         <div className="bg-gray-50 p-4 rounded-lg border-l-4" style={{ borderLeftColor: '#10B981' }}>
                             <h4 className="text-sm font-medium text-gray-500">Return on Ad Spend (ROAS)</h4>
                             <p className="text-2xl font-bold text-green-600 mt-1">{reportDetails.financials.roas}x</p>
                             <p className="text-sm text-gray-500">Revenue per dollar spent</p>
                         </div>
-                         <div className="bg-gray-50 p-4 rounded-lg border">
+                         <div className="bg-gray-50 p-4 rounded-lg border-l-4" style={{ borderLeftColor: '#0000CC' }}>
                             <h4 className="text-sm font-medium text-gray-500">Cost Per Acquisition (CPA)</h4>
                             <p className="text-2xl font-bold text-gray-900 mt-1">${reportDetails.financials.cpa.toFixed(2)}</p>
                             <p className="text-sm text-gray-500">To acquire a new customer</p>
@@ -350,7 +388,7 @@ const GeneratedReport = ({ report, onClose }: any) => {
                     <div className="p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
                         <h3 className="font-semibold text-red-800 flex items-center"><AlertTriangle className="h-5 w-5 mr-2"/>Analysis of Shortfall</h3>
                         <ul className="mt-2 space-y-2">
-                            {reportDetails.blockers.map((blocker, i) => (
+                            {reportDetails.blockers.map((blocker: any, i: number) => (
                                 <li key={i} className="text-sm">
                                     <strong className="text-gray-700">{blocker.role}:</strong>
                                     <span className="text-gray-600 ml-1">"{blocker.note}"</span>
@@ -361,7 +399,7 @@ const GeneratedReport = ({ report, onClose }: any) => {
                 )}
 
                 {/* Next Steps */}
-                <div className="p-4 bg-white rounded-lg border">
+                <div className="p-4 bg-white rounded-lg border-l-4" style={{ borderLeftColor: '#0000CC' }}>
                     <h3 className="font-semibold text-gray-800">Next Steps & Recommendations</h3>
                     <p className="mt-2 text-sm text-gray-600">{reportDetails.nextSteps}</p>
                 </div>
@@ -370,7 +408,6 @@ const GeneratedReport = ({ report, onClose }: any) => {
     );
 };
 
-
 // --- THE MAIN DASHBOARD COMPONENT ---
 const ReportsSection = () => {
     const [reports, setReports] = useState(initialReportsData);
@@ -378,8 +415,17 @@ const ReportsSection = () => {
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [viewingReport, setViewingReport] = useState<Report | null>(null);
 
-    const handleAddReport = (newReport: Report) => {
-        setReports(prev => [newReport, ...prev]);
+    const handleAddReport = (newReport: any) => {
+        const report: Report = {
+            id: `rep-${Date.now()}`,
+            title: `Generated Report - ${new Date().toLocaleDateString()}`,
+            type: 'Client Performance',
+            clientName: 'Nexus Corp',
+            dateRange: '2025-07-01 to 2025-07-31',
+            generatedBy: 'Brand Head',
+            generatedAt: new Date().toISOString()
+        };
+        setReports(prev => [report, ...prev]);
     };
 
     const handleViewReport = (report: Report) => {
@@ -390,14 +436,20 @@ const ReportsSection = () => {
     return (
         <div className="p-8 bg-gray-50 min-h-screen">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-900">Reports</h1>
-                <button onClick={() => setIsGenerateModalOpen(true)} className="flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                <h1 className="text-3xl font-bold" style={{ color: '#0000CC' }}>
+                    Reports
+                </h1>
+                <button 
+                    onClick={() => setIsGenerateModalOpen(true)} 
+                    className="flex items-center px-4 py-2 text-white font-semibold rounded-lg hover:opacity-90 transition-all shadow-sm"
+                    style={{ backgroundColor: '#0000CC' }}
+                >
                     <Plus className="h-5 w-5 mr-2 -ml-1"/>
                     Generate New Report
                 </button>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-white rounded-lg shadow-sm border-l-4" style={{ borderLeftColor: '#0000CC' }}>
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
@@ -408,7 +460,7 @@ const ReportsSection = () => {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {reports.map(report => (
-                            <tr key={report.id}>
+                            <tr key={report.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4">
                                     <p className="font-medium text-gray-900">{report.title}</p>
                                     <p className="text-sm text-gray-500">{report.dateRange}</p>
@@ -421,10 +473,35 @@ const ReportsSection = () => {
                                 </td>
                                 <td className="px-6 py-4 text-sm font-medium">
                                     <div className="flex items-center space-x-2">
-                                        <button onClick={() => handleViewReport(report)} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-100 rounded-full"><Eye className="h-4 w-4"/></button>
-                                        <button onClick={() => alert(`Downloading PDF for ${report.title}`)} className="p-2 text-gray-500 hover:text-green-600 hover:bg-gray-100 rounded-full" title="Download PDF"><Download className="h-4 w-4"/></button>
-                                        <button onClick={() => alert(`Sending report to Project Manager for ${report.title}`)} className="p-2 text-gray-500 hover:text-purple-600 hover:bg-gray-100 rounded-full" title="Send to Project Manager"><Briefcase className="h-4 w-4"/></button>
-                                        <button onClick={() => alert(`Sending report to Client: ${report.clientName}`)} className="p-2 text-gray-500 hover:text-red-600 hover:bg-gray-100 rounded-full" title="Send to Client"><Send className="h-4 w-4"/></button>
+                                        <button 
+                                            onClick={() => handleViewReport(report)} 
+                                            className="p-2 text-gray-500 hover:rounded-full hover:bg-gray-100 transition-colors" 
+                                            style={{ '--hover-color': '#0000CC' } as React.CSSProperties}
+                                            title="View Report"
+                                        >
+                                            <Eye className="h-4 w-4"/>
+                                        </button>
+                                        <button 
+                                            onClick={() => alert(`Downloading PDF for ${report.title}`)} 
+                                            className="p-2 text-gray-500 hover:rounded-full hover:bg-gray-100 transition-colors"
+                                            title="Download PDF"
+                                        >
+                                            <Download className="h-4 w-4"/>
+                                        </button>
+                                        <button 
+                                            onClick={() => alert(`Sending report to Project Manager for ${report.title}`)} 
+                                            className="p-2 text-gray-500 hover:rounded-full hover:bg-gray-100 transition-colors"
+                                            title="Send to Project Manager"
+                                        >
+                                            <Briefcase className="h-4 w-4"/>
+                                        </button>
+                                        <button 
+                                            onClick={() => alert(`Sending report to Client: ${report.clientName}`)} 
+                                            className="p-2 text-gray-500 hover:rounded-full hover:bg-gray-100 transition-colors"
+                                            title="Send to Client"
+                                        >
+                                            <Send className="h-4 w-4"/>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -448,7 +525,7 @@ const ReportsSection = () => {
                         <div className="flex min-h-full items-center justify-center p-4">
                             <Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="ease-in duration-200" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
                                 <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all">
-                                    <GeneratedReport report={viewingReport} onClose={() => setIsViewModalOpen(false)} />
+                                    {viewingReport && <GeneratedReport report={viewingReport} onClose={() => setIsViewModalOpen(false)} />}
                                 </Dialog.Panel>
                             </Transition.Child>
                         </div>

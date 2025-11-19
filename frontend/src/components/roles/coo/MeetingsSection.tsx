@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, Clock, Users, MapPin, Plus, Video } from "lucide-react";
+import { Calendar, Clock, Users, MapPin, Plus, Video, X } from "lucide-react";
 import { api } from "../../../utils/api/Employees/api";
 import { useDispatch, useSelector } from "react-redux";
 import { selectAccessToken } from "../../../redux/slice/authSlice";
+
 
 interface Meeting {
   id: string;
@@ -17,6 +18,7 @@ interface Meeting {
   organizer: string;
   meeting_link: string;
 }
+
 
 const MeetingsSection: React.FC = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -36,7 +38,6 @@ const MeetingsSection: React.FC = () => {
   });
 
   const accessToken = useSelector(selectAccessToken);
-
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -55,38 +56,31 @@ const MeetingsSection: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "scheduled":
-        return "bg-blue-100 text-blue-800";
-      case "completed":
-        return "bg-green-100 text-green-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      case "in progress":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  const getStatusColor = () => {
+    // All statuses now have white background with blue text
+    return "bg-white";
   };
 
   const getTypeIcon = (type: string) => {
     switch (type.toLowerCase()) {
       case "virtual":
-        return <Video className="h-4 w-4" />;
+        return <Video className="h-4 w-4" style={{ color: '#0000CC' }} />;
       case "in-person":
-        return <MapPin className="h-4 w-4" />;
+        return <MapPin className="h-4 w-4" style={{ color: '#0000CC' }} />;
       case "hybrid":
-        return <Users className="h-4 w-4" />;
+        return <Users className="h-4 w-4" style={{ color: '#0000CC' }} />;
       default:
-        return <Calendar className="h-4 w-4" />;
+        return <Calendar className="h-4 w-4" style={{ color: '#0000CC' }} />;
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div 
+          className="animate-spin rounded-full h-12 w-12 border-b-2"
+          style={{ borderColor: '#0000CC' }}
+        ></div>
       </div>
     );
   }
@@ -97,12 +91,12 @@ const MeetingsSection: React.FC = () => {
       const participantsArray = newMeeting.participants
         .split(",")
         .map((p) => p.trim())
-        .filter(Boolean); // remove empty strings
+        .filter(Boolean);
 
       const payload = {
         ...newMeeting,
         participants: participantsArray,
-        status: "Scheduled", // or default value
+        status: "Scheduled",
       };
 
       const response = await api.coo.calendar.create(payload, accessToken, dispatch);
@@ -129,13 +123,30 @@ const MeetingsSection: React.FC = () => {
   };
 
   return (
-    <div className="">
+    <div 
+      className="min-h-screen p-6"
+      style={{ backgroundColor: '#FEF9F5' }}
+    >
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">Meeting Calendar</h2>
+          <h1 
+            className="text-3xl"
+            style={{ 
+              fontFamily: 'Inter, sans-serif', 
+              fontWeight: 'bold',
+              color: '#0000CC'
+            }}
+          >
+            Meeting Calendar
+          </h1>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity"
+            style={{ 
+              backgroundColor: '#0000CC',
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: 'bold'
+            }}
           >
             <Plus className="h-4 w-4 mr-2" />
             Schedule Meeting
@@ -147,309 +158,497 @@ const MeetingsSection: React.FC = () => {
           {meetings.map((meeting) => (
             <div
               key={meeting.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+              className="rounded-xl shadow-lg overflow-hidden"
+              style={{ backgroundColor: '#0000CC' }}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center">
-                  <Calendar className="h-5 w-5 text-blue-600 mr-3" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {meeting.title}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      Organized by {meeting.organizer}
-                    </p>
+              {/* Meeting Header */}
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center flex-1">
+                    <Calendar className="h-5 w-5 text-white mr-3" />
+                    <div>
+                      <h3 
+                        className="text-lg text-white mb-1"
+                        style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                      >
+                        {meeting.title}
+                      </h3>
+                      <p 
+                        className="text-sm text-white"
+                        style={{ fontFamily: 'Roboto, sans-serif', opacity: 0.9 }}
+                      >
+                        Organized by {meeting.organizer}
+                      </p>
+                    </div>
                   </div>
+                  <span
+                    className={`inline-flex px-3 py-1 text-xs rounded-lg ${getStatusColor()}`}
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif', 
+                      fontWeight: 'bold',
+                      color: '#0000CC'
+                    }}
+                  >
+                    {meeting.status}
+                  </span>
                 </div>
-                <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                    meeting.status
-                  )}`}
-                >
-                  {meeting.status}
-                </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <div className="flex items-center">
-                  <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                  <div>
-                    <p className="text-xs text-gray-600">Date</p>
-                    <p className="text-sm font-medium">
-                      {new Date(meeting.date).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <Clock className="h-4 w-4 text-gray-400 mr-2" />
-                  <div>
-                    <p className="text-xs text-gray-600">Time</p>
-                    <p className="text-sm font-medium">{meeting.time}</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  {getTypeIcon(meeting.type)}
-                  <div className="ml-2">
-                    <p className="text-xs text-gray-600">Type</p>
-                    <p className="text-sm font-medium">{meeting.type}</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <MapPin className="h-4 w-4 text-gray-400 mr-2" />
-                  <div>
-                    <p className="text-xs text-gray-600">Location</p>
-                    <p className="text-sm font-medium">{meeting.location}</p>
-                  </div>
-                </div>
-                {/* 👇 Add this right here */}
-                {meeting.meeting_link && (
+              {/* Meeting Content */}
+              <div className="bg-white p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                   <div className="flex items-center">
+                    <Calendar 
+                      className="h-4 w-4 mr-2"
+                      style={{ color: '#0000CC' }}
+                    />
+                    <div>
+                      <p 
+                        className="text-xs text-gray-600"
+                        style={{ fontFamily: 'Roboto, sans-serif' }}
+                      >
+                        Date
+                      </p>
+                      <p 
+                        className="text-sm"
+                        style={{ 
+                          fontFamily: 'Inter, sans-serif',
+                          fontWeight: 'bold',
+                          color: '#333'
+                        }}
+                      >
+                        {new Date(meeting.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <Clock 
+                      className="h-4 w-4 mr-2"
+                      style={{ color: '#0000CC' }}
+                    />
+                    <div>
+                      <p 
+                        className="text-xs text-gray-600"
+                        style={{ fontFamily: 'Roboto, sans-serif' }}
+                      >
+                        Time
+                      </p>
+                      <p 
+                        className="text-sm"
+                        style={{ 
+                          fontFamily: 'Inter, sans-serif',
+                          fontWeight: 'bold',
+                          color: '#333'
+                        }}
+                      >
+                        {meeting.time}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    {getTypeIcon(meeting.type)}
+                    <div className="ml-2">
+                      <p 
+                        className="text-xs text-gray-600"
+                        style={{ fontFamily: 'Roboto, sans-serif' }}
+                      >
+                        Type
+                      </p>
+                      <p 
+                        className="text-sm"
+                        style={{ 
+                          fontFamily: 'Inter, sans-serif',
+                          fontWeight: 'bold',
+                          color: '#333'
+                        }}
+                      >
+                        {meeting.type}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <MapPin 
+                      className="h-4 w-4 mr-2"
+                      style={{ color: '#0000CC' }}
+                    />
+                    <div>
+                      <p 
+                        className="text-xs text-gray-600"
+                        style={{ fontFamily: 'Roboto, sans-serif' }}
+                      >
+                        Location
+                      </p>
+                      <p 
+                        className="text-sm"
+                        style={{ 
+                          fontFamily: 'Inter, sans-serif',
+                          fontWeight: 'bold',
+                          color: '#333'
+                        }}
+                      >
+                        {meeting.location}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {meeting.meeting_link && (
+                  <div className="mb-4">
                     <a
                       href={meeting.meeting_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline text-sm flex items-center"
+                      className="inline-flex items-center px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+                      style={{ 
+                        backgroundColor: '#E6E6FF',
+                        color: '#0000CC',
+                        fontFamily: 'Inter, sans-serif',
+                        fontWeight: 'bold'
+                      }}
                     >
-                      🔗&nbsp;<span>Join Meeting</span>
+                      <Video className="h-4 w-4 mr-2" />
+                      Join Meeting
                     </a>
                   </div>
                 )}
-              </div>
 
-              <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">
-                  Participants
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {meeting.participants.map((participant, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
-                    >
-                      <Users className="h-3 w-3 mr-1" />
-                      {participant}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {meeting.agenda && (
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">
-                    Agenda
+                <div className="mb-4">
+                  <h4 
+                    className="text-sm mb-2"
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif',
+                      fontWeight: 'bold',
+                      color: '#0000CC'
+                    }}
+                  >
+                    Participants
                   </h4>
-                  <p className="text-sm text-gray-700">{meeting.agenda}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {meeting.participants.map((participant, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-3 py-1 rounded-lg"
+                        style={{ 
+                          backgroundColor: '#E6E6FF',
+                          color: '#0000CC',
+                          fontFamily: 'Roboto, sans-serif',
+                          fontSize: '12px'
+                        }}
+                      >
+                        <Users className="h-3 w-3 mr-1" />
+                        {participant}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              )}
+
+                {meeting.agenda && (
+                  <div 
+                    className="rounded-lg p-4"
+                    style={{ backgroundColor: '#E6E6FF' }}
+                  >
+                    <h4 
+                      className="text-sm mb-2"
+                      style={{ 
+                        fontFamily: 'Inter, sans-serif',
+                        fontWeight: 'bold',
+                        color: '#0000CC'
+                      }}
+                    >
+                      Agenda
+                    </h4>
+                    <p 
+                      className="text-sm text-gray-700"
+                      style={{ fontFamily: 'Roboto, sans-serif' }}
+                    >
+                      {meeting.agenda}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
 
         {meetings.length === 0 && (
-          <div className="text-center py-12">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">No meetings scheduled</p>
+          <div className="text-center py-12 bg-white rounded-xl shadow-lg">
+            <Calendar 
+              className="h-12 w-12 mx-auto mb-4"
+              style={{ color: '#0000CC' }}
+            />
+            <p 
+              className="text-gray-500"
+              style={{ fontFamily: 'Roboto, sans-serif' }}
+            >
+              No meetings scheduled
+            </p>
           </div>
         )}
       </div>
 
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 m-0">
-          <div className="bg-white w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-lg shadow-xl border border-gray-200 p-6 relative">
-            {/* Close button (top-right) */}
-            <button
-              onClick={() => setShowAddModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-red-600"
-              title="Close"
-            >
-              ✕
-            </button>
-
-            {/* Header */}
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">
-              Schedule a New Meeting
-            </h3>
-
-            {/* Form Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Title */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Project Kickoff"
-                  onChange={(e) =>
-                    setNewMeeting({ ...newMeeting, title: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Date */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  onChange={(e) =>
-                    setNewMeeting({ ...newMeeting, date: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Time */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Time
-                </label>
-                <input
-                  type="time"
-                  onChange={(e) =>
-                    setNewMeeting({ ...newMeeting, time: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Duration */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Duration
-                </label>
-                <input
-                  type="text"
-                  onChange={(e) =>
-                    setNewMeeting({ ...newMeeting, duration: e.target.value })
-                  }
-                  placeholder="e.g. 1h 30m"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Type */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Meeting Type
-                </label>
-                <select
-                  onChange={(e) =>
-                    setNewMeeting({
-                      ...newMeeting,
-                      type: e.target.value as
-                        | "Virtual"
-                        | "In-Person"
-                        | "Hybrid",
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="virtual">Virtual</option>
-                  <option value="in-person">In-Person</option>
-                  <option value="hybrid">Hybrid</option>
-                </select>
-              </div>
-
-              {/* Location */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  onChange={(e) =>
-                    setNewMeeting({ ...newMeeting, location: e.target.value })
-                  }
-                  placeholder="e.g. Zoom, Board Room A"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Organizer */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Organizer
-                </label>
-                <input
-                  type="text"
-                  onChange={(e) =>
-                    setNewMeeting({ ...newMeeting, organizer: e.target.value })
-                  }
-                  placeholder="e.g. Sarah Johnson"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Meeting Link */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Meeting Link
-                </label>
-                <input
-                  type="url"
-                  onChange={(e) =>
-                    setNewMeeting({
-                      ...newMeeting,
-                      meeting_link: e.target.value,
-                    })
-                  }
-                  placeholder="e.g. https://zoom.us/j/123456789"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Paste the meeting link if available (Zoom, Google Meet, Teams,
-                  etc.)
-                </p>
-              </div>
-
-              {/* Participants */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Participants
-                </label>
-                <input
-                  type="text"
-                  onChange={(e) =>
-                    setNewMeeting({
-                      ...newMeeting,
-                      participants: e.target.value,
-                    })
-                  }
-                  placeholder="Comma-separated names/emails"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Example: alice@company.com, bob@company.com
-                </p>
-              </div>
-
-              {/* Agenda */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Agenda
-                </label>
-                <textarea
-                  placeholder="Outline the discussion points"
-                  onChange={(e) =>
-                    setNewMeeting({ ...newMeeting, agenda: e.target.value })
-                  }
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                ></textarea>
-              </div>
+          <div 
+            className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl shadow-lg"
+            style={{ backgroundColor: '#0000CC' }}
+          >
+            {/* Modal Header */}
+            <div className="p-6 flex items-center justify-between">
+              <h3 
+                className="text-xl text-white"
+                style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+              >
+                Schedule a New Meeting
+              </h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-white hover:text-gray-200 transition-colors"
+                title="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
-            {/* Submit Button */}
-            <div className="mt-6 flex justify-end">
-              <button
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                onClick={handleCreateMeeting}
-              >
-                Create Meeting
-              </button>
+            {/* Modal Content */}
+            <div className="bg-white p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Title */}
+                <div>
+                  <label 
+                    className="block text-sm mb-2 text-gray-700"
+                    style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                  >
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Project Kickoff"
+                    onChange={(e) =>
+                      setNewMeeting({ ...newMeeting, title: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  />
+                </div>
+
+                {/* Date */}
+                <div>
+                  <label 
+                    className="block text-sm mb-2 text-gray-700"
+                    style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                  >
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    onChange={(e) =>
+                      setNewMeeting({ ...newMeeting, date: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  />
+                </div>
+
+                {/* Time */}
+                <div>
+                  <label 
+                    className="block text-sm mb-2 text-gray-700"
+                    style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                  >
+                    Time
+                  </label>
+                  <input
+                    type="time"
+                    onChange={(e) =>
+                      setNewMeeting({ ...newMeeting, time: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  />
+                </div>
+
+                {/* Duration */}
+                <div>
+                  <label 
+                    className="block text-sm mb-2 text-gray-700"
+                    style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                  >
+                    Duration
+                  </label>
+                  <input
+                    type="text"
+                    onChange={(e) =>
+                      setNewMeeting({ ...newMeeting, duration: e.target.value })
+                    }
+                    placeholder="e.g. 1h 30m"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  />
+                </div>
+
+                {/* Type */}
+                <div>
+                  <label 
+                    className="block text-sm mb-2 text-gray-700"
+                    style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                  >
+                    Meeting Type
+                  </label>
+                  <select
+                    onChange={(e) =>
+                      setNewMeeting({
+                        ...newMeeting,
+                        type: e.target.value as "Virtual" | "In-Person" | "Hybrid",
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  >
+                    <option value="virtual">Virtual</option>
+                    <option value="in-person">In-Person</option>
+                    <option value="hybrid">Hybrid</option>
+                  </select>
+                </div>
+
+                {/* Location */}
+                <div>
+                  <label 
+                    className="block text-sm mb-2 text-gray-700"
+                    style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                  >
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    onChange={(e) =>
+                      setNewMeeting({ ...newMeeting, location: e.target.value })
+                    }
+                    placeholder="e.g. Zoom, Board Room A"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  />
+                </div>
+
+                {/* Organizer */}
+                <div>
+                  <label 
+                    className="block text-sm mb-2 text-gray-700"
+                    style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                  >
+                    Organizer
+                  </label>
+                  <input
+                    type="text"
+                    onChange={(e) =>
+                      setNewMeeting({ ...newMeeting, organizer: e.target.value })
+                    }
+                    placeholder="e.g. Sarah Johnson"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  />
+                </div>
+
+                {/* Meeting Link */}
+                <div className="md:col-span-2">
+                  <label 
+                    className="block text-sm mb-2 text-gray-700"
+                    style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                  >
+                    Meeting Link
+                  </label>
+                  <input
+                    type="url"
+                    onChange={(e) =>
+                      setNewMeeting({
+                        ...newMeeting,
+                        meeting_link: e.target.value,
+                      })
+                    }
+                    placeholder="e.g. https://zoom.us/j/123456789"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  />
+                  <p 
+                    className="text-xs text-gray-500 mt-1"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  >
+                    Paste the meeting link if available (Zoom, Google Meet, Teams, etc.)
+                  </p>
+                </div>
+
+                {/* Participants */}
+                <div className="md:col-span-2">
+                  <label 
+                    className="block text-sm mb-2 text-gray-700"
+                    style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                  >
+                    Participants
+                  </label>
+                  <input
+                    type="text"
+                    onChange={(e) =>
+                      setNewMeeting({
+                        ...newMeeting,
+                        participants: e.target.value,
+                      })
+                    }
+                    placeholder="Comma-separated names/emails"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  />
+                  <p 
+                    className="text-xs text-gray-500 mt-1"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  >
+                    Example: alice@company.com, bob@company.com
+                  </p>
+                </div>
+
+                {/* Agenda */}
+                <div className="md:col-span-2">
+                  <label 
+                    className="block text-sm mb-2 text-gray-700"
+                    style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                  >
+                    Agenda
+                  </label>
+                  <textarea
+                    placeholder="Outline the discussion points"
+                    onChange={(e) =>
+                      setNewMeeting({ ...newMeeting, agenda: e.target.value })
+                    }
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  ></textarea>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 text-sm bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  style={{ 
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 'bold',
+                    color: '#666'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-6 py-2 text-white rounded-lg hover:opacity-90 transition-opacity"
+                  onClick={handleCreateMeeting}
+                  style={{ 
+                    backgroundColor: '#0000CC',
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Create Meeting
+                </button>
+              </div>
             </div>
           </div>
         </div>

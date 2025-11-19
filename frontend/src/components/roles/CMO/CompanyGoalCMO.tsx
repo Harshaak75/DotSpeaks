@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Flag,
   Users,
@@ -23,7 +23,6 @@ import { api } from "../../../utils/api/Employees/api";
 import { useDispatch, useSelector } from "react-redux";
 
 // --- CONSTANTS ---
-const TARGET_QUARTER_REVENUE = 2500000;
 const MONTHLY_LEADS_TARGET = 1667;
 const TIME_SCOPES = ["Monthly", "Quarterly", "Yearly"];
 const CACHE_KEY = "cmo_target_cache";
@@ -35,7 +34,7 @@ const LEAD_PACKAGES = [
     name: "All Packages",
     percentage: 1.0,
     price: 0,
-    color: "#3b82f6",
+    color: "#0000CC",
   },
   {
     key: "spark",
@@ -129,16 +128,24 @@ const generateMockData = (selectedPackageKey: any, selectedTimeScope: any) => {
 
 // --- REUSABLE COMPONENTS ---
 const TimeScopeSelector = ({ selected, onSelect }: any) => (
-  <div className="flex space-x-2 p-1 bg-gray-100 rounded-xl shadow-inner">
+  <div 
+    className="flex space-x-2 p-1 rounded-xl shadow-inner"
+    style={{ backgroundColor: '#F9FAFB' }}
+  >
     {TIME_SCOPES.map((scope) => (
       <button
         key={scope}
         onClick={() => onSelect(scope)}
-        className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+        className={`px-4 py-2 text-sm rounded-lg transition-all ${
           selected === scope
-            ? "bg-blue-600 text-white shadow-md"
+            ? "text-white shadow-md"
             : "text-gray-600 hover:bg-gray-200"
         }`}
+        style={{
+          backgroundColor: selected === scope ? '#0000CC' : 'transparent',
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 'bold'
+        }}
       >
         {scope}
       </button>
@@ -152,15 +159,27 @@ const PeriodSelector = ({
   onSelect,
   selectedTimeScope,
 }: any) => (
-  <div className="flex flex-wrap gap-2 p-3 bg-white border border-gray-200 rounded-lg shadow-inner mt-2">
+  <div 
+    className="flex flex-wrap gap-2 p-3 border-2 rounded-lg shadow-inner mt-2"
+    style={{ 
+      backgroundColor: 'white',
+      borderColor: '#E6E6FF'
+    }}
+  >
     <button
       key="all-periods"
       onClick={() => onSelect(null)}
-      className={`px-4 py-2 text-xs font-semibold rounded-full transition-all ${
+      className={`px-4 py-2 text-xs rounded-full transition-all ${
         selected === null
-          ? "bg-blue-600 text-white shadow-md border-2 border-blue-700"
+          ? "text-white shadow-md border-2"
           : "text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-300"
       }`}
+      style={{
+        backgroundColor: selected === null ? '#0000CC' : undefined,
+        borderColor: selected === null ? '#0000CC' : undefined,
+        fontFamily: 'Inter, sans-serif',
+        fontWeight: 'bold'
+      }}
     >
       Show All {selectedTimeScope}
     </button>
@@ -168,11 +187,17 @@ const PeriodSelector = ({
       <button
         key={period}
         onClick={() => onSelect(period)}
-        className={`px-4 py-2 text-xs font-semibold rounded-full transition-all ${
+        className={`px-4 py-2 text-xs rounded-full transition-all ${
           selected === period
-            ? "bg-purple-600 text-white shadow-md border-2 border-purple-700"
+            ? "text-white shadow-md border-2"
             : "text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-300"
         }`}
+        style={{
+          backgroundColor: selected === period ? '#DC2626' : undefined,
+          borderColor: selected === period ? '#DC2626' : undefined,
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 'bold'
+        }}
       >
         {period}
       </button>
@@ -190,8 +215,10 @@ const PackageFilter = ({ selected, onSelect }: any) => (
           backgroundColor: selected === pkg.key ? pkg.color : "#f3f4f6",
           color: selected === pkg.key ? "white" : "#4b5563",
           borderColor: pkg.color,
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 'bold'
         }}
-        className="text-xs sm:text-sm font-medium px-3 py-1 rounded-full border-2 transition-all shadow-sm hover:shadow-md"
+        className="text-xs sm:text-sm px-3 py-1 rounded-full border-2 transition-all shadow-sm hover:shadow-md"
       >
         {pkg.name}
       </button>
@@ -202,12 +229,31 @@ const PackageFilter = ({ selected, onSelect }: any) => (
 const LeadsLineChart = ({ data, timeScope, selectedPackage }: any) => {
   const pkg = LEAD_PACKAGES.find((p) => p.key === selectedPackage);
   return (
-    <div className="p-4 bg-white rounded-xl shadow-lg border border-gray-100 h-96">
-      <h3 className="text-xl font-bold text-gray-800 mb-2 flex items-center">
-        <BarChart className="h-5 w-5 mr-2 text-blue-600" />
+    <div 
+      className="p-4 rounded-xl shadow-lg border-2 h-96"
+      style={{ 
+        backgroundColor: 'white',
+        borderColor: '#E6E6FF'
+      }}
+    >
+      <h3 
+        className="text-xl mb-2 flex items-center"
+        style={{ 
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 'bold',
+          color: '#0000CC'
+        }}
+      >
+        <BarChart 
+          className="h-5 w-5 mr-2"
+          style={{ color: '#0000CC' }}
+        />
         Leads Performance: {pkg?.name} ({timeScope} View)
       </h3>
-      <p className="text-sm text-gray-500 mb-4">
+      <p 
+        className="text-sm text-gray-500 mb-4"
+        style={{ fontFamily: 'Roboto, sans-serif' }}
+      >
         Comparison of Targeted vs. Achieved Leads
       </p>
       <ResponsiveContainer width="100%" height="80%">
@@ -233,10 +279,10 @@ const LeadsLineChart = ({ data, timeScope, selectedPackage }: any) => {
           <Line
             type="monotone"
             dataKey="Targeted"
-            stroke="#3b82f6"
+            stroke="#0000CC"
             strokeWidth={4}
             dot={{ r: 6 }}
-            activeDot={{ r: 8, fill: "#3b82f6" }}
+            activeDot={{ r: 8, fill: "#0000CC" }}
             name="Targeted Leads"
           />
           <Line
@@ -290,7 +336,7 @@ const CMOAnalyticalDashboard = () => {
           accessToken,
           dispatch
         );
-        console.log(response.payload)
+        console.log(response.payload);
         if (response?.payload) {
           const latestData = {
             revenue: Number(response.payload.projectedRevenue),
@@ -330,7 +376,6 @@ const CMOAnalyticalDashboard = () => {
     });
     channel.subscribe();
     return () => {
-      // ignore promise, just call it
       channel
         .unsubscribe()
         .catch((err) => console.warn("Unsubscribe error", err));
@@ -355,37 +400,85 @@ const CMOAnalyticalDashboard = () => {
 
   const packageDetail = LEAD_PACKAGES.find((p) => p.key === selectedPackage);
   const availablePeriods = getPeriodsForScope(selectedTimeScope);
-  const alertMessageScope = selectedPeriod
-    ? `in period ${selectedPeriod}`
-    : `(Full Scope) for ${selectedTimeScope}`;
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div 
+      className="min-h-screen"
+      style={{ 
+        backgroundColor: '#FEF9F5',
+        fontFamily: 'Roboto, sans-serif'
+      }}
+    >
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Header */}
-        <header className="border-b-4 border-blue-600 pb-4 shadow-sm bg-white p-6 rounded-xl">
-          <h1 className="text-4xl font-extrabold text-gray-900 flex items-center">
-            <Flag className="h-8 w-8 mr-3 text-blue-600" />
+        <header 
+          className="border-b-4 pb-4 shadow-sm p-6 rounded-xl"
+          style={{ 
+            backgroundColor: 'white',
+            borderColor: '#0000CC'
+          }}
+        >
+          <h1 
+            className="text-4xl flex items-center"
+            style={{ 
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: 'bold',
+              color: '#0000CC'
+            }}
+          >
+            <Flag 
+              className="h-8 w-8 mr-3"
+              style={{ color: '#0000CC' }}
+            />
             CMO Strategic Dashboard
           </h1>
-          <p className="mt-2 text-lg text-gray-500">
+          <p 
+            className="mt-2 text-lg text-gray-500"
+            style={{ fontFamily: 'Roboto, sans-serif' }}
+          >
             Analyzing Lead Flow against {liveTargetData.quarter} Financial
             Targets
           </p>
         </header>
 
         {/* Financial Target Box */}
-        <div className="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-green-500">
+        <div 
+          className="p-8 rounded-2xl shadow-xl border-t-8"
+          style={{ 
+            backgroundColor: 'white',
+            borderColor: '#10b981'
+          }}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="p-3 rounded-full bg-green-100 text-green-600">
+              <div 
+                className="p-3 rounded-full"
+                style={{ 
+                  backgroundColor: '#D1FAE5',
+                  color: '#10b981'
+                }}
+              >
                 <DollarSign className="h-7 w-7" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                <p 
+                  className="text-sm uppercase tracking-wider"
+                  style={{ 
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 'bold',
+                    color: '#6B7280'
+                  }}
+                >
                   {liveTargetData.quarter} Revenue Target (Mandated)
                 </p>
-                <p className="text-4xl font-bold text-gray-900 mt-1">
+                <p 
+                  className="text-4xl mt-1"
+                  style={{ 
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 'bold',
+                    color: '#111827'
+                  }}
+                >
                   {formatCurrency(liveTargetData.revenue)}
                 </p>
               </div>
@@ -394,13 +487,42 @@ const CMOAnalyticalDashboard = () => {
         </div>
 
         {/* Filters Section */}
-        <div className="bg-white p-6 rounded-xl shadow-lg space-y-6">
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-            <Package className="h-6 w-6 mr-3 text-blue-600" /> Select Focus Area
+        <div 
+          className="p-6 rounded-xl shadow-lg space-y-6"
+          style={{ 
+            backgroundColor: 'white',
+            borderColor: '#E6E6FF',
+            border: '2px solid'
+          }}
+        >
+          <h2 
+            className="text-2xl flex items-center"
+            style={{ 
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: 'bold',
+              color: '#0000CC'
+            }}
+          >
+            <Package 
+              className="h-6 w-6 mr-3"
+              style={{ color: '#0000CC' }}
+            /> 
+            Select Focus Area
           </h2>
           <div className="space-y-4">
-            <label className="block text-sm font-medium text-gray-700 flex items-center">
-              <Clock className="h-4 w-4 mr-2" /> Time Scope:
+            <label 
+              className="block text-sm flex items-center"
+              style={{ 
+                fontFamily: 'Inter, sans-serif',
+                fontWeight: 'bold',
+                color: '#374151'
+              }}
+            >
+              <Clock 
+                className="h-4 w-4 mr-2"
+                style={{ color: '#0000CC' }}
+              /> 
+              Time Scope:
             </label>
             <TimeScopeSelector
               selected={selectedTimeScope}
@@ -415,15 +537,29 @@ const CMOAnalyticalDashboard = () => {
           </div>
 
           <div className="space-y-4">
-            <label className="block text-sm font-medium text-gray-700 flex items-center">
-              <Users className="h-4 w-4 mr-2" /> Leads Package:
+            <label 
+              className="block text-sm flex items-center"
+              style={{ 
+                fontFamily: 'Inter, sans-serif',
+                fontWeight: 'bold',
+                color: '#374151'
+              }}
+            >
+              <Users 
+                className="h-4 w-4 mr-2"
+                style={{ color: '#0000CC' }}
+              /> 
+              Leads Package:
             </label>
             <PackageFilter
               selected={selectedPackage}
               onSelect={setSelectedPackage}
             />
             {selectedPackage !== "all" && packageDetail && (
-              <p className="text-sm text-gray-500 pt-2 flex items-center">
+              <p 
+                className="text-sm text-gray-500 pt-2 flex items-center"
+                style={{ fontFamily: 'Roboto, sans-serif' }}
+              >
                 <Zap className="h-4 w-4 mr-2 text-yellow-500" />
                 Focusing on {packageDetail.name} (
                 {packageDetail.percentage * 100}% Lead Share @{" "}

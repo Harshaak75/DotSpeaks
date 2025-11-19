@@ -1,4 +1,3 @@
-
 import ProfileSection from '../../../ProfileSection';
 import ContentWriterCalender from './CalenderContentWriter';
 
@@ -9,10 +8,9 @@ interface ContentWriterDashboardProps {
 export const ContentWriterDashboard: React.FC<ContentWriterDashboardProps> = ({ activeSection }) => {
   const renderSection = () => {
     switch (activeSection) {
-      // taken from coo
       case 'profile':
         return <ProfileSection />;
-    case 'calender':
+      case 'calender':
         return <ContentWriterCalender />;
       default:
         return <ProfileSection />;

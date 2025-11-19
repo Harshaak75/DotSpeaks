@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Target, TrendingUp, TrendingDown, Calendar, CheckCircle, XCircle, Grid, Clock } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Target, TrendingUp, TrendingDown, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 // --- MOCK DATA FOR TARGETS AND ACHIEVEMENTS ---
 const TARGET_DATA: any = {
@@ -38,31 +38,24 @@ const formatCurrency = (value: any) => {
 };
 
 // --- HELPER FUNCTION: GENERATE WEEKLY DATA ---
-/**
- * Distributes quarterly data evenly across 13 weeks to simulate weekly performance.
- * Also includes quarter ID for filtering.
- * @param quarters - Array of quarterly data objects.
- * @returns Array of 52 weekly data objects.
- */
 const generateWeeklyData = (quarters: any) => {
     const weeksPerQuarter = 13;
     const allWeeks: any = [];
-    let weekCounter = 1; // Sequential week number 1 to 52
+    let weekCounter = 1;
 
     quarters.forEach((q: any) => {
-        // Distribute quarter data evenly across 13 weeks
         const weeklyTarget = q.target / weeksPerQuarter;
         const weeklyAchieved = q.achieved / weeksPerQuarter;
         
         for (let i = 1; i <= weeksPerQuarter; i++) {
             allWeeks.push({
                 id: `${q.id}-W${i}`,
-                label: `W${weekCounter++}`, // 'W1', 'W2', ... 'W52'
+                label: `W${weekCounter++}`,
                 target: weeklyTarget,
                 achieved: weeklyAchieved,
                 note: `Weekly average based on ${q.label} performance. ${q.note}`, 
-                quarterLabel: q.label, // Q1 2024
-                quarterId: q.id // Q1, Q2, Q3, Q4 (used for filtering)
+                quarterLabel: q.label,
+                quarterId: q.id
             });
         }
     });
@@ -89,20 +82,15 @@ const TargetAchievementChart = ({ data, year, view }: any) => {
     const chartHeight = 350;
     const padding = 20;
 
-    // 1. Calculate Max Value for Scaling (Target or Achieved)
     const maxVal = useMemo(() => {
-        // Find max value across all data points (quarters or weeks)
         const allValues = data.flatMap((item: any) => [item.target, item.achieved]);
-        // Use 1Cr (10,000,000) as a minimum scale if values are small
         return Math.max(...allValues, 10000000); 
     }, [data]);
     
-    // 2. Calculate Scale
     const scale = (chartHeight - 2 * padding) / maxVal;
 
     const getBarHeight = (value: any) => Math.min(chartHeight, value * scale);
     
-    // 3. Y-Axis Label Positions
     const yAxisLabels = useMemo(() => {
         const labels = [];
         const numLabels = 5;
@@ -115,58 +103,50 @@ const TargetAchievementChart = ({ data, year, view }: any) => {
         return labels;
     }, [maxVal, chartHeight, padding]);
 
-    // Use a fixed width per bar for the scrollable weekly view, and dynamic width for quarterly
     const barWidth = view === 'weekly' ? 35 : 100 / data.length;
     const chartAreaWidth = view === 'weekly' ? data.length * 35 : '100%';
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100 relative">
+        <div className="bg-white p-6 rounded-xl shadow-2xl border-l-4 relative" style={{ borderLeftColor: '#0000CC' }}>
             <h3 className="text-xl font-bold text-gray-700 mb-6 flex items-center">
-                <Target className="h-5 w-5 mr-2 text-blue-600" /> 
+                <Target className="h-5 w-5 mr-2" style={{ color: '#0000CC' }} /> 
                 {view === 'weekly' ? 'Weekly Revenue Performance' : 'Quarterly Revenue Performance'} ({year})
             </h3>
             
-            {/* Chart Area Container */}
             <div className="flex relative overflow-x-auto pb-4" style={{ height: `${chartHeight + 50}px` }}> 
                 
-                {/* 1. Y-Axis Labels/Guides Area (Fixed width) */}
                 <div className="w-20 h-full text-right text-xs text-gray-500 pr-3 relative flex-shrink-0 pt-3">
                     {yAxisLabels.map((label, index) => (
                         <div key={index}>
                             <div className="absolute -translate-y-1/2 font-semibold" style={{ top: `${label.y}px` }}>
                                 {label.label.replace(' Cr', '').replace(' L', '')}
                             </div>
-                            {/* Grid Line */}
                             <div className={`absolute w-full border-t border-gray-200 ${label.value === 0 ? 'border-gray-400' : ''}`} style={{ top: `${label.y}px`, right: '-3px' }}></div>
                         </div>
                     ))}
                     <div className="absolute -bottom-1 left-0 text-gray-700 font-bold">Value (Cr/L)</div>
                 </div>
 
-                {/* 2. Main Chart Area - Dynamic width for weekly view */}
                 <div 
                     className="relative border-l border-gray-300 ml-1 flex-1"
                     style={{ width: chartAreaWidth }} 
                 >
                     <div className="flex w-full h-full relative z-20 justify-around">
-                        {data.map((item: any, i: any) => {
-                            // Calculate heights
+                        {data.map((item: any, index: number) => {
                             const targetHeight = getBarHeight(item.target);
                             const achievedHeight = getBarHeight(item.achieved);
 
-                            // Determine achievement status for color
                             const exceeded = item.achieved >= item.target;
                             const achievedColorClass = exceeded ? 'from-green-400 to-green-600' : 'from-red-400 to-red-600';
-                            const targetColorClass = 'from-blue-400 to-blue-600';
 
                             const isHovered = hoveredItem?.id === item.id;
 
                             return (
                                 <div 
-                                    key={item.id || i} // Use unique ID for key
+                                    key={item.id || index}
                                     className={`absolute cursor-pointer h-full p-1 flex justify-center`}
                                     style={{ 
-                                        left: view === 'weekly' ? `${i * barWidth}px` : `${i * barWidth}%`, 
+                                        left: view === 'weekly' ? `${index * barWidth}px` : `${index * barWidth}%`, 
                                         width: view === 'weekly' ? `${barWidth}px` : `${barWidth}%`, 
                                         minWidth: '35px' 
                                     }}
@@ -176,11 +156,10 @@ const TargetAchievementChart = ({ data, year, view }: any) => {
                                     <div className={`flex w-full space-x-[2px] items-end h-full relative 
                                                      transition-transform duration-300 ${isHovered ? 'translate-y-[-5px]' : ''}`}>
                                         
-                                        {/* Target Bar (Left) */}
+                                        {/* Target Bar (Left) - Blue */}
                                         <div 
-                                            style={{ height: `${targetHeight}px` }}
-                                            className={`w-1/2 bg-gradient-to-t ${targetColorClass} 
-                                                        opacity-80 transition-all duration-300 rounded-t-md 
+                                            style={{ height: `${targetHeight}px`, background: 'linear-gradient(to top, #0000CC, #3B82F6)' }}
+                                            className={`w-1/2 opacity-80 transition-all duration-300 rounded-t-md 
                                                         shadow-lg ${isHovered ? 'shadow-xl' : ''}`}
                                         ></div>
 
@@ -193,7 +172,7 @@ const TargetAchievementChart = ({ data, year, view }: any) => {
                                         ></div>
 
                                         {/* Status Icon */}
-                                        <div className="absolute top-0 right-0 -mr-1 -mt-2"> {/* Adjusted position */}
+                                        <div className="absolute top-0 right-0 -mr-1 -mt-2">
                                             {exceeded 
                                                 ? <CheckCircle className="h-4 w-4 text-green-600 bg-white rounded-full shadow-md p-[1px]" />
                                                 : <XCircle className="h-4 w-4 text-red-600 bg-white rounded-full shadow-md p-[1px]" />
@@ -207,12 +186,12 @@ const TargetAchievementChart = ({ data, year, view }: any) => {
                 </div>
             </div>
 
-            {/* X-Axis Labels (Quarter/Week Labels) */}
+            {/* X-Axis Labels */}
             <div className="flex pt-2 border-t border-gray-300 ml-20" style={{ width: chartAreaWidth }}>
-                {data.map((item: any, i: number) => (
+                {data.map((item: any) => (
                     <div 
                         key={item.id || item.label} 
-                        className="text-[10px] font-bold text-gray-700 text-center flex-1 p-1" // Made labels bolder
+                        className="text-[10px] font-bold text-gray-700 text-center flex-1 p-1"
                          style={{ 
                             width: view === 'weekly' ? `${barWidth}px` : `${barWidth}%`, 
                             minWidth: '35px' 
@@ -223,15 +202,14 @@ const TargetAchievementChart = ({ data, year, view }: any) => {
                 ))}
             </div>
 
-
-            {/* Tooltip / Detailed Hover Info (Updated Style) */}
+            {/* Tooltip */}
             {hoveredItem && (
                 <div 
-                    className="absolute top-4 right-4 p-4 bg-white border-2 border-indigo-400 rounded-xl shadow-2xl z-30 w-80 transition-opacity duration-200"
-                    style={{ pointerEvents: 'none' }}
+                    className="absolute top-4 right-4 p-4 bg-white rounded-xl shadow-2xl z-30 w-80 transition-opacity duration-200 border-2"
+                    style={{ pointerEvents: 'none', borderColor: '#0000CC' }}
                 >
-                    <h4 className="font-bold text-indigo-700 text-lg mb-2 flex items-center">
-                        <Clock className="h-4 w-4 mr-2 text-indigo-500" /> 
+                    <h4 className="font-bold text-lg mb-2 flex items-center" style={{ color: '#0000CC' }}>
+                        <Clock className="h-4 w-4 mr-2" style={{ color: '#0000CC' }} /> 
                         
                         {view === 'weekly' ? (
                             <>
@@ -244,7 +222,7 @@ const TargetAchievementChart = ({ data, year, view }: any) => {
                     </h4>
                     <div className="space-y-1">
                         <p className="text-sm flex justify-between">
-                            <span className="font-semibold text-blue-600">Target Revenue:</span>
+                            <span className="font-semibold" style={{ color: '#0000CC' }}>Target Revenue:</span>
                             <span>{formatCurrency(hoveredItem.target)}</span>
                         </p>
                         <p className={`text-sm flex justify-between ${hoveredItem.achieved >= hoveredItem.target ? 'text-green-600' : 'text-red-600'}`}>
@@ -260,7 +238,7 @@ const TargetAchievementChart = ({ data, year, view }: any) => {
                             </p>
                         </div>
                     </div>
-                    <div className="mt-3 text-xs p-2 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                    <div className="mt-3 text-xs p-2 bg-blue-50 rounded-lg border-l-4" style={{ borderLeftColor: '#0000CC' }}>
                         <span className="font-semibold text-gray-700">Note:</span> {hoveredItem.note}
                     </div>
                 </div>
@@ -269,7 +247,7 @@ const TargetAchievementChart = ({ data, year, view }: any) => {
             {/* Legend */}
             <div className="flex justify-center mt-4 space-x-6 text-sm">
                 <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-gradient-to-t from-blue-400 to-blue-600 rounded-full"></div>
+                    <div className="w-3 h-3 rounded-full" style={{ background: 'linear-gradient(to top, #0000CC, #3B82F6)' }}></div>
                     <span>Target</span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -289,14 +267,11 @@ const TargetAchievementChart = ({ data, year, view }: any) => {
 const TargetVsAchive = () => {
     const years = useMemo(() => Object.keys(TARGET_DATA).map(Number).sort((a, b) => b - a), []);
     const [selectedYear, setSelectedYear] = useState(years[0]);
-    // State to toggle between 'quarterly' or 'weekly' view
     const [view, setView] = useState('quarterly'); 
-    // State to filter down to a specific quarter or week ('all', 'Q1', 'W2', etc.)
     const [selectedFilter, setSelectedFilter] = useState('all'); 
 
     const currentYearData = useMemo(() => TARGET_DATA[selectedYear], [selectedYear]);
 
-    // Handlers to reset the detailed filter when changing main context
     const handleYearChange = (year: number) => {
         setSelectedYear(year);
         setSelectedFilter('all'); 
@@ -307,23 +282,17 @@ const TargetVsAchive = () => {
         setSelectedFilter('all'); 
     };
 
-    // Define all possible quarter and week filters
     const allQuarterFilters = ['all', 'Q1', 'Q2', 'Q3', 'Q4'];
-    // Specific weekly filters requested by the user
     const specificWeekFilters = ['W1', 'W2', 'W3', 'W4'];
 
     const filterOptions = useMemo(() => {
         if (view === 'quarterly') {
             return allQuarterFilters;
         } else {
-            // For weekly view, show all quarter filters (to zoom 13 weeks)
-            // AND the specific weekly filters (to zoom 1 week)
             return [...allQuarterFilters, ...specificWeekFilters];
         }
     }, [view]);
 
-
-    // Data to be displayed in the chart, dynamically filtered by view and selectedFilter
     const dataToShow = useMemo(() => {
         let data: any;
 
@@ -333,26 +302,22 @@ const TargetVsAchive = () => {
             if (selectedFilter === 'all') {
                 return data;
             } else if (selectedFilter.startsWith('Q')) {
-                // Filter by Quarter ID (shows 13 weeks: W1-W13, W14-W26, etc.)
                 return data.filter((item: any) => item.quarterId === selectedFilter);
             } else if (selectedFilter.startsWith('W')) {
-                // Filter by specific global Week Label (shows 1 week: W1, W2, W3, W4)
                 return data.filter((item: any) => item.label === selectedFilter);
             }
             return data;
             
-        } else { // Quarterly view
+        } else {
             data = currentYearData.quarters;
 
             if (selectedFilter !== 'all') {
-                // Filter quarterly data by the selected quarter ID (Q1, Q2, etc.)
                 return data.filter((item: any) => item.id === selectedFilter);
             }
             return data;
         }
     }, [view, currentYearData, selectedFilter]);
 
-    // KPI calculations always use the full annual data (quarters), regardless of chart view
     const totalAchieved = useMemo(() => 
         currentYearData.quarters.reduce((sum: any, q: any) => sum + q.achieved, 0), [currentYearData]);
 
@@ -371,11 +336,9 @@ const TargetVsAchive = () => {
         return note;
     }, [isTargetAchieved, totalAchieved, currentYearData]);
 
-
     return (
         <div className="min-h-screen bg-gray-50 p-4 sm:p-8 font-sans">
             <style>{`
-                /* Ensure responsive layout and prevent horizontal scrolling on chart container */
                 .overflow-x-auto {
                     overflow-x: auto;
                     -webkit-overflow-scrolling: touch;
@@ -385,19 +348,20 @@ const TargetVsAchive = () => {
                 
                 {/* Header and View Filters */}
                 <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4">
-                    <h1 className="text-3xl font-extrabold text-indigo-800 drop-shadow-sm">
+                    <h1 className="text-3xl font-extrabold drop-shadow-sm" style={{ color: '#0000CC' }}>
                         Annual Revenue Target Review
                     </h1>
                     <div className="flex flex-wrap items-center space-x-4 mt-4 sm:mt-0">
                         
-                        {/* 1. Year Filter */}
+                        {/* Year Filter */}
                         <div className="flex items-center space-x-2">
                             <Calendar className="h-5 w-5 text-gray-500" />
                             <span className="text-sm font-medium text-gray-600">Year:</span>
                             <select
                                 value={selectedYear}
                                 onChange={(e) => handleYearChange(Number(e.target.value))}
-                                className="p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-semibold"
+                                className="p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 transition-all font-semibold"
+                                style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
                             >
                                 {years.map(year => (
                                     <option key={year} value={year}>{year}</option>
@@ -405,40 +369,42 @@ const TargetVsAchive = () => {
                             </select>
                         </div>
                         
-                        {/* 2. View Filter (Quarterly/Weekly) */}
+                        {/* View Filter */}
                         <div className="flex space-x-2 mt-2 sm:mt-0 bg-gray-100 p-1 rounded-lg">
                             <button 
                                 onClick={() => handleViewChange('quarterly')}
                                 className={`p-2 px-4 text-sm rounded-lg font-bold transition-colors shadow-md ${
-                                    view === 'quarterly' ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                    view === 'quarterly' ? 'text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                 }`}
+                                style={view === 'quarterly' ? { backgroundColor: '#0000CC' } : {}}
                             >
                                 Quarterly View
                             </button>
                             <button 
                                 onClick={() => handleViewChange('weekly')}
                                 className={`p-2 px-4 text-sm rounded-lg font-bold transition-colors shadow-md ${
-                                    view === 'weekly' ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                    view === 'weekly' ? 'text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                 }`}
+                                style={view === 'weekly' ? { backgroundColor: '#0000CC' } : {}}
                             >
                                 Weekly View
                             </button>
                         </div>
-
                     </div>
                 </header>
 
-                {/* Quarter/Week Filter Bar */}
-                <div className="flex justify-start flex-wrap gap-2 p-3 bg-white rounded-xl shadow-lg border-l-4 border-purple-500">
+                {/* Filter Bar */}
+                <div className="flex justify-start flex-wrap gap-2 p-3 bg-white rounded-xl shadow-lg border-l-4" style={{ borderLeftColor: '#0000CC' }}>
                     {filterOptions.map((filter) => (
                         <button
                             key={filter}
                             onClick={() => setSelectedFilter(filter)}
                             className={`px-4 py-2 text-xs rounded-lg font-bold transition-colors shadow-sm whitespace-nowrap ${
                                 selectedFilter === filter
-                                    ? 'bg-purple-600 text-white shadow-md'
+                                    ? 'text-white shadow-md'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
+                            style={selectedFilter === filter ? { backgroundColor: '#0000CC' } : {}}
                         >
                             {filter === 'all' ? 'All Data' : filter}
                         </button>
@@ -454,26 +420,26 @@ const TargetVsAchive = () => {
                         title={`Total Target Revenue (${selectedYear})`} 
                         value={currentYearData.annualTarget} 
                         icon={Target} 
-                        color="#2563EB" // Indigo Blue
+                        color="#0000CC"
                     />
                     <KPICard 
                         title={`Total Achieved Revenue (${selectedYear})`} 
                         value={totalAchieved} 
                         icon={CheckCircle} 
-                        color={isTargetAchieved ? "#10B981" : "#F59E0B"} // Green/Amber
+                        color={isTargetAchieved ? "#10B981" : "#F59E0B"}
                     />
                     <KPICard 
                         title="Annual Variance" 
                         value={annualVariance} 
                         icon={annualVariance >= 0 ? TrendingUp : TrendingDown} 
-                        color={annualVariance >= 0 ? "#10B981" : "#EF4444"} // Green/Red
+                        color={annualVariance >= 0 ? "#10B981" : "#EF4444"}
                     />
                 </div>
 
-                {/* Main Graph Section */}
+                {/* Main Graph */}
                 <TargetAchievementChart data={dataToShow} year={selectedYear} view={view} />
                 
-                {/* Overall Company Performance Summary Note */}
+                {/* Performance Summary */}
                 <div className="bg-white p-6 rounded-xl shadow-lg border-t-4" style={{ borderColor: isTargetAchieved ? '#10B981' : '#EF4444' }}>
                     <h2 className="text-xl font-bold text-gray-800 mb-3">
                         Executive Review: {selectedYear} Performance Summary
@@ -486,7 +452,6 @@ const TargetVsAchive = () => {
                         <p className="mt-1 text-gray-600" dangerouslySetInnerHTML={{ __html: overallPerformanceNote }} />
                     </div>
                 </div>
-
             </div>
         </div>
     );

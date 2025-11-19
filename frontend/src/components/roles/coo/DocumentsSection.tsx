@@ -4,6 +4,7 @@ import { api } from '../../../utils/api/Employees/api';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectAccessToken } from '../../../redux/slice/authSlice';
 
+
 interface Document {
   id: string;
   title: string;
@@ -18,13 +19,13 @@ interface Document {
   version: string;
 }
 
+
 const DocumentsSection: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterCategory, setFilterCategory] = useState('All');
 
   const accessToken = useSelector(selectAccessToken);
-
   const dispatch = useDispatch();
 
   const categories = ['All', 'Employment', 'Financial', 'Legal', 'Compliance'];
@@ -50,44 +51,55 @@ const DocumentsSection: React.FC = () => {
   );
 
   const getConfidentialityIcon = (level: string) => {
+    const iconStyle = { color: '#0000CC' };
     switch (level.toLowerCase()) {
       case 'confidential':
-        return <Lock className="h-4 w-4 text-red-500" />;
+        return <Lock className="h-4 w-4" style={iconStyle} />;
       case 'restricted':
-        return <Shield className="h-4 w-4 text-orange-500" />;
+        return <Shield className="h-4 w-4" style={iconStyle} />;
       case 'internal':
-        return <Eye className="h-4 w-4 text-blue-500" />;
+        return <Eye className="h-4 w-4" style={iconStyle} />;
       default:
-        return <FileText className="h-4 w-4 text-gray-500" />;
+        return <FileText className="h-4 w-4" style={iconStyle} />;
     }
   };
 
-  const getConfidentialityColor = (level: string) => {
-    switch (level.toLowerCase()) {
-      case 'confidential':
-        return 'bg-red-100 text-red-800';
-      case 'restricted':
-        return 'bg-orange-100 text-orange-800';
-      case 'internal':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const getConfidentialityColor = () => {
+    // All confidentiality levels now have white background with blue text
+    return 'bg-white';
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div 
+          className="animate-spin rounded-full h-12 w-12 border-b-2"
+          style={{ borderColor: '#0000CC' }}
+        ></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div 
+      className="min-h-screen p-6 space-y-6"
+      style={{ backgroundColor: '#FEF9F5' }}
+    >
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Legal Documents</h2>
-        <div className="text-sm text-gray-500">
+        <h1 
+          className="text-3xl"
+          style={{ 
+            fontFamily: 'Inter, sans-serif', 
+            fontWeight: 'bold',
+            color: '#0000CC'
+          }}
+        >
+          Legal Documents
+        </h1>
+        <div 
+          className="text-sm text-gray-500"
+          style={{ fontFamily: 'Roboto, sans-serif' }}
+        >
           View-only access • {documents.length} documents
         </div>
       </div>
@@ -98,11 +110,18 @@ const DocumentsSection: React.FC = () => {
           <button
             key={category}
             onClick={() => setFilterCategory(category)}
-            className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+            className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
               filterCategory === category
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'
             }`}
+            style={filterCategory === category ? { 
+              backgroundColor: '#0000CC',
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: 'bold'
+            } : {
+              fontFamily: 'Roboto, sans-serif'
+            }}
           >
             {category}
           </button>
@@ -112,63 +131,183 @@ const DocumentsSection: React.FC = () => {
       {/* Documents Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredDocuments.map((document) => (
-          <div key={document.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center">
-                <FileText className="h-5 w-5 text-blue-600 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">{document.title}</h3>
+          <div 
+            key={document.id} 
+            className="rounded-xl shadow-lg overflow-hidden"
+            style={{ backgroundColor: '#0000CC' }}
+          >
+            {/* Document Header */}
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center flex-1">
+                  <FileText className="h-5 w-5 text-white mr-2" />
+                  <h3 
+                    className="text-lg text-white"
+                    style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold' }}
+                  >
+                    {document.title}
+                  </h3>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {getConfidentialityIcon(document.confidentiality)}
+                  <span 
+                    className={`inline-flex px-3 py-1 text-xs rounded-lg ${getConfidentialityColor()}`}
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif', 
+                      fontWeight: 'bold',
+                      color: '#0000CC'
+                    }}
+                  >
+                    {document.confidentiality}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                {getConfidentialityIcon(document.confidentiality)}
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getConfidentialityColor(document.confidentiality)}`}>
-                  {document.confidentiality}
-                </span>
-              </div>
+
+              <p 
+                className="text-sm text-white mb-4"
+                style={{ fontFamily: 'Roboto, sans-serif', opacity: 0.9 }}
+              >
+                {document.description}
+              </p>
             </div>
 
-            <p className="text-gray-600 text-sm mb-4">{document.description}</p>
+            {/* Document Content */}
+            <div className="bg-white p-6">
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span 
+                    className="text-gray-600"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  >
+                    Type:
+                  </span>
+                  <span 
+                    className="font-medium"
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif',
+                      fontWeight: 'bold',
+                      color: '#333'
+                    }}
+                  >
+                    {document.type}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span 
+                    className="text-gray-600"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  >
+                    Category:
+                  </span>
+                  <span 
+                    className="font-medium"
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif',
+                      fontWeight: 'bold',
+                      color: '#333'
+                    }}
+                  >
+                    {document.category}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span 
+                    className="text-gray-600"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  >
+                    Size:
+                  </span>
+                  <span 
+                    className="font-medium"
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif',
+                      fontWeight: 'bold',
+                      color: '#333'
+                    }}
+                  >
+                    {document.size}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span 
+                    className="text-gray-600"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  >
+                    Version:
+                  </span>
+                  <span 
+                    className="font-medium"
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif',
+                      fontWeight: 'bold',
+                      color: '#333'
+                    }}
+                  >
+                    v{document.version}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span 
+                    className="text-gray-600"
+                    style={{ fontFamily: 'Roboto, sans-serif' }}
+                  >
+                    Last Modified:
+                  </span>
+                  <span 
+                    className="font-medium"
+                    style={{ 
+                      fontFamily: 'Inter, sans-serif',
+                      fontWeight: 'bold',
+                      color: '#333'
+                    }}
+                  >
+                    {new Date(document.date).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
 
-            <div className="space-y-3 mb-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Type:</span>
-                <span className="font-medium">{document.type}</span>
+              <div className="flex space-x-2">
+                <button 
+                  className="flex-1 flex items-center justify-center px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity"
+                  style={{ 
+                    backgroundColor: '#0000CC',
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  View
+                </button>
+                <button 
+                  className="flex-1 flex items-center justify-center px-4 py-2 rounded-lg transition-opacity hover:opacity-90"
+                  style={{ 
+                    backgroundColor: '#E6E6FF',
+                    color: '#0000CC',
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </button>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Category:</span>
-                <span className="font-medium">{document.category}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Size:</span>
-                <span className="font-medium">{document.size}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Version:</span>
-                <span className="font-medium">v{document.version}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Last Modified:</span>
-                <span className="font-medium">{new Date(document.date).toLocaleDateString()}</span>
-              </div>
-            </div>
-
-            <div className="flex space-x-2">
-              <button className="flex-1 flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                <Eye className="h-4 w-4 mr-2" />
-                View
-              </button>
-              <button className="flex-1 flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                <Download className="h-4 w-4 mr-2" />
-                Download
-              </button>
             </div>
           </div>
         ))}
       </div>
 
       {filteredDocuments.length === 0 && (
-        <div className="text-center py-12">
-          <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">No documents found for the selected category</p>
+        <div className="text-center py-12 bg-white rounded-xl shadow-lg">
+          <FileText 
+            className="h-12 w-12 mx-auto mb-4"
+            style={{ color: '#0000CC' }}
+          />
+          <p 
+            className="text-gray-500"
+            style={{ fontFamily: 'Roboto, sans-serif' }}
+          >
+            No documents found for the selected category
+          </p>
         </div>
       )}
     </div>

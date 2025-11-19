@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   PieChart,
   Pie,
@@ -42,16 +42,16 @@ const CEOProfitAndLoss = () => {
   };
 
   const expenseData = [
-    { name: "Salaries", value: 32000, color: "#3B82F6" },
-    { name: "Marketing", value: 18000, color: "#F59E0B" },
-    { name: "Operations", value: 25000, color: "#10B981" },
-    { name: "R&D", value: 12000, color: "#EF4444" },
-    { name: "Miscellaneous", value: 8000, color: "#8B5CF6" },
+    { name: "Salaries", value: 32000, color: "#0000CC" },
+    { name: "Marketing", value: 18000, color: "#3B82F6" },
+    { name: "Operations", value: 25000, color: "#60A5FA" },
+    { name: "R&D", value: 12000, color: "#93C5FD" },
+    { name: "Miscellaneous", value: 8000, color: "#DBEAFE" },
   ];
 
   const profitdata = [
-    { name: "Total Revenue", value: 32000, color: "#3B82F6" },
-    { name: "Net Profit", value: 18000, color: "#F59E0B" },
+    { name: "Total Revenue", value: 32000, color: "#0000CC" },
+    { name: "Net Profit", value: 18000, color: "#10B981" },
   ];
 
   const kpiData = {
@@ -81,7 +81,6 @@ const CEOProfitAndLoss = () => {
 
   // ---------------------- ACHIEVEMENT CHART DATA ----------------------
   const getAchievementChartData = () => {
-    // Step-like chart: start from 0, go up to revenue, netProfit line always lower
     if (!chartData.length) return [];
     const d = chartData[0];
     return [
@@ -98,7 +97,7 @@ const CEOProfitAndLoss = () => {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* ---------- Header ---------- */}
         <header className="flex justify-between items-center border-b pb-4">
-          <h1 className="text-4xl font-extrabold text-blue-800 drop-shadow-sm">
+          <h1 className="text-4xl font-extrabold drop-shadow-sm" style={{ color: '#0000CC' }}>
             Profit And Loss Dashboard
           </h1>
           <div className="flex items-center space-x-3">
@@ -111,9 +110,10 @@ const CEOProfitAndLoss = () => {
                 }}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
                   filter === f
-                    ? "bg-blue-600 text-white shadow-md"
+                    ? "text-white shadow-md"
                     : "bg-white border text-gray-600 hover:bg-blue-50"
                 }`}
+                style={filter === f ? { backgroundColor: '#0000CC' } : {}}
               >
                 {f}
               </button>
@@ -129,9 +129,10 @@ const CEOProfitAndLoss = () => {
               onClick={() => setSubFilter(s)}
               className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${
                 subFilter === s
-                  ? "bg-emerald-500 text-white shadow-sm"
-                  : "bg-white border text-gray-600 hover:bg-emerald-50"
+                  ? "text-white shadow-sm"
+                  : "bg-white border text-gray-600"
               }`}
+              style={subFilter === s ? { backgroundColor: '#0000CC', borderColor: '#0000CC' } : { borderColor: '#0000CC' }}
             >
               {s}
             </button>
@@ -141,10 +142,10 @@ const CEOProfitAndLoss = () => {
         {/* ---------- KPI CARDS ---------- */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
           {/* Revenue */}
-          <div className="bg-white p-5 rounded-xl shadow-md border-t-4 border-green-500">
+          <div className="bg-white p-5 rounded-xl shadow-md border-t-4" style={{ borderTopColor: '#0000CC' }}>
             <div className="flex justify-between items-center">
               <p className="text-gray-500 text-sm font-medium">Revenue</p>
-              <TrendingUp className="h-5 w-5 text-green-600" />
+              <TrendingUp className="h-5 w-5" style={{ color: '#0000CC' }} />
             </div>
             <h2 className="text-3xl font-bold text-gray-800 mt-2">
               ₹{kpiData.revenue.toLocaleString()}
@@ -165,11 +166,11 @@ const CEOProfitAndLoss = () => {
           </div>
 
           {/* Gross Profit */}
-          <div className="bg-white p-5 rounded-xl shadow-md border-t-4 border-blue-500">
+          <div className="bg-white p-5 rounded-xl shadow-md border-t-4" style={{ borderTopColor: '#0000CC' }}>
             <p className="text-gray-500 text-sm font-medium mb-2">
               Gross Profit Margin
             </p>
-            <h2 className="text-3xl font-bold text-blue-700">
+            <h2 className="text-3xl font-bold" style={{ color: '#0000CC' }}>
               {kpiData.grossMargin}%
             </h2>
             <p className="text-sm text-gray-500">
@@ -178,11 +179,11 @@ const CEOProfitAndLoss = () => {
           </div>
 
           {/* Net Profit */}
-          <div className="bg-white p-5 rounded-xl shadow-md border-t-4 border-amber-500">
+          <div className="bg-white p-5 rounded-xl shadow-md border-t-4 border-green-500">
             <p className="text-gray-500 text-sm font-medium mb-2">
               Net Profit Margin
             </p>
-            <h2 className="text-3xl font-bold text-amber-600">
+            <h2 className="text-3xl font-bold text-green-600">
               {kpiData.netMargin}%
             </h2>
             <p className="text-sm text-gray-500">
@@ -194,7 +195,7 @@ const CEOProfitAndLoss = () => {
         {/* ---------- CHART SECTION ---------- */}
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mt-6">
           {/* Revenue vs Net Profit Trend */}
-          <div className="bg-white w-full p-6 rounded-xl shadow-md">
+          <div className="bg-white w-full p-6 rounded-xl shadow-md" style={{ borderLeft: '4px solid #0000CC' }}>
             <h3 className="text-lg font-semibold text-gray-700 mb-4">
               {subFilter
                 ? `${subFilter} Revenue Achievement`
@@ -219,7 +220,7 @@ const CEOProfitAndLoss = () => {
                     <Line
                       type="monotone"
                       dataKey="revenue"
-                      stroke="#2563EB"
+                      stroke="#0000CC"
                       strokeWidth={3}
                       dot={{ r: 5 }}
                       name="Revenue Target"
@@ -249,12 +250,12 @@ const CEOProfitAndLoss = () => {
                       >
                         <stop
                           offset="0%"
-                          stopColor="#2563EB"
+                          stopColor="#0000CC"
                           stopOpacity={0.4}
                         />
                         <stop
                           offset="100%"
-                          stopColor="#2563EB"
+                          stopColor="#0000CC"
                           stopOpacity={0}
                         />
                       </linearGradient>
@@ -288,7 +289,7 @@ const CEOProfitAndLoss = () => {
                     <Line
                       type="monotone"
                       dataKey="revenue"
-                      stroke="#2563EB"
+                      stroke="#0000CC"
                       strokeWidth={3}
                       dot={{ r: 4 }}
                       fill="url(#revenueGradient)"
@@ -307,12 +308,10 @@ const CEOProfitAndLoss = () => {
               </ResponsiveContainer>
             </div>
           </div>
-
-          {/* Expense Breakdown */}
         </div>
 
-        <div className="flex gap-2 w-full">
-          <div className="bg-white p-6 rounded-xl w-[50%] shadow-md flex flex-col justify-between">
+        <div className="flex gap-6 w-full">
+          <div className="bg-white p-6 rounded-xl w-[50%] shadow-md flex flex-col justify-between" style={{ borderLeft: '4px solid #0000CC' }}>
             <h3 className="text-lg font-semibold pb-3 text-gray-700 mb-2 text-center">
               Expense Breakdown
             </h3>
@@ -347,7 +346,7 @@ const CEOProfitAndLoss = () => {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl w-[50%] shadow-md flex flex-col justify-between">
+          <div className="bg-white p-6 rounded-xl w-[50%] shadow-md flex flex-col justify-between" style={{ borderLeft: '4px solid #0000CC' }}>
             <h3 className="text-lg font-semibold pb-3 text-gray-700 mb-2 text-center">
               Total Revenue vs Net Profit
             </h3>
@@ -362,7 +361,7 @@ const CEOProfitAndLoss = () => {
                     paddingAngle={4}
                     label
                   >
-                    {expenseData.map((entry, index) => (
+                    {profitdata.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>

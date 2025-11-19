@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import ProfileSection from "../ProfileSection";
 import CallRecordsDashboard from "./CallRecordAndStats";
-// import CreateClientAccount from "./CreateClientAccount";
 import LeadManagementSection from "./LeadManagement";
 import { useDispatch, useSelector } from "react-redux";
 import { selectAccessToken } from "../../../../redux/slice/authSlice";
@@ -23,28 +22,26 @@ export const BrandDeveloperDashboard: React.FC<
   const [data, setdata] = useState<any[]>([]);
 
   const getData = useCallback(async () => {
-    if (!accessToken) return; // Don't fetch if there's no token
+    if (!accessToken) return;
     try {
       const response = await api.brandDeveloper.getInfo.get(
         accessToken,
         dispatch
       );
       console.log("Fetched new data:", response.data);
-      setdata(response.data); // This will now correctly trigger a re-render
+      setdata(response.data);
     } catch (error) {
       console.log("Error fetching data:", error);
     }
-  }, [accessToken, dispatch]); // Dependencies for useCallback
+  }, [accessToken, dispatch]);
 
   useEffect(() => {
-    // Initial data fetch
     getData();
 
     const channel = supabase.channel("BD-changes-channel");
 
     const broadcastCallback = (payload: any) => {
       console.log("Broadcast received! Refetching data...", payload);
-      // Calling the stable getData function
       getData();
     };
 
@@ -59,7 +56,6 @@ export const BrandDeveloperDashboard: React.FC<
         }
       });
 
-    // Cleanup function
     return () => {
       console.log("Unsubscribing from broadcast channel.");
       supabase.removeChannel(channel);
@@ -68,7 +64,6 @@ export const BrandDeveloperDashboard: React.FC<
 
   const renderSection = () => {
     switch (activeSection) {
-      // taken from coo
       case "profile":
         return <ProfileSection />;
       case "callRecordAndStats":
@@ -76,12 +71,9 @@ export const BrandDeveloperDashboard: React.FC<
       case "Calendar":
         return <CalendarSyncDashboardBD />;
       case "Chat":
-        return <Chatting/>;
+        return <Chatting />;
       case "lead_management":
         return <LeadManagementSection info={data} />;
-
-      // case "CreateClientAccount":
-      //   return <CreateClientAccount />;
       default:
         return <ProfileSection />;
     }

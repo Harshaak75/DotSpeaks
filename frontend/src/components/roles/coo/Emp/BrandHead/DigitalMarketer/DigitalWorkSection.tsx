@@ -1,4 +1,4 @@
-import React, { useState, Fragment, useRef, useEffect, useMemo } from "react";
+import { useState, Fragment, useRef, useEffect, useMemo } from "react";
 import {
   format,
   addMonths,
@@ -23,7 +23,6 @@ import {
   Instagram,
   Facebook,
   Twitter,
-  Hash,
   Clock,
   Link as LinkIcon,
   Calendar,
@@ -39,19 +38,18 @@ import { api } from "../../../../../../utils/api/Employees/api";
 import { useDispatch, useSelector } from "react-redux";
 import { supabase } from "../../../../../../utils/supabase";
 
-// MODIFIED: This now matches the live data structure
+// --- TYPE DEFINITIONS ---
 interface ClientType {
   id: string;
   name: string;
   avatarUrl: string;
 }
 
-// MODIFIED: Backend response type for a single task
 interface TaskFromApi {
   taskDetails: {
     id: string;
     campaignTitle: string;
-    date: string; // Comes as ISO string
+    date: string;
     marketerGuide: string;
     hashtags: string[];
     postType: string;
@@ -65,7 +63,7 @@ interface TaskFromApi {
     fileType: string;
     uploadedBy: string;
     imageUrl: string;
-    createdAt: string; // Comes as ISO string
+    createdAt: string;
   }[];
 }
 
@@ -77,7 +75,7 @@ type ReviewStatus =
   | "DM_APPROVED";
 
 interface ReviewEventType {
-  id: string; // Task ID
+  id: string;
   clientId: string;
   title: string;
   start: Date;
@@ -86,7 +84,7 @@ interface ReviewEventType {
   reworkComment?: string;
 }
 
-// --- TASK ITEM COMPONENT (for To-Do List) with "Proof of Work" & "Need Help" ---
+// --- TASK ITEM COMPONENT ---
 const TaskItem = ({ task, onClick }: any) => {
   return (
     <button
@@ -111,7 +109,7 @@ const TaskItem = ({ task, onClick }: any) => {
           {task.text}
         </span>
         {task.suggestion && (
-          <p className="text-xs text-blue-600 flex items-center mt-1">
+          <p className="text-xs flex items-center mt-1" style={{ color: '#0000CC' }}>
             <MessageSquare className="h-3 w-3 mr-1" /> Suggestion from Brand
             Head
           </p>
@@ -194,10 +192,11 @@ const PersonalTaskModal = ({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all border-2" style={{ borderColor: '#0000CC' }}>
                 <Dialog.Title
                   as="h3"
                   className="text-2xl font-bold leading-8 text-gray-900 flex justify-between items-start"
+                  style={{ color: '#0000CC' }}
                 >
                   <div>
                     {task.text}
@@ -205,7 +204,7 @@ const PersonalTaskModal = ({
                       Task in progress...
                     </p>
                   </div>
-                  <div className="flex items-center space-x-2 p-2 bg-red-100 text-red-700 rounded-lg">
+                  <div className="flex items-center space-x-2 p-2 rounded-lg" style={{ backgroundColor: '#FFE6E6', color: '#DC2626' }}>
                     <Timer className="h-6 w-6" />
                     <span className="font-mono text-xl font-bold">
                       {formatTime(timeLeft)}
@@ -215,12 +214,12 @@ const PersonalTaskModal = ({
 
                 <div className="mt-4 space-y-4">
                   {task.suggestion && (
-                    <div className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-md">
-                      <h4 className="font-bold text-blue-800 flex items-center">
+                    <div className="p-4 rounded-r-md border-l-4" style={{ backgroundColor: '#F0F0FF', borderLeftColor: '#0000CC' }}>
+                      <h4 className="font-bold flex items-center" style={{ color: '#0000CC' }}>
                         <MessageSquare className="h-5 w-5 mr-2" />
                         Suggestion from Brand Head
                       </h4>
-                      <p className="mt-2 text-sm text-blue-700">
+                      <p className="mt-2 text-sm text-gray-700">
                         {task.suggestion.text}
                       </p>
                     </div>
@@ -239,7 +238,8 @@ const PersonalTaskModal = ({
                       value={workNotes}
                       onChange={(e) => setWorkNotes(e.target.value)}
                       placeholder="Add a link or notes to complete the task..."
-                      className="w-full mt-1 p-2 border rounded-md"
+                      className="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+                      style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
                     />
                   </div>
                 </div>
@@ -252,13 +252,15 @@ const PersonalTaskModal = ({
                           value={helpComment}
                           onChange={(e) => setHelpComment(e.target.value)}
                           placeholder="What's the issue?"
-                          className="p-2 border rounded-md text-sm w-64"
+                          className="p-2 border rounded-md text-sm w-64 focus:outline-none focus:ring-2 focus:border-transparent"
+                          style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
                           rows={3}
                         />
                         <button
                           onClick={handleSendHelp}
                           disabled={!helpComment}
-                          className="px-3 py-2 text-sm bg-red-600 text-white rounded-md disabled:bg-gray-300"
+                          className="px-3 py-2 text-sm text-white rounded-md disabled:bg-gray-300"
+                          style={{ backgroundColor: !helpComment ? '' : '#DC2626' }}
                         >
                           Send
                         </button>
@@ -272,7 +274,8 @@ const PersonalTaskModal = ({
                     ) : (
                       <button
                         onClick={() => setShowHelp(true)}
-                        className="flex items-center text-sm font-semibold text-gray-500 hover:text-red-600"
+                        className="flex items-center text-sm font-semibold text-gray-500 hover:opacity-80"
+                        style={{ '--hover-color': '#DC2626' } as React.CSSProperties}
                       >
                         <HelpCircle className="h-5 w-5 mr-2" /> Need Help?
                       </button>
@@ -281,7 +284,8 @@ const PersonalTaskModal = ({
                   <button
                     onClick={handleComplete}
                     disabled={!workNotes}
-                    className="px-4 py-2 flex items-center justify-center bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:bg-gray-300"
+                    className="px-4 py-2 flex items-center justify-center text-white font-semibold rounded-lg hover:opacity-90 disabled:bg-gray-300"
+                    style={{ backgroundColor: !workNotes ? '' : '#10B981' }}
                   >
                     <CheckCircle className="h-5 w-5 mr-2" /> Complete Task
                   </button>
@@ -298,7 +302,6 @@ const PersonalTaskModal = ({
 // --- THE MAIN DASHBOARD COMPONENT ---
 const WorkSection = () => {
   const [viewMode, setViewMode] = useState<"review" | "tasks">("review");
-  // --- NEW: State for live data ---
   const [allTasks, setAllTasks] = useState<TaskFromApi[]>([]);
   const [clients, setClients] = useState<ClientType[]>([]);
   const [selectedClient, setSelectedClient] = useState<ClientType | null>(null);
@@ -306,7 +309,6 @@ const WorkSection = () => {
     null
   );
 
-  // States for personal tasks (can be integrated later)
   const [personalTasks, setPersonalTasks] = useState<any[]>([]);
   const [activePersonalTask, setActivePersonalTask] = useState<any | null>(
     null
@@ -329,7 +331,6 @@ const WorkSection = () => {
 
         setAllTasks(tasksFromApi);
 
-        // Dynamically create client list from fetched data
         const uniqueClients = new Map<string, ClientType>();
         tasksFromApi.forEach((task) => {
           if (!uniqueClients.has(task.taskDetails.clientId)) {
@@ -346,7 +347,6 @@ const WorkSection = () => {
         const clientsArray = Array.from(uniqueClients.values());
         setClients(clientsArray);
 
-        // Set the first client as selected by default
         if (clientsArray.length > 0 && !selectedClient) {
           setSelectedClient(clientsArray[0]);
         }
@@ -357,11 +357,9 @@ const WorkSection = () => {
     fetchAndProcessData();
   }, [accessToken, dispatch, needsRefresh]);
 
-  // --- NEW: Memoized transformation of API data into calendar event format ---
   const reviewEvents = useMemo((): ReviewEventType[] => {
     return allTasks
       .map((task) => {
-        // For the calendar, we'll just show the first submission image
         const firstSubmission = task.designerSubmissions?.[0];
         if (!firstSubmission) return null;
 
@@ -372,7 +370,7 @@ const WorkSection = () => {
           start: new Date(task.taskDetails.date),
           status:
             ((task.taskDetails as any).status as ReviewStatus) ||
-            "pending_review", // Default to "pending_review" if status is missing
+            "pending_review",
           imageUrl: firstSubmission.imageUrl,
         };
       })
@@ -380,17 +378,13 @@ const WorkSection = () => {
   }, [allTasks]);
 
   useEffect(() => {
-    // This variable will hold our channel subscription
     let privateChannel: any;
 
-    // We need to get the user's ID to build the channel name
     const setupSubscription = async () => {
-      // const { data: { user } } = await supabase.auth.getUser();
       const userId = await api.designer.getUserId.get(accessToken, dispatch);
       console.log("userId", userId);
 
       if (userId) {
-        // 1. Construct the private channel name. MUST match the backend convention.
         const privateChannelName = `private-notifications-${userId.user_id}`;
         console.log(`👂 Subscribing to private channel: ${privateChannelName}`);
 
@@ -399,7 +393,7 @@ const WorkSection = () => {
         privateChannel
           .on(
             "broadcast",
-            { event: "designer_viewing_gf" }, // Listen for the specific event from the backend
+            { event: "designer_viewing_gf" },
             (payload: any) => {
               console.log(
                 "🎉 A new task was assigned specifically to me!",
@@ -408,7 +402,6 @@ const WorkSection = () => {
 
               alert("A new design task is ready for you!");
 
-              // 2. Trigger a data refresh to show the new task in the UI
               setNeedsRefresh((prev) => !prev);
             }
           )
@@ -425,27 +418,17 @@ const WorkSection = () => {
 
     setupSubscription();
 
-    // 3. The cleanup function is crucial to prevent memory leaks
     return () => {
       if (privateChannel) {
         supabase.removeChannel(privateChannel);
         console.log("Unsubscribed from private channel.");
       }
     };
-  }, []);
+  }, [accessToken, dispatch]);
 
   const filteredReviewEvents = reviewEvents.filter(
     (event) => event.clientId === selectedClient?.id
   );
-
-  // const filteredPersonalTasks = personalTasks
-  //   .filter((task) => task.clientId === selectedClient.id)
-  //   .sort((a, b) => {
-  //     const statusOrder = { todo: 1, help_requested: 2, done: 3 };
-  //     if (a.suggestion && !b.suggestion) return -1;
-  //     if (!a.suggestion && b.suggestion) return 1;
-  //     return statusOrder[a.status] - statusOrder[b.status];
-  //   });
 
   const handlePersonalTaskHelpRequest = (taskId: number, comment: string) => {
     setPersonalTasks((tasks) =>
@@ -460,25 +443,15 @@ const WorkSection = () => {
           : task
       )
     );
-    setActivePersonalTask(null); // Close modal
+    setActivePersonalTask(null);
     alert("Your help request has been sent to the Brand Head.");
   };
 
-  // const handleCompletePersonalTask = (taskId: number, workNotes: string) => {
-  //   console.log(`Task ${taskId} completed with notes: ${workNotes}`);
-  //   setPersonalTasks((tasks) =>
-  //     tasks.map((task) =>
-  //       task.id === taskId ? { ...task, status: "done" } : task
-  //     )
-  //   );
-  //   setActivePersonalTask(null); // Close modal
-  // };
-
-  // --- Functions for Review Calendar ---
-
+  // --- CALENDAR FUNCTIONS ---
   const [currentDate, setCurrentDate] = useState(new Date(2025, 6, 1));
   const [reviewEvent, setReviewEvent] = useState<ReviewEventType | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
   const openReviewModal = (event: ReviewEventType) => {
     const fullTaskData = allTasks.find(
       (task) => task.taskDetails.id === event.id
@@ -493,9 +466,8 @@ const WorkSection = () => {
     setIsReviewModalOpen(false);
     setTimeout(() => setActiveReviewTask(null), 300);
   };
-  const handleMarkAsDone = async (taskId: string) => {
-    // FIX: This should make an API call and then refresh the data
 
+  const handleMarkAsDone = async (taskId: string) => {
     try {
       const result = await api.digitalMarketer.ApproveTheDesign.post(
         accessToken,
@@ -517,9 +489,9 @@ const WorkSection = () => {
       alert("There was an error approving the task. Please try again.");
     }
   };
+
   const handleReworkSubmit = async (taskId: string, comment: string) => {
     if (!comment) return;
-    // FIX: This should make an API call and then refresh the data
 
     try {
       await api.digitalMarketer.RequestRework.post(
@@ -530,7 +502,6 @@ const WorkSection = () => {
       );
       alert("Rework request has been sent to the designer.");
 
-      // Refresh data to remove the task from your queue
       setNeedsRefresh((prev) => !prev);
       closeReviewModal();
     } catch (error) {
@@ -541,9 +512,9 @@ const WorkSection = () => {
 
   // --- SUB-COMPONENTS ---
   const ClientSelector = () => (
-    <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="p-6 bg-white rounded-lg shadow-sm border-l-4" style={{ borderLeftColor: '#0000CC' }}>
       <div className="flex items-center mb-4">
-        <Users className="h-6 w-6 text-gray-500 mr-3" />
+        <Users className="h-6 w-6 mr-3" style={{ color: '#0000CC' }} />
         <h2 className="text-xl font-bold text-gray-800">
           Client Work: {selectedClient?.name}
         </h2>
@@ -555,9 +526,17 @@ const WorkSection = () => {
             onClick={() => setSelectedClient(client)}
             className={`flex-shrink-0 flex items-center space-x-2 px-3 py-1.5 rounded-full border-2 transition-all duration-200 ${
               selectedClient?.id === client.id
-                ? "bg-blue-600 border-blue-600 text-white shadow-md"
-                : "bg-white border-gray-200 text-gray-600 hover:border-blue-500 hover:bg-blue-50"
+                ? "text-white shadow-md"
+                : "bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
             }`}
+            style={
+              selectedClient?.id === client.id
+                ? {
+                    backgroundColor: '#0000CC',
+                    borderColor: '#0000CC',
+                  }
+                : {}
+            }
           >
             <img
               src={client.avatarUrl}
@@ -578,6 +557,7 @@ const WorkSection = () => {
     const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
     const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const days = Array.from({ length: 35 }, (_, i) => addDays(startDate, i));
+
     const getStatusStyles = (status: ReviewEventType["status"]) => {
       switch (status) {
         case "pending_review":
@@ -586,12 +566,15 @@ const WorkSection = () => {
           return "ring-pink-500";
         case "completed":
           return "ring-green-500";
+        default:
+          return "ring-gray-500";
       }
     };
+
     return (
-      <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200 flex-grow flex flex-col">
+      <div className="p-6 bg-white rounded-lg shadow-sm border-l-4 flex-grow flex flex-col" style={{ borderLeftColor: '#0000CC' }}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold" style={{ color: '#0000CC' }}>
             {format(currentDate, "MMMM yyyy")}
           </h2>
           <div className="flex items-center space-x-2">
@@ -603,7 +586,8 @@ const WorkSection = () => {
             </button>
             <button
               onClick={() => setCurrentDate(new Date())}
-              className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:border-transparent transition-colors"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
             >
               Today
             </button>
@@ -616,6 +600,11 @@ const WorkSection = () => {
           </div>
         </div>
         <div className="grid grid-cols-7 grid-rows-5 gap-px flex-grow bg-gray-200 border-t border-l border-gray-200">
+          {weekdays.map((day) => (
+            <div key={day} className="p-1 text-center bg-white text-sm font-semibold text-gray-600">
+              {day}
+            </div>
+          ))}
           {days.map((day, index) => {
             const dayEvents = filteredReviewEvents.filter((event) =>
               isSameDay(event.start, day)
@@ -630,11 +619,16 @@ const WorkSection = () => {
                 <span
                   className={`text-sm font-medium mb-1 ${
                     isSameDay(day, new Date())
-                      ? "text-blue-600"
+                      ? "font-bold"
                       : isSameMonth(day, monthStart)
                       ? "text-gray-800"
                       : "text-gray-400"
                   }`}
+                  style={
+                    isSameDay(day, new Date())
+                      ? { color: '#0000CC' }
+                      : {}
+                  }
                 >
                   {format(day, "d")}
                 </span>
@@ -662,7 +656,8 @@ const WorkSection = () => {
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <button
                           onClick={() => openReviewModal(event)}
-                          className="flex items-center text-white text-sm font-semibold bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm hover:bg-white/30"
+                          className="flex items-center text-white text-sm font-semibold px-3 py-1 rounded-full backdrop-blur-sm hover:bg-white/30"
+                          style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
                         >
                           <Eye className="h-4 w-4 mr-1.5" />
                           Review
@@ -680,30 +675,23 @@ const WorkSection = () => {
   };
 
   const MyTasksView = () => (
-    <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="p-6 bg-white rounded-lg shadow-sm border-l-4" style={{ borderLeftColor: '#0000CC' }}>
       <h2 className="text-2xl font-bold text-gray-900 mb-4">
         My Tasks for {selectedClient?.name}
       </h2>
       <div className="space-y-3">
-        {/* {filteredPersonalTasks.map((task) => (
-          <TaskItem key={task.id} task={task} onClick={setActivePersonalTask} />
-        ))} */}
+        {/* Tasks would be rendered here */}
       </div>
     </div>
   );
-
-  // This sub-component goes inside your main WorkSection component
 
   const ReviewModal = () => {
     const [reworkCommentInput, setReworkCommentInput] = useState("");
     const [showReworkInput, setShowReworkInput] = useState(false);
 
-    // The active task is the single source of truth for this modal
     const taskData = activeReviewTask;
-    // Get the first submission for display. Handle cases with multiple submissions if needed.
     const submissionData = taskData?.designerSubmissions?.[0];
 
-    // Reset local state when the active task changes (e.g., when modal opens)
     useEffect(() => {
       if (taskData) {
         setShowReworkInput(false);
@@ -711,15 +699,14 @@ const WorkSection = () => {
       }
     }, [taskData]);
 
-    // If there's no active task, the modal shouldn't render at all.
     if (!taskData || !submissionData) {
       return null;
     }
 
-    // --- Handlers now correctly reference the taskData from the active task ---
     const handleSubmitRework = () => {
       handleReworkSubmit(taskData.taskDetails.id, reworkCommentInput);
     };
+
     const handleDone = () => {
       handleMarkAsDone(taskData.taskDetails.id);
     };
@@ -757,7 +744,7 @@ const WorkSection = () => {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-6xl transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-6xl transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all border-2" style={{ borderColor: '#0000CC' }}>
                   <div className="grid grid-cols-1 md:grid-cols-3">
                     <div className="md:col-span-2 bg-gray-900 flex items-center justify-center p-4">
                       <img
@@ -770,7 +757,7 @@ const WorkSection = () => {
                       <div className="flex-grow">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="text-2xl font-bold text-gray-900">
+                            <h3 className="text-2xl font-bold" style={{ color: '#0000CC' }}>
                               {taskData.taskDetails.campaignTitle}
                             </h3>
                             <p className="text-sm text-gray-500">
@@ -804,7 +791,8 @@ const WorkSection = () => {
                               <p className="text-xs text-gray-500">Platform</p>
                               <a
                                 href="#"
-                                className="font-semibold text-blue-600 hover:underline"
+                                className="font-semibold hover:underline"
+                                style={{ color: '#0000CC' }}
                               >
                                 {taskData.taskDetails.platform}
                               </a>
@@ -829,7 +817,8 @@ const WorkSection = () => {
                             {taskData.taskDetails.hashtags.map((tag) => (
                               <span
                                 key={tag}
-                                className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full"
+                                className="px-2 py-1 text-xs font-semibold rounded-full"
+                                style={{ backgroundColor: '#F0F0FF', color: '#0000CC' }}
                               >
                                 {tag}
                               </span>
@@ -854,13 +843,15 @@ const WorkSection = () => {
                               onChange={(e) =>
                                 setReworkCommentInput(e.target.value)
                               }
-                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500"
+                              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+                              style={{ '--tw-ring-color': '#EC4899' } as React.CSSProperties}
                               placeholder="e.g., Please make the logo bigger..."
                             />
                             <button
                               onClick={handleSubmitRework}
                               disabled={!reworkCommentInput}
-                              className="w-full mt-2 py-3 flex items-center justify-center bg-pink-600 text-white rounded-md font-semibold hover:bg-pink-700 disabled:bg-gray-300"
+                              className="w-full mt-2 py-3 flex items-center justify-center text-white rounded-md font-semibold hover:opacity-90 disabled:bg-gray-300"
+                              style={{ backgroundColor: !reworkCommentInput ? '' : '#EC4899' }}
                             >
                               <MessageSquare className="h-5 w-5 mr-2" /> Submit
                               Rework Request
@@ -876,7 +867,8 @@ const WorkSection = () => {
                             </button>
                             <button
                               onClick={handleDone}
-                              className="w-full py-3 flex items-center justify-center bg-green-600 text-white rounded-md font-semibold hover:bg-green-700"
+                              className="w-full py-3 flex items-center justify-center text-white rounded-md font-semibold hover:opacity-90"
+                              style={{ backgroundColor: '#10B981' }}
                             >
                               <CheckCircle className="h-5 w-5 mr-2" /> Done
                             </button>
@@ -911,9 +903,14 @@ const WorkSection = () => {
             onClick={() => setViewMode("review")}
             className={`w-full flex items-center justify-center py-2.5 rounded-md font-semibold transition-all ${
               viewMode === "review"
-                ? "bg-white shadow text-blue-600"
+                ? "bg-white shadow"
                 : "text-gray-600"
             }`}
+            style={
+              viewMode === "review"
+                ? { color: '#0000CC' }
+                : {}
+            }
           >
             <Calendar className="h-5 w-5 mr-2" />
             Creatives
@@ -922,9 +919,14 @@ const WorkSection = () => {
             onClick={() => setViewMode("tasks")}
             className={`w-full flex items-center justify-center py-2.5 rounded-md font-semibold transition-all ${
               viewMode === "tasks"
-                ? "bg-white shadow text-blue-600"
+                ? "bg-white shadow"
                 : "text-gray-600"
             }`}
+            style={
+              viewMode === "tasks"
+                ? { color: '#0000CC' }
+                : {}
+            }
           >
             <ListChecks className="h-5 w-5 mr-2" />
             Tasks
@@ -938,7 +940,6 @@ const WorkSection = () => {
         <PersonalTaskModal
           task={activePersonalTask}
           onClose={() => setActivePersonalTask(null)}
-          // onComplete={handleCompletePersonalTask}
           onHelpRequest={handlePersonalTaskHelpRequest}
         />
       )}

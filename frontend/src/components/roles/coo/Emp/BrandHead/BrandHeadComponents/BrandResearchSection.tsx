@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
     TrendingUp, 
     Users, 
@@ -13,7 +12,6 @@ import {
     ArrowUp,
     ArrowDown,
     MapPin,
-    Heart,
     Instagram,
     Linkedin,
     Twitter,
@@ -63,11 +61,11 @@ const audienceInsights = {
 
 // --- REUSABLE COMPONENTS (ENHANCED) ---
 const StatCard = ({ title, value, icon: Icon, change, positive }: any) => (
-  <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col justify-between">
+  <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 hover:shadow-md transition-shadow" style={{ borderLeftColor: '#0000CC' }}>
     <div className="flex items-start justify-between">
         <div className="flex items-center">
-            <div className="p-3 bg-blue-100 rounded-full">
-                <Icon className="h-6 w-6 text-blue-600" />
+            <div className="p-3 rounded-full" style={{ backgroundColor: '#F0F0FF' }}>
+                <Icon className="h-6 w-6" style={{ color: '#0000CC' }} />
             </div>
             <p className="text-sm font-medium text-gray-500 ml-4">{title}</p>
         </div>
@@ -83,7 +81,7 @@ const StatCard = ({ title, value, icon: Icon, change, positive }: any) => (
 );
 
 const CompetitorCard = ({ name, strength, weakness }: any) => (
-    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
         <h4 className="font-bold text-gray-800">{name}</h4>
         <div className="mt-3 space-y-2 text-sm">
             <div className="flex items-start">
@@ -131,12 +129,13 @@ const SentimentChart = ({ data }: any) => {
     );
 };
 
-
 // --- THE MAIN DASHBOARD COMPONENT ---
 const BrandResearchSection = () => {
   return (
-    <div className="p-1 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Brand R&D Dashboard</h1>
+    <div className="p-8 bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-bold mb-6" style={{ color: '#0000CC' }}>
+        Brand R&D Dashboard
+      </h1>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -150,8 +149,11 @@ const BrandResearchSection = () => {
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-8">
             {/* Competitor Analysis */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center"><BarChart2 className="mr-2"/>Competitor Analysis</h2>
+            <div className="bg-white p-6 rounded-lg shadow-sm border-l-4" style={{ borderLeftColor: '#0000CC' }}>
+                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <BarChart2 className="mr-2" style={{ color: '#0000CC' }}/>
+                    Competitor Analysis
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {competitors.map((comp) => (
                         <CompetitorCard key={comp.name} name={comp.name} strength={comp.strength} weakness={comp.weakness} />
@@ -159,22 +161,28 @@ const BrandResearchSection = () => {
                 </div>
             </div>
             {/* Sentiment Analysis */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center"><MessageSquare className="mr-2"/>Brand Sentiment Breakdown</h2>
+            <div className="bg-white p-6 rounded-lg shadow-sm border-l-4" style={{ borderLeftColor: '#0000CC' }}>
+                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <MessageSquare className="mr-2" style={{ color: '#0000CC' }}/>
+                    Brand Sentiment Breakdown
+                </h2>
                 <SentimentChart data={sentimentData} />
             </div>
         </div>
 
-        {/* Right Column (REDESIGNED) */}
+        {/* Right Column */}
         <div className="space-y-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center"><Users className="mr-2"/>Audience Insights</h2>
+          <div className="bg-white p-6 rounded-lg shadow-sm border-l-4" style={{ borderLeftColor: '#0000CC' }}>
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <Users className="mr-2" style={{ color: '#0000CC' }}/>
+                Audience Insights
+            </h2>
             <div className="space-y-4">
-                <div className="flex items-center bg-gray-50 p-3 rounded-md">
+                <div className="flex items-center bg-gray-50 p-3 rounded-md border">
                     <Users2 className="h-5 w-5 text-gray-500 mr-3"/>
                     <p className="text-sm"><strong className="font-semibold text-gray-700">Age Group:</strong> {audienceInsights.age}</p>
                 </div>
-                <div className="flex items-center bg-gray-50 p-3 rounded-md">
+                <div className="flex items-center bg-gray-50 p-3 rounded-md border">
                     <MapPin className="h-5 w-5 text-gray-500 mr-3"/>
                     <p className="text-sm"><strong className="font-semibold text-gray-700">Location:</strong> {audienceInsights.location}</p>
                 </div>
@@ -182,7 +190,13 @@ const BrandResearchSection = () => {
                     <h4 className="font-semibold text-gray-700 text-sm mb-2">Top Interests</h4>
                     <div className="flex flex-wrap gap-2">
                         {audienceInsights.interests.map(interest => (
-                            <span key={interest} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full">{interest}</span>
+                            <span 
+                                key={interest} 
+                                className="px-2 py-1 text-white text-xs font-semibold rounded-full"
+                                style={{ backgroundColor: '#F0F0FF', color: '#0000CC', border: '1px solid #0000CC' }}
+                            >
+                                {interest}
+                            </span>
                         ))}
                     </div>
                 </div>
@@ -199,12 +213,15 @@ const BrandResearchSection = () => {
                 </div>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center"><Search className="mr-2"/>Market Trends</h2>
+          <div className="bg-white p-6 rounded-lg shadow-sm border-l-4" style={{ borderLeftColor: '#0000CC' }}>
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <Search className="mr-2" style={{ color: '#0000CC' }}/>
+                Market Trends
+            </h2>
             <div className="space-y-3">
               {marketTrends.map(({text, icon: Icon}, index) => 
-                <div key={index} className="flex items-start bg-gray-50 p-3 rounded-md">
-                    <Icon className="h-5 w-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0"/>
+                <div key={index} className="flex items-start bg-gray-50 p-3 rounded-md border">
+                    <Icon className="h-5 w-5 mr-3 mt-0.5 flex-shrink-0" style={{ color: '#0000CC' }}/>
                     <div>
                         <p className="text-sm font-medium text-gray-800">{text}</p>
                         <span className="text-xs font-semibold text-green-600">Rising Trend</span>

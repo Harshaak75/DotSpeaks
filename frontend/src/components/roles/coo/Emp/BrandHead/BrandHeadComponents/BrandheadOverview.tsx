@@ -1,26 +1,17 @@
-import React, { useState, Fragment, useEffect } from "react";
+import { useState, Fragment, useEffect } from "react";
 import {
   Briefcase,
-  User,
-  Users,
   ChevronDown,
   FileText,
   Paintbrush,
-  Mic,
   CheckCircle,
-  AlertTriangle,
   X,
   Gem,
-  Zap,
-  Rocket,
-  Crown,
-  Star,
   Shield,
   MessageSquare,
   Send,
   Inbox,
   TrendingDown,
-  BarChart2,
   Eye,
 } from "lucide-react";
 import { Dialog, Transition } from "@headlessui/react";
@@ -58,12 +49,12 @@ interface Request {
   role: string;
   task: string;
   client: string;
-  details: string; // This is the help request message
+  details: string;
   taskDetails: {
     id: string;
     campaignTitle: string;
     date: string;
-    content: string; // marketerGuide
+    content: string;
     hashtags: string[];
     objective: string;
     visual: string;
@@ -82,8 +73,6 @@ interface PerformanceReview {
   performanceScore: number;
   feedback: string[];
 }
-
-// for now we are using it, i future we get it from the backend
 
 const brandInfo: any = {
   SCALE: {
@@ -111,13 +100,13 @@ const brandHeadData = {
           {
             id: "emp-1",
             name: "Rohan Sharma",
-            role: "Digital Marketer",
+            role: "Digital Marketer" as Role,
             avatarUrl: "https://placehold.co/100x100/E9D5FF/7C3AED?text=RS",
           },
           {
             id: "emp-2",
             name: "Priya Patel",
-            role: "Graphics Designer",
+            role: "Graphics Designer" as Role,
             avatarUrl: "https://placehold.co/100x100/FECACA/DC2626?text=PP",
           },
         ],
@@ -132,13 +121,13 @@ const brandHeadData = {
           {
             id: "emp-4",
             name: "Sneha Reddy",
-            role: "Digital Marketer",
+            role: "Digital Marketer" as Role,
             avatarUrl: "https://placehold.co/100x100/E9D5FF/7C3AED?text=SR",
           },
           {
             id: "emp-5",
             name: "Vikram Kumar",
-            role: "Graphics Designer",
+            role: "Graphics Designer" as Role,
             avatarUrl: "https://placehold.co/100x100/FECACA/DC2626?text=VK",
           },
         ],
@@ -178,7 +167,7 @@ const brandHeadData = {
     {
       id: "perf-1",
       name: "Vikram Kumar",
-      role: "Graphics Designer",
+      role: "Graphics Designer" as Role,
       avatarUrl: "https://placehold.co/100x100/FECACA/DC2626?text=VK",
       performanceScore: 68,
       feedback: [
@@ -189,7 +178,7 @@ const brandHeadData = {
     {
       id: "perf-2",
       name: "Rohan Sharma",
-      role: "Digital Marketer",
+      role: "Digital Marketer" as Role,
       avatarUrl: "https://placehold.co/100x100/E9D5FF/7C3AED?text=RS",
       performanceScore: 72,
       feedback: ["Ad campaign CPA was higher than projected."],
@@ -197,7 +186,7 @@ const brandHeadData = {
     {
       id: "perf-3",
       name: "Amit Singh",
-      role: "Content Strategist",
+      role: "Content Strategist" as Role,
       avatarUrl: "https://placehold.co/100x100/A7F3D0/059669?text=AS",
       performanceScore: 75,
       feedback: ["Blog post engagement is slightly below target."],
@@ -207,11 +196,9 @@ const brandHeadData = {
 
 // --- MODAL COMPONENTS ---
 const RequestModal = ({ isOpen, onClose, request, onRespond }: any) => {
-  if (!request) return null;
   const [responseText, setResponseText] = useState("");
 
   useEffect(() => {
-    // Clear the textarea when a new request is opened
     if (isOpen) {
       setResponseText("");
     }
@@ -249,12 +236,13 @@ const RequestModal = ({ isOpen, onClose, request, onRespond }: any) => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all border-2" style={{ borderColor: '#0000CC' }}>
                 <div className="flex justify-between items-start">
                   <div>
                     <Dialog.Title
                       as="h3"
-                      className="text-xl font-bold leading-6 text-gray-900"
+                      className="text-xl font-bold leading-6"
+                      style={{ color: '#0000CC' }}
                     >
                       Request: {request.taskDetails.campaignTitle}
                     </Dialog.Title>
@@ -271,7 +259,7 @@ const RequestModal = ({ isOpen, onClose, request, onRespond }: any) => {
                 </div>
 
                 <div className="mt-4 grid grid-cols-1 lg:grid-cols-5 gap-8 border-t pt-4">
-                  {/* --- LEFT COLUMN (REFERENCE INFO) --- */}
+                  {/* LEFT COLUMN */}
                   <div className="lg:col-span-3 space-y-4">
                     <h4 className="font-semibold text-gray-800">
                       Original Task Brief
@@ -291,7 +279,8 @@ const RequestModal = ({ isOpen, onClose, request, onRespond }: any) => {
                           {request.taskDetails.hashtags.map((tag: string) => (
                             <span
                               key={tag}
-                              className="px-2.5 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full"
+                              className="px-2.5 py-1 text-white text-xs font-bold rounded-full"
+                              style={{ backgroundColor: '#0000CC' }}
                             >
                               {tag}
                             </span>
@@ -304,9 +293,8 @@ const RequestModal = ({ isOpen, onClose, request, onRespond }: any) => {
                         Designer's Guide
                       </h5>
 
-                      {/* Objective */}
                       <div className="flex items-start">
-                        <Briefcase className="h-5 w-5 text-indigo-500 mr-4 flex-shrink-0" />
+                        <Briefcase className="h-5 w-5 mr-4 flex-shrink-0" style={{ color: '#0000CC' }} />
                         <div>
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                             Objective
@@ -317,9 +305,8 @@ const RequestModal = ({ isOpen, onClose, request, onRespond }: any) => {
                         </div>
                       </div>
 
-                      {/* Visual */}
                       <div className="flex items-start">
-                        <Eye className="h-5 w-5 text-indigo-500 mr-4 flex-shrink-0" />
+                        <Eye className="h-5 w-5 mr-4 flex-shrink-0" style={{ color: '#0000CC' }} />
                         <div>
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                             Visual
@@ -330,9 +317,8 @@ const RequestModal = ({ isOpen, onClose, request, onRespond }: any) => {
                         </div>
                       </div>
 
-                      {/* Headline */}
                       <div className="flex items-start">
-                        <FileText className="h-5 w-5 text-indigo-500 mr-4 flex-shrink-0" />
+                        <FileText className="h-5 w-5 mr-4 flex-shrink-0" style={{ color: '#0000CC' }} />
                         <div>
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                             Headline
@@ -343,9 +329,8 @@ const RequestModal = ({ isOpen, onClose, request, onRespond }: any) => {
                         </div>
                       </div>
 
-                      {/* Message */}
                       <div className="flex items-start">
-                        <MessageSquare className="h-5 w-5 text-indigo-500 mr-4 flex-shrink-0" />
+                        <MessageSquare className="h-5 w-5 mr-4 flex-shrink-0" style={{ color: '#0000CC' }} />
                         <div>
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                             Message
@@ -356,9 +341,8 @@ const RequestModal = ({ isOpen, onClose, request, onRespond }: any) => {
                         </div>
                       </div>
 
-                      {/* CTA */}
                       <div className="flex items-start">
-                        <Send className="h-5 w-5 text-indigo-500 mr-4 flex-shrink-0" />
+                        <Send className="h-5 w-5 mr-4 flex-shrink-0" style={{ color: '#0000CC' }} />
                         <div>
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                             CTA (Call to Action)
@@ -369,9 +353,8 @@ const RequestModal = ({ isOpen, onClose, request, onRespond }: any) => {
                         </div>
                       </div>
 
-                      {/* Branding */}
                       <div className="flex items-start">
-                        <Paintbrush className="h-5 w-5 text-indigo-500 mr-4 flex-shrink-0" />
+                        <Paintbrush className="h-5 w-5 mr-4 flex-shrink-0" style={{ color: '#0000CC' }} />
                         <div>
                           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                             Branding
@@ -384,7 +367,7 @@ const RequestModal = ({ isOpen, onClose, request, onRespond }: any) => {
                     </div>
                   </div>
 
-                  {/* --- RIGHT COLUMN (ACTION PANEL) --- */}
+                  {/* RIGHT COLUMN */}
                   <div className="lg:col-span-2 flex flex-col">
                     <div className="flex-grow space-y-4">
                       <div>
@@ -403,7 +386,8 @@ const RequestModal = ({ isOpen, onClose, request, onRespond }: any) => {
                           value={responseText}
                           onChange={(e) => setResponseText(e.target.value)}
                           placeholder="Provide a clear suggestion or answer..."
-                          className="w-full p-2 border rounded-md"
+                          className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+                          style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
                           rows={8}
                         />
                       </div>
@@ -418,7 +402,8 @@ const RequestModal = ({ isOpen, onClose, request, onRespond }: any) => {
                       <button
                         onClick={handleSend}
                         disabled={!responseText.trim()}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                        className="px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:bg-gray-400"
+                        style={!responseText.trim() ? {} : { backgroundColor: '#0000CC' }}
                       >
                         Send Response
                       </button>
@@ -461,10 +446,11 @@ const FeedbackModal = ({ isOpen, onClose, review }: any) => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all border-2" style={{ borderColor: '#0000CC' }}>
                 <Dialog.Title
                   as="h3"
-                  className="text-lg font-bold leading-6 text-gray-900"
+                  className="text-lg font-bold leading-6"
+                  style={{ color: '#0000CC' }}
                 >
                   Feedback for {review.name}
                 </Dialog.Title>
@@ -481,7 +467,8 @@ const FeedbackModal = ({ isOpen, onClose, review }: any) => {
                 <div className="mt-4">
                   <textarea
                     placeholder="Add your feedback or schedule a meeting..."
-                    className="w-full p-2 border rounded-md"
+                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+                    style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
                     rows={3}
                   />
                 </div>
@@ -494,7 +481,8 @@ const FeedbackModal = ({ isOpen, onClose, review }: any) => {
                   </button>
                   <button
                     onClick={onClose}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="px-4 py-2 text-white rounded-lg hover:opacity-90"
+                    style={{ backgroundColor: '#0000CC' }}
                   >
                     Submit Feedback
                   </button>
@@ -519,7 +507,6 @@ const BrandheadOverview = () => {
   const profile = useSelector((state: RootState) => state.profile) as {
     name: string;
     PackageName: string;
-    // add other properties as needed
   };
 
   const [requests, setRequests] = useState<Request[]>([]);
@@ -564,8 +551,6 @@ const BrandheadOverview = () => {
       privateChannel
         .on("broadcast", { event: "new_help_ticket" }, (payload: any) => {
           console.log("🎟️ New help ticket received in real-time!", payload);
-
-          // The simplest and most reliable way to update is to refetch the list
           setNeedsRefresh((prev) => !prev);
         })
         .subscribe();
@@ -589,8 +574,8 @@ const BrandheadOverview = () => {
         response
       );
       alert("Response sent successfully!");
-      setActiveRequest(null); // Close the modal
-      setNeedsRefresh((prev) => !prev); // Refresh the ticket list
+      setActiveRequest(null);
+      setNeedsRefresh((prev) => !prev);
     } catch (error) {
       console.error("Failed to send response:", error);
       alert("Error: Could not send response.");
@@ -611,7 +596,6 @@ const BrandheadOverview = () => {
     switch (activeView) {
       case "requests":
         if (isLoading) return <p>Loading requests...</p>;
-        // --- MODIFIED: Use the `requests` state variable ---
         return (
           <div className="space-y-3">
             {requests.length === 0 ? (
@@ -620,7 +604,7 @@ const BrandheadOverview = () => {
               requests.map((req) => (
                 <div
                   key={req.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:border-gray-300 transition-colors"
                 >
                   <div>
                     <p className="font-semibold text-gray-800">
@@ -635,7 +619,8 @@ const BrandheadOverview = () => {
                   </div>
                   <button
                     onClick={() => setActiveRequest(req)}
-                    className="px-3 py-1 text-sm bg-blue-100 text-blue-700 font-semibold rounded-full hover:bg-blue-200"
+                    className="px-3 py-1 text-sm text-white font-semibold rounded-full hover:opacity-90"
+                    style={{ backgroundColor: '#0000CC' }}
                   >
                     Open
                   </button>
@@ -747,18 +732,18 @@ const BrandheadOverview = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold" style={{ color: '#0000CC' }}>
             Brand Head Dashboard
           </h1>
           <p className="text-gray-500">Welcome back, {profile.name}</p>
         </div>
-        <div className="p-4 rounded-lg bg-blue-600 text-white shadow-lg flex items-center">
+        <div className="p-4 rounded-lg text-white shadow-lg flex items-center" style={{ backgroundColor: '#0000CC' }}>
           <div className="p-2 rounded-full bg-white/20">
             {brandInfo[profile.PackageName]?.icon}
           </div>
           <div className="ml-4">
             <p className="font-bold text-lg">{profile.PackageName} Package</p>
-            <p className="text-xs text-blue-200">
+            <p className="text-xs" style={{ color: '#E6E6FF' }}>
               {brandInfo[profile.PackageName]?.description}
             </p>
           </div>
@@ -766,7 +751,7 @@ const BrandheadOverview = () => {
       </div>
 
       {/* Main Content */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
+      <div className="bg-white p-6 rounded-lg shadow-sm border-l-4" style={{ borderLeftColor: '#0000CC' }}>
         <div className="border-b border-gray-200 mb-4">
           <nav className="-mb-px flex space-x-6" aria-label="Tabs">
             {views.map((view) => (
@@ -775,14 +760,14 @@ const BrandheadOverview = () => {
                 onClick={() => setActiveView(view.id)}
                 className={`flex items-center whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeView === view.id
-                    ? "border-blue-500 text-blue-600"
+                    ? "text-gray-900"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
+                style={activeView === view.id ? { borderBottomColor: '#0000CC', color: '#0000CC' } : {}}
               >
                 <view.icon
-                  className={`mr-2 h-5 w-5 ${
-                    activeView === view.id ? "text-blue-500" : "text-gray-400"
-                  }`}
+                  className={`mr-2 h-5 w-5`}
+                  style={activeView === view.id ? { color: '#0000CC' } : { color: '#9CA3AF' }}
                 />
                 {view.label}
               </button>

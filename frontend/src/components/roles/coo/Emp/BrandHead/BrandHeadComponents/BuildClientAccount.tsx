@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Building,
   Target,
@@ -14,7 +14,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../../../../../redux/store";
 import { api } from "../../../../../../utils/api/Employees/api";
 import ToastNotification from "../../../../../ToastMessageComp";
-// import { api } from '../../../../../../utils/api';
 
 // --- HELPER COMPONENTS ---
 const StepIndicator = ({ currentStep, steps }: any) => (
@@ -23,7 +22,7 @@ const StepIndicator = ({ currentStep, steps }: any) => (
       {steps.map((step: any, index: any) => (
         <li key={step.name}>
           {index < currentStep ? (
-            <div className="flex items-center text-green-600">
+            <div className="flex items-center" style={{ color: '#10B981' }}>
               <CheckCircle className="h-6 w-6" />
               <span className="ml-2 text-sm font-medium hidden md:block">
                 {step.name}
@@ -31,12 +30,13 @@ const StepIndicator = ({ currentStep, steps }: any) => (
             </div>
           ) : index === currentStep ? (
             <div
-              className="flex items-center text-blue-600"
+              className="flex items-center"
+              style={{ color: '#0000CC' }}
               aria-current="step"
             >
               <span className="relative flex h-6 w-6 items-center justify-center">
-                <span className="absolute h-6 w-6 rounded-full bg-blue-200"></span>
-                <span className="relative block h-3 w-3 rounded-full bg-blue-600"></span>
+                <span className="absolute h-6 w-6 rounded-full" style={{ backgroundColor: '#E6E6FF' }}></span>
+                <span className="relative block h-3 w-3 rounded-full" style={{ backgroundColor: '#0000CC' }}></span>
               </span>
               <span className="ml-2 text-sm font-medium hidden md:block">
                 {step.name}
@@ -71,7 +71,8 @@ const CheckboxGroup = ({ title, options, checkedOptions, onChange }: any) => (
             type="checkbox"
             checked={checkedOptions[option] || false}
             onChange={() => onChange(option)}
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="h-4 w-4 rounded border-gray-300 focus:ring-2 focus:border-transparent"
+            style={{ accentColor: '#0000CC' }}
           />
           <span className="text-sm text-gray-700">{option}</span>
         </label>
@@ -83,7 +84,6 @@ const CheckboxGroup = ({ title, options, checkedOptions, onChange }: any) => (
 // --- MAIN COMPONENT ---
 const ClientOnboardingForm = () => {
   const initialFormData = {
-    // Step 1: Company & Contact
     companyName: "",
     yearOfEstablishment: "",
     about: "",
@@ -94,17 +94,13 @@ const ClientOnboardingForm = () => {
     positionTitle: "",
     emailAddress: "",
     contactNumber: "",
-    // Step 2: Goals & Audience
     marketingGoals: {},
     timeline: "",
     targetAudience: "",
-    // Step 3: Current Marketing
     currentMarketingActivities: {},
-    socialMediaAccounts: {}, // Links removed
-    // Step 4: Challenges & Competitors
+    socialMediaAccounts: {},
     currentChallenges: "",
     competitors: [] as string[],
-    // Step 5: Package
     selectedPackage: "",
   };
 
@@ -116,11 +112,11 @@ const ClientOnboardingForm = () => {
   const dispatch = useDispatch();
   const [loading, setloading] = useState(false);
 
-   const [toast, setToast] = useState({
-        show: false,
-        message: "",
-        type: "info",
-      });
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "info",
+  });
 
   const steps = [
     { name: "Company Info", icon: Building },
@@ -180,26 +176,24 @@ const ClientOnboardingForm = () => {
     }));
   };
 
-  // ✅ NEW: Validation function to check if the current step is complete
   const isStepValid = () => {
     switch (currentStep) {
-      case 0: // Company Info
+      case 0:
         return (
           formData.companyName.trim() !== "" &&
           formData.websiteUrl.trim() !== "" &&
           formData.primaryContactPerson.trim() !== "" &&
           formData.emailAddress.trim() !== ""
         );
-      case 1: // Goals & Audience
-        // Ensures at least one marketing goal is checked
+      case 1:
         return (
           Object.values(formData.marketingGoals).some((v) => v) &&
           formData.targetAudience.trim() !== ""
         );
-      case 2: // Current Marketing - Optional
-      case 3: // Challenges - Optional
+      case 2:
+      case 3:
         return true;
-      case 4: // Package
+      case 4:
         return formData.selectedPackage !== "";
       default:
         return false;
@@ -208,7 +202,6 @@ const ClientOnboardingForm = () => {
 
   const [currentCompetitor, setCurrentCompetitor] = useState("");
 
-  // ✅ MODIFIED: handleSubmit now sends data to the backend
   const handleSubmit = async () => {
     if (!isStepValid()) {
       setToast({
@@ -223,7 +216,6 @@ const ClientOnboardingForm = () => {
 
     try {
       setloading(true)
-      // await api.onboarding.createClient.post(accessToken, dispatch, formData);
       api.BrandHead.BuildClientAccount.post(accessToken, dispatch, formData);
       setToast({
         show: true,
@@ -247,20 +239,18 @@ const ClientOnboardingForm = () => {
     }
   };
 
-    if (loading)
+  if (loading)
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderBottomColor: '#0000CC' }}></div>
       </div>
     );
-
-  
 
   const handleCompetitorKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault(); // Prevent form submission on Enter
+      e.preventDefault();
       const newCompetitor = currentCompetitor.trim();
       if (newCompetitor && !formData.competitors.includes(newCompetitor)) {
         setFormData((prev: any) => ({
@@ -268,7 +258,7 @@ const ClientOnboardingForm = () => {
           competitors: [...prev.competitors, newCompetitor],
         }));
       }
-      setCurrentCompetitor(""); // Clear the input
+      setCurrentCompetitor("");
     }
   };
 
@@ -281,7 +271,7 @@ const ClientOnboardingForm = () => {
 
   const renderStepContent = () => {
     switch (currentStep) {
-      case 0: // Company & Contact
+      case 0:
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
@@ -289,21 +279,24 @@ const ClientOnboardingForm = () => {
               value={formData.companyName}
               onChange={handleInputChange}
               placeholder="Company Name *"
-              className="p-3 border rounded-lg"
+              className="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
             />
             <input
               name="yearOfEstablishment"
               value={formData.yearOfEstablishment}
               onChange={handleInputChange}
               placeholder="Year of Establishment"
-              className="p-3 border rounded-lg"
+              className="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
             />
             <textarea
               name="about"
               value={formData.about}
               onChange={handleInputChange}
               placeholder="About the Company"
-              className="md:col-span-2 p-3 border rounded-lg"
+              className="md:col-span-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
               rows={3}
             ></textarea>
             <input
@@ -311,21 +304,24 @@ const ClientOnboardingForm = () => {
               value={formData.websiteUrl}
               onChange={handleInputChange}
               placeholder="Website URL *"
-              className="p-3 border rounded-lg"
+              className="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
             />
             <input
               name="industry"
               value={formData.industry}
               onChange={handleInputChange}
               placeholder="Industry"
-              className="p-3 border rounded-lg"
+              className="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
             />
             <textarea
               name="keyProducts"
               value={formData.keyProducts}
               onChange={handleInputChange}
               placeholder="Key Products or Services"
-              className="md:col-span-2 p-3 border rounded-lg"
+              className="md:col-span-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
               rows={2}
             ></textarea>
             <input
@@ -333,14 +329,16 @@ const ClientOnboardingForm = () => {
               value={formData.primaryContactPerson}
               onChange={handleInputChange}
               placeholder="Primary Contact Person *"
-              className="p-3 border rounded-lg"
+              className="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
             />
             <input
               name="positionTitle"
               value={formData.positionTitle}
               onChange={handleInputChange}
               placeholder="Position / Title"
-              className="p-3 border rounded-lg"
+              className="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
             />
             <input
               name="emailAddress"
@@ -348,18 +346,20 @@ const ClientOnboardingForm = () => {
               value={formData.emailAddress}
               onChange={handleInputChange}
               placeholder="Email Address *"
-              className="p-3 border rounded-lg"
+              className="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
             />
             <input
               name="contactNumber"
               value={formData.contactNumber}
               onChange={handleInputChange}
               placeholder="Contact Number"
-              className="p-3 border rounded-lg"
+              className="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
             />
           </div>
         );
-      case 1: // Goals & Audience
+      case 1:
         return (
           <div className="space-y-4">
             <CheckboxGroup
@@ -375,19 +375,21 @@ const ClientOnboardingForm = () => {
               value={formData.timeline}
               onChange={handleInputChange}
               placeholder="Preferred timeline for seeing results?"
-              className="w-full p-3 border rounded-lg"
+              className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
             />
             <textarea
               name="targetAudience"
               value={formData.targetAudience}
               onChange={handleInputChange}
               placeholder="Describe your target audience (age, gender, etc.) *"
-              className="w-full p-3 border rounded-lg"
+              className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
               rows={4}
             ></textarea>
           </div>
         );
-      case 2: // Current Marketing
+      case 2:
         return (
           <div className="space-y-6">
             <CheckboxGroup
@@ -408,7 +410,7 @@ const ClientOnboardingForm = () => {
             />
           </div>
         );
-      case 3: // Challenges
+      case 3:
         return (
           <div className="space-y-6">
             <textarea
@@ -416,11 +418,11 @@ const ClientOnboardingForm = () => {
               value={formData.currentChallenges}
               onChange={handleInputChange}
               placeholder="What challenges are you currently facing with your marketing?"
-              className="w-full p-3 border rounded-lg"
+              className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
               rows={5}
             />
 
-            {/* ✅ NEW Tag-based input for competitors */}
             <div>
               <label className="text-sm font-medium text-gray-900">
                 Who are your main competitors?
@@ -428,11 +430,12 @@ const ClientOnboardingForm = () => {
               <p className="text-xs text-gray-500 mb-2">
                 Type a competitor and press Enter or Comma to add it as a tag.
               </p>
-              <div className="p-3 border rounded-lg flex flex-wrap gap-2 items-center">
+              <div className="p-3 border rounded-lg flex flex-wrap gap-2 items-center focus-within:ring-2 focus-within:ring-blue-500" style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}>
                 {formData.competitors.map((competitor: string) => (
                   <div
                     key={competitor}
-                    className="flex items-center bg-gray-200 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full"
+                    className="flex items-center text-gray-800 text-sm font-semibold px-3 py-1 rounded-full"
+                    style={{ backgroundColor: '#F0F0FF', borderColor: '#0000CC', border: '1px solid' }}
                   >
                     <span>{competitor}</span>
                     <button
@@ -459,7 +462,7 @@ const ClientOnboardingForm = () => {
             </div>
           </div>
         );
-      case 4: // Package
+      case 4:
         return (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-800 text-center">
@@ -477,9 +480,14 @@ const ClientOnboardingForm = () => {
                   }
                   className={`p-4 border-2 rounded-lg text-left transition-all ${
                     formData.selectedPackage === pkg.name
-                      ? "border-blue-600 bg-blue-50 ring-2 ring-blue-500"
+                      ? "ring-2"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
+                  style={formData.selectedPackage === pkg.name ? {
+                    borderColor: '#0000CC',
+                    backgroundColor: '#F0F0FF',
+                    '--tw-ring-color': '#0000CC'
+                  } as React.CSSProperties : {}}
                 >
                   <h4 className="font-bold text-gray-900">{pkg.name}</h4>
                   <p className="text-sm text-gray-600">{pkg.desc}</p>
@@ -505,7 +513,7 @@ const ClientOnboardingForm = () => {
           onClose={() => setToast({ ...toast, show: false })}
         />
       )}
-      <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">
+      <h1 className="text-3xl font-bold mb-2 text-center" style={{ color: '#0000CC' }}>
         Client Onboarding Form
       </h1>
       <p className="text-gray-600 text-center mb-8">
@@ -513,7 +521,7 @@ const ClientOnboardingForm = () => {
         business.
       </p>
 
-      <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200">
+      <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg border-l-4" style={{ borderLeftColor: '#0000CC' }}>
         <div className="mb-8">
           <StepIndicator currentStep={currentStep} steps={steps} />
         </div>
@@ -542,11 +550,14 @@ const ClientOnboardingForm = () => {
               isFinalStep ? handleSubmit() : setCurrentStep((s) => s + 1)
             }
             disabled={isSubmitting || !canProceed}
-            className={`px-6 py-2 text-white font-semibold rounded-lg transition-colors flex items-center justify-center min-w-[150px] ${
+            className={`px-6 py-2 text-white font-semibold rounded-lg transition-colors flex items-center justify-center min-w-[150px] disabled:bg-gray-400 disabled:cursor-not-allowed ${
               isFinalStep
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-blue-600 hover:bg-blue-700"
-            } disabled:bg-gray-400 disabled:cursor-not-allowed`}
+                ? "hover:opacity-90"
+                : "hover:opacity-90"
+            }`}
+            style={!isSubmitting && canProceed ? {
+              backgroundColor: isFinalStep ? '#10B981' : '#0000CC'
+            } : {}}
           >
             {isSubmitting ? (
               "Submitting..."

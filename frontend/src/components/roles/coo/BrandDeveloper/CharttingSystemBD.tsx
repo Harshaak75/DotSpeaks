@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Send, Users, MessageSquare, Search } from "lucide-react";
 import { io } from "socket.io-client";
 import { useDispatch, useSelector } from "react-redux";
@@ -38,8 +38,6 @@ interface Chat {
   timestamp?: Date;
 }
 
-type MockMessages = Record<string, Message[]>;
-
 // --- MOCK DATA (for demonstration) ---
 const MOCK_CURRENT_USER: User = {
   uid: "bd_raj_patel",
@@ -71,65 +69,6 @@ const MOCK_TEAM_MEMBERS: TeamMember[] = [
   },
 ];
 
-const MOCK_MESSAGES: MockMessages = {
-  group_bd_raj_patel: [
-    {
-      id: 1,
-      text: "Hi Team, please remember to update your lead statuses by EOD. Thanks!",
-      senderId: "bd_raj_patel",
-      senderName: "Raj Patel",
-      timestamp: new Date(Date.now() - 10 * 60000),
-    },
-    {
-      id: 2,
-      text: "Got it, Raj!",
-      senderId: "tc_sunita_sharma",
-      senderName: "Sunita Sharma",
-      timestamp: new Date(Date.now() - 9 * 60000),
-    },
-    {
-      id: 3,
-      text: "Will do.",
-      senderId: "tc_amit_kumar",
-      senderName: "Amit Kumar",
-      timestamp: new Date(Date.now() - 8 * 60000),
-    },
-  ],
-  bd_raj_patel_tc_sunita_sharma: [
-    {
-      id: 1,
-      text: "Hey Sunita, how are the follow-ups for the new campaign going?",
-      senderId: "bd_raj_patel",
-      senderName: "Raj Patel",
-      timestamp: new Date(Date.now() - 5 * 60000),
-    },
-    {
-      id: 2,
-      text: "Hi Raj, going well! I have three promising leads I'll be calling back this afternoon.",
-      senderId: "tc_sunita_sharma",
-      senderName: "Sunita Sharma",
-      timestamp: new Date(Date.now() - 4 * 60000),
-    },
-    {
-      id: 3,
-      text: "Excellent, keep me posted!",
-      senderId: "bd_raj_patel",
-      senderName: "Raj Patel",
-      timestamp: new Date(Date.now() - 3 * 60000),
-    },
-  ],
-  bd_raj_patel_tc_amit_kumar: [
-    {
-      id: 1,
-      text: "Amit, do you have the report for last week?",
-      senderId: "bd_raj_patel",
-      senderName: "Raj Patel",
-      timestamp: new Date(Date.now() - 2 * 60000),
-    },
-  ],
-  bd_raj_patel_tc_priya_singh: [], // No messages yet
-};
-
 // --- HELPER COMPONENTS ---
 
 const UserAvatar = ({
@@ -147,7 +86,8 @@ const UserAvatar = ({
   };
   return (
     <div
-      className={`rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold flex-shrink-0 ${sizeClasses[size]}`}
+      className={`rounded-full text-white flex items-center justify-center font-bold flex-shrink-0 ${sizeClasses[size]}`}
+      style={{ backgroundColor: '#0000CC' }}
     >
       {initial}
     </div>
@@ -177,11 +117,12 @@ const ChatListItem = ({
     <button
       onClick={onClick}
       className={`w-full text-left p-3 flex items-center rounded-lg transition-colors duration-200 ${
-        isSelected ? "bg-indigo-100" : "hover:bg-gray-100"
+        isSelected ? "hover:bg-gray-100" : "hover:bg-gray-100"
       }`}
+      style={isSelected ? { backgroundColor: '#E6E6FF' } : {}}
     >
       {chat.type === "group" ? (
-        <div className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+        <div className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-sm flex-shrink-0" style={{ backgroundColor: '#0000CC' }}>
           <Users size={20} />
         </div>
       ) : (
@@ -203,7 +144,7 @@ const ChatListItem = ({
 };
 
 const ChatList = ({
-  chats, // We only need the list of chats now
+  chats,
   selectedChat,
   onSelectChat,
 }: {
@@ -212,11 +153,9 @@ const ChatList = ({
   onSelectChat: (chat: Chat) => void;
 }) => {
 
-  // 1. Filter the incoming chats array into two separate lists
   const groupChats = chats.filter(chat => chat.type === 'group');
   const individualChats = chats.filter(chat => chat.type === 'individual');
 
-  // 2. Sort each list individually by the most recent message
   const sortedGroupChats = [...groupChats].sort(
     (a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
   );
@@ -233,12 +172,12 @@ const ChatList = ({
           <input
             type="text"
             placeholder="Search chats..."
-            className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm"
+            className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 text-sm"
+            style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
           />
         </div>
       </div>
       <div className="flex-grow overflow-y-auto p-2 space-y-1">
-        {/* Render the Group Chats section */}
         {sortedGroupChats.length > 0 && (
           <div>
             <h3 className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -255,7 +194,6 @@ const ChatList = ({
           </div>
         )}
 
-        {/* Render the Individual Chats (Team Members) section */}
         {sortedIndividualChats.length > 0 && (
           <div className="mt-2">
             <h3 className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -293,12 +231,13 @@ const MessageBubble = ({
       <div
         className={`px-4 py-3 rounded-2xl max-w-xs lg:max-w-md shadow-sm ${
           isCurrentUser
-            ? "bg-indigo-500 text-white rounded-br-none"
+            ? "text-white rounded-br-none"
             : "bg-white text-gray-800 rounded-bl-none"
         }`}
+        style={isCurrentUser ? { backgroundColor: '#0000CC' } : {}}
       >
         {!isCurrentUser && (
-          <p className="text-xs font-bold text-indigo-600 mb-1">
+          <p className="text-xs font-bold mb-1" style={{ color: '#0000CC' }}>
             {message.senderName}
           </p>
         )}
@@ -321,16 +260,15 @@ const ChatWindow = ({
   currentUser,
   selectedChat,
 }: {
-  currentUser: User | null; // currentUser can be null initially
+  currentUser: User | null;
   selectedChat: Chat | null;
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sentMessage, setsentMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // Add a loading state
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Get Redux state for API calls
   const dispatch = useDispatch();
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
 
@@ -340,11 +278,8 @@ const ChatWindow = ({
 
   useEffect(scrollToBottom, [messages]);
 
-  // --- 1. FETCH MESSAGE HISTORY ---
-  // This effect runs whenever the user selects a different chat.
   useEffect(() => {
     const fetchMessages = async () => {
-      // Don't fetch if no chat is selected or we don't have a token
       if (selectedChat?.id && accessToken) {
         try {
           const fetchedMessages = await api.ChattingSystem.getMessages.get(
@@ -355,13 +290,13 @@ const ChatWindow = ({
           setMessages(fetchedMessages || []);
         } catch (error) {
           console.error("Failed to fetch messages:", error);
-          setMessages([]); // Clear messages on error
+          setMessages([]);
         }
         finally {
-          setIsLoading(false); // Stop loading
+          setIsLoading(false);
         }
       } else {
-        setMessages([]); // Clear messages if no chat is selected
+        setMessages([]);
         setIsLoading(false);
       }
     };
@@ -370,22 +305,16 @@ const ChatWindow = ({
     setIsLoading(true);
   }, [selectedChat, accessToken, dispatch, sentMessage]);
 
-
-  // --- 2. LISTEN FOR NEW MESSAGES ---
-  // This effect sets up the real-time listener.
   useEffect(() => {
     const handleNewMessage = (incomingMessage: any) => {
-      // The backend sends the full message object after saving it.
-      // We need to format it slightly for our frontend Message type.
       const formattedMessage: Message = {
         id: incomingMessage.id,
         text: incomingMessage.content,
         senderId: incomingMessage.sender_id,
-        senderName: incomingMessage.senderName || '...', // You might need to add senderName to the socket broadcast
+        senderName: incomingMessage.senderName || '...',
         timestamp: new Date(incomingMessage.created_at),
       };
 
-      // Only add the message if it belongs to the currently open chat
       if (incomingMessage.chat_id === selectedChat?.id) {
         setMessages((prevMessages) => [...prevMessages, formattedMessage]);
       }
@@ -393,32 +322,25 @@ const ChatWindow = ({
 
     socket.on("newMessage", handleNewMessage);
 
-    // IMPORTANT: Clean up the listener when the component unmounts
-    // or when the selectedChat changes, to avoid duplicate listeners.
     return () => {
       socket.off("newMessage", handleNewMessage);
     };
-  }, [selectedChat]); // Re-subscribe if the selected chat changes
+  }, [selectedChat]);
 
-
-  // --- 3. SEND A NEW MESSAGE ---
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedChat?.id || !currentUser?.uid || !accessToken) return;
     const data = newMessage;
 
-    // The data payload for our /storeMessage endpoint
     const messagePayload = {
       chatId: selectedChat.id,
       content: newMessage,
-      senderId: currentUser.uid, // The backend should verify this against the token
+      senderId: currentUser.uid,
     };
 
     try {
-      // Clear the input field immediately for a snappy UI
       setNewMessage("");
       
-      // Call the API to store the message. The backend will handle the socket broadcast.
       await api.ChattingSystem.storeMessage.post(
         accessToken,
         dispatch,
@@ -428,7 +350,6 @@ const ChatWindow = ({
 
     } catch (error) {
       console.error("Failed to send message:", error);
-      // Optional: Show an error to the user
     }
   };
 
@@ -472,11 +393,13 @@ const ChatWindow = ({
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type your message..."
-            className="flex-grow px-4 py-2 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="flex-grow px-4 py-2 bg-gray-100 rounded-full focus:outline-none focus:ring-2"
+            style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
           />
           <button
             type="submit"
-            className="ml-4 p-3 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors duration-200 disabled:bg-gray-300"
+            className="ml-4 p-3 text-white rounded-full hover:opacity-90 focus:outline-none focus:ring-2 transition-colors duration-200 disabled:bg-gray-300"
+            style={{ backgroundColor: '#0000CC', '--tw-ring-color': '#0000CC' } as React.CSSProperties}
             disabled={!newMessage.trim()}
           >
             <Send size={20} />
@@ -487,12 +410,9 @@ const ChatWindow = ({
   );
 };
 
-
 // --- MAIN DASHBOARD COMPONENT ---
-// This is the component you will import and render in your main dashboard area.
 export const ChatDashboard = () => {
   const [currentUser, setcurrentUser] = useState<any | null>(MOCK_CURRENT_USER);
-  const [teamMembers, setteamMembers] = useState(MOCK_TEAM_MEMBERS);
   const [chart, setChat] = useState([]);
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
 
@@ -505,7 +425,6 @@ export const ChatDashboard = () => {
     const fetchCharts = async () => {
       try {
 
-        // check it later
         const response = await api.ChattingSystem.myChats.get(
           accessToken,
           dispatch
@@ -529,13 +448,11 @@ export const ChatDashboard = () => {
 
        setChat(conversationsResponse)
 
-       setteamMembers(conversationsResponse);
         socket.emit("joinChats", {
           userId: response.userId,
           chatIds: response.chatIds,
         });
 
-        // Handle the fetched chart data
       } catch (error) {
         console.error(error);
       }
@@ -548,13 +465,11 @@ export const ChatDashboard = () => {
 
   return (
     <div className=" bg-gray-50 font-sans antialiased text-gray-900">
-      {/* Header to match your dashboard design */}
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Chat</h1>
+      <h1 className="text-3xl font-bold mb-6" style={{ color: '#0000CC' }}>Chat</h1>
 
-      {/* Main Chat Container */}
       <div
-        className="w-full flex overflow-hidden shadow-lg rounded-lg border border-gray-200"
-        style={{ height: "calc(100vh - 200px)" }} // Adjust height to fit your layout
+        className="w-full flex overflow-hidden shadow-lg rounded-lg border-2"
+        style={{ height: "calc(100vh - 200px)", borderColor: '#0000CC' }}
       >
         <ChatList
           chats={chart}
@@ -567,7 +482,6 @@ export const ChatDashboard = () => {
   );
 };
 
-// You can still use this default export for standalone testing if needed
 export default function App() {
   return <ChatDashboard />;
 }

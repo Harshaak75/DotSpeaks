@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, Fragment } from "react";
 import {
   format,
   addMonths,
@@ -9,7 +9,6 @@ import {
   endOfWeek,
   isSameMonth,
   isSameDay,
-  addDays,
   eachDayOfInterval,
 } from "date-fns";
 import { Dialog, Transition } from "@headlessui/react";
@@ -95,16 +94,13 @@ const parseDescription = (description: string): ParsedDescription => {
 
   const parsed: ParsedDescription = {};
 
-  // Extract "Location" line
   const locationMatch = description.match(/Location:\s*(.+)/i);
   if (locationMatch) {
     parsed.location = locationMatch[1].trim();
   }
 
-  // Extract join URL (Google Meet, Zoom, etc.)
   const urlMatch = description.match(/(https?:\/\/[^\s]+)/g);
   if (urlMatch) {
-    // Take first as join URL unless matched below
     parsed.joinUrl =
       urlMatch.find(
         (u) =>
@@ -114,13 +110,11 @@ const parseDescription = (description: string): ParsedDescription => {
       ) || urlMatch[0];
   }
 
-  // Cancel URL
   const cancelMatch = description.match(/Cancel:\s*(https?:\/\/[^\s]+)/i);
   if (cancelMatch) {
     parsed.cancelUrl = cancelMatch[1];
   }
 
-  // Reschedule URL
   const rescheduleMatch = description.match(
     /Reschedule:\s*(https?:\/\/[^\s]+)/i
   );
@@ -128,7 +122,6 @@ const parseDescription = (description: string): ParsedDescription => {
     parsed.rescheduleUrl = rescheduleMatch[1];
   }
 
-  // Notes ("Please share anything ...")
   const notesMatch = description.match(/Please share anything.*?:\s*(.+)/i);
   if (notesMatch) {
     parsed.notes = notesMatch[1].trim();
@@ -137,12 +130,12 @@ const parseDescription = (description: string): ParsedDescription => {
   return parsed;
 };
 
-// --- NEW: Data Transformation Function ---
+// --- Data Transformation Function ---
 const transformGoogleEvents = (googleEvents: any[]): CalendarEvent[] => {
   if (!googleEvents) return [];
 
   return googleEvents.map((event) => {
-    let category: EventCategory = "Meeting"; // Default category
+    let category: EventCategory = "Meeting";
     const title = event.summary || "No Title";
 
     const cancel =
@@ -150,7 +143,6 @@ const transformGoogleEvents = (googleEvents: any[]): CalendarEvent[] => {
 
     console.log(title.toLowerCase());
 
-    // Smart categorization based on keywords
     if (title.toLowerCase().includes("deadline")) category = "Deadline";
     else if (
       title.toLowerCase().includes("focus") ||
@@ -163,7 +155,6 @@ const transformGoogleEvents = (googleEvents: any[]): CalendarEvent[] => {
     )
       category = "Personal";
 
-    // Handle all-day vs. specific time events
     let time = "All Day";
     if (event.start.dateTime) {
       const startTime = format(new Date(event.start.dateTime), "p");
@@ -227,10 +218,10 @@ const MeetingInfo = ({ isOpen, onClose, selectedEvent }: any) => {
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <Dialog.Panel className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <Dialog.Panel className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border-2" style={{ borderColor: '#0000CC' }}>
               {selectedEvent && (
                 <>
-                  <Dialog.Title className="text-xl font-bold flex justify-between items-center">
+                  <Dialog.Title className="text-xl font-bold flex justify-between items-center" style={{ color: '#0000CC' }}>
                     {selectedEvent.title}
                     <button
                       onClick={onClose}
@@ -274,7 +265,8 @@ const MeetingInfo = ({ isOpen, onClose, selectedEvent }: any) => {
                           href={selectedEvent.rescheduleUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex-1 text-center px-3 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600"
+                          className="flex-1 text-center px-3 py-2 text-white rounded-lg font-medium hover:opacity-90"
+                          style={{ backgroundColor: '#0000CC' }}
                         >
                           Reschedule Meet
                         </a>
@@ -337,10 +329,11 @@ const EventDetailModal = ({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all border-2" style={{ borderColor: '#0000CC' }}>
                 <Dialog.Title
                   as="h3"
-                  className="text-lg font-bold leading-6 text-gray-900 flex justify-between items-center"
+                  className="text-lg font-bold leading-6 flex justify-between items-center"
+                  style={{ color: '#0000CC' }}
                 >
                   <span>Schedule for {format(date, "eeee, MMMM d")}</span>
 
@@ -446,7 +439,6 @@ const CalendarSyncDashboard = () => {
     try {
       const response = await api.google.events.get(accessToken, dispatch);
       console.log("Raw Google Data:", response);
-      // Use the transformation function here
       const formattedEvents = transformGoogleEvents(response);
       console.log("Formatted Events:", formattedEvents);
 
@@ -454,7 +446,7 @@ const CalendarSyncDashboard = () => {
       setConnectionStatus("connected");
     } catch (error) {
       console.log(error);
-      setConnectionStatus("disconnected"); // Revert on error
+      setConnectionStatus("disconnected");
     }
   };
 
@@ -495,7 +487,7 @@ const CalendarSyncDashboard = () => {
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
           <div className="p-4 bg-white rounded-full shadow-md inline-block">
-            <Calendar className="h-16 w-16 text-blue-600" />
+            <Calendar className="h-16 w-16" style={{ color: '#0000CC' }} />
           </div>
 
           <h1 className="mt-6 text-3xl font-bold text-gray-900">
@@ -509,7 +501,8 @@ const CalendarSyncDashboard = () => {
 
           <button
             onClick={handleConnect}
-            className="mt-8 px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition-all"
+            className="mt-8 px-8 py-3 text-white font-semibold rounded-lg shadow-lg hover:opacity-90 transition-all"
+            style={{ backgroundColor: '#0000CC' }}
           >
             Connect to Google Calendar
           </button>
@@ -521,7 +514,7 @@ const CalendarSyncDashboard = () => {
   if (connectionStatus === "connecting") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-8">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4" style={{ borderColor: '#0000CC' }}></div>
 
         <p className="mt-4 text-lg text-gray-600">
           Connecting to your calendar...
@@ -533,9 +526,9 @@ const CalendarSyncDashboard = () => {
   return (
     <>
       <div className=" bg-gray-50 min-h-screen">
-        <div className="max-w-8xl mx-auto bg-white p-6 rounded-lg shadow-sm border">
+        <div className="max-w-8xl mx-auto bg-white p-6 rounded-lg shadow-sm border-2" style={{ borderColor: '#0000CC' }}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold" style={{ color: '#0000CC' }}>
               {format(currentDate, "MMMM yyyy")}
             </h2>
 
@@ -549,7 +542,8 @@ const CalendarSyncDashboard = () => {
 
               <button
                 onClick={() => setCurrentDate(new Date())}
-                className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-semibold text-white rounded-md hover:opacity-90"
+                style={{ backgroundColor: '#0000CC' }}
               >
                 Today
               </button>
@@ -574,6 +568,7 @@ const CalendarSyncDashboard = () => {
           <div className="grid grid-cols-7">
             {days.map((day, index) => {
               const dayEvents = events.filter((e) => isSameDay(e.date, day));
+              const isToday = isSameDay(day, new Date());
               return (
                 <div
                   key={index}
@@ -586,16 +581,18 @@ const CalendarSyncDashboard = () => {
                       : ""
                   } ${
                     isSameDay(selectedDate, day) && isModalOpen
-                      ? "bg-blue-100 ring-2 ring-blue-500"
+                      ? "ring-2"
                       : ""
                   }`}
+                  style={isSameDay(selectedDate, day) && isModalOpen ? { backgroundColor: '#E6E6FF', '--tw-ring-color': '#0000CC' } as React.CSSProperties : {}}
                 >
                   <span
                     className={`font-medium text-sm ${
-                      isSameDay(day, new Date())
-                        ? "text-blue-600 font-bold"
+                      isToday
+                        ? "font-bold"
                         : "text-gray-700"
                     }`}
+                    style={isToday ? { color: '#0000CC' } : {}}
                   >
                     {format(day, "d")}
                   </span>

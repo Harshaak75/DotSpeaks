@@ -1,10 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Users, Zap, Briefcase, BarChart3 } from 'lucide-react';
 
 // --- HELPER FUNCTION: Score/Value Formatting ---
-// Used by KPICard when isScore=false (e.g., for Manager Name, Role)
 const formatValue = (value: any) => {
-    // Keeping a placeholder function for generic text/number formatting
     if (typeof value === 'number') {
         return value.toFixed(1);
     }
@@ -42,7 +40,6 @@ const PERFORMANCE_DATA = [
     { id: 'tele_3', name: 'Trent Reznor', role: 'Tele', score: 55.4, managerId: 'bd_c', performanceHistory: Array.from({ length: 12 }, (_, i) => ({ month: `M${i + 1}`, value: 50 + Math.random() * 10 })) },
 ];
 
-
 // --- COMMON COMPONENTS ---
 
 // KPI CARD COMPONENT
@@ -67,9 +64,9 @@ const PerformanceLineGraph = ({ data, userName }: any) => {
     const padding = 30;
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-2xl border border-gray-100 overflow-x-auto">
+        <div className="bg-white p-6 rounded-xl shadow-2xl border-l-4 overflow-x-auto" style={{ borderLeftColor: '#0000CC' }}>
             <h3 className="text-xl font-bold text-gray-700 mb-6 flex items-center">
-                <BarChart3 className="h-5 w-5 mr-2 text-indigo-600" /> 
+                <BarChart3 className="h-5 w-5 mr-2" style={{ color: '#0000CC' }} /> 
                 {userName}'s Monthly Performance Score
             </h3>
             
@@ -117,11 +114,11 @@ const PerformanceLineGraph = ({ data, userName }: any) => {
                                 <polyline fill="url(#areaGradient)" points={`${padding},${chartHeight - padding} ${points} ${chartWidth - padding},${chartHeight - padding}`} />
 
                                 {/* Line */}
-                                <polyline fill="none" stroke="#4f46e5" strokeWidth="3" points={points} />
+                                <polyline fill="none" stroke="#0000CC" strokeWidth="3" points={points} />
 
                                 {/* Data Points */}
                                 {data.map((d: any, i: number) => (
-                                    <circle key={i} cx={scaleX(i)} cy={scaleY(d.value)} r="4" fill="#4f46e5" stroke="#fff" strokeWidth="2" />
+                                    <circle key={i} cx={scaleX(i)} cy={scaleY(d.value)} r="4" fill="#0000CC" stroke="#fff" strokeWidth="2" />
                                 ))}
                             </g>
                         );
@@ -130,8 +127,8 @@ const PerformanceLineGraph = ({ data, userName }: any) => {
                     {/* Gradient Definition */}
                     <defs>
                         <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.5}/>
-                            <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                            <stop offset="5%" stopColor="#0000CC" stopOpacity={0.5}/>
+                            <stop offset="95%" stopColor="#0000CC" stopOpacity={0}/>
                         </linearGradient>
                     </defs>
                 </svg>
@@ -140,18 +137,16 @@ const PerformanceLineGraph = ({ data, userName }: any) => {
     );
 };
 
-
 // --- PERFORMANCE DASHBOARD COMPONENT ---
 const PerformanceDashboard = ({ performanceData, selectUser, selectedUser }: any) => {
 
     // Level 0: Top Leaders (COO, CMO, etc.)
     const allPersonnel = useMemo(() => {
         const leaders = performanceData.filter((p: any) => ['COO', 'CMO', 'CTO', 'CFO', 'HR'].includes(p.role));
-        // Sort leaders by score (low to high)
         return leaders.sort((a: any, b: any) => a.score - b.score);
     }, [performanceData]);
 
-    // Level 1: PMs for COO, BDs for CMO (or generic for others)
+    // Level 1: PMs for COO, BDs for CMO
     const level1Personnel = useMemo(() => {
         if (!selectedUser.leader) return [];
         let filtered = performanceData.filter((p: any) => p.managerId === selectedUser.leader.id);
@@ -161,10 +156,9 @@ const PerformanceDashboard = ({ performanceData, selectUser, selectedUser }: any
         } else if (selectedUser.leader.role === 'CMO') {
             filtered = filtered.filter((p: any) => p.role === 'BD');
         } else {
-            // CTO/CFO/HR: Show all direct reports (PMs or BDs)
             filtered = filtered.filter((p: any) => ['PM', 'BD'].includes(p.role));
         }
-        return filtered.sort((a: any, b: any) => a.score - b.score); // Low to high
+        return filtered.sort((a: any, b: any) => a.score - b.score);
     }, [performanceData, selectedUser.leader]);
 
     // Level 2: BHs for PMs, Tele for BDs
@@ -176,10 +170,9 @@ const PerformanceDashboard = ({ performanceData, selectUser, selectedUser }: any
         } else if (selectedUser.level1.role === 'BD') {
             filtered = filtered.filter((p: any) => p.role === 'Tele');
         }
-        return filtered.sort((a: any, b: any) => a.score - b.score); // Low to high
+        return filtered.sort((a: any, b: any) => a.score - b.score);
     }, [performanceData, selectedUser.level1]);
 
-    // The user whose graph/KPIs are currently displayed
     const activeUser = selectedUser.level2 || selectedUser.level1 || selectedUser.leader;
 
     const renderUserList = (users: any[], level: number) => (
@@ -192,9 +185,14 @@ const PerformanceDashboard = ({ performanceData, selectUser, selectedUser }: any
                         ${(level === 0 && selectedUser.leader?.id === user.id) || 
                           (level === 1 && selectedUser.level1?.id === user.id) || 
                           (level === 2 && selectedUser.level2?.id === user.id)
-                            ? 'bg-purple-600 text-white ring-4 ring-purple-300'
-                            : 'bg-gray-100 text-gray-800 hover:bg-purple-50 hover:text-purple-700'
+                            ? 'text-white ring-4'
+                            : 'bg-gray-100 text-gray-800 hover:bg-blue-50'
                         }`}
+                    style={(level === 0 && selectedUser.leader?.id === user.id) || 
+                           (level === 1 && selectedUser.level1?.id === user.id) || 
+                           (level === 2 && selectedUser.level2?.id === user.id)
+                        ? { backgroundColor: '#0000CC', '--tw-ring-color': '#0000CC' } as React.CSSProperties
+                        : {}}
                 >
                     <Briefcase className="w-4 h-4" />
                     <span>{user.name} ({user.role})</span>
@@ -208,21 +206,21 @@ const PerformanceDashboard = ({ performanceData, selectUser, selectedUser }: any
 
     return (
         <div className="space-y-8">
-            {/* Level 0: Leadership Filter (COO, CMO, etc.) */}
-            <div className="bg-white p-6 rounded-xl shadow-lg">
+            {/* Level 0: Leadership Filter */}
+            <div className="bg-white p-6 rounded-xl shadow-lg border-l-4" style={{ borderLeftColor: '#0000CC' }}>
                 <h2 className="text-xl font-bold text-gray-800 flex items-center">
-                    <Users className="w-5 h-5 mr-2 text-purple-600" />
+                    <Users className="w-5 h-5 mr-2" style={{ color: '#0000CC' }} />
                     Executive Leadership Performance (Sorted Low to High)
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">Select a leader to drill down into their team's performance.</p>
                 {renderUserList(allPersonnel, 0)}
             </div>
             
-            {/* Level 1: Manager/Developer Filter (PMs or BDs) */}
+            {/* Level 1: Manager/Developer Filter */}
             {selectedUser.leader && (
-                <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-purple-500">
+                <div className="bg-white p-6 rounded-xl shadow-lg border-l-4" style={{ borderLeftColor: '#0000CC' }}>
                     <h2 className="text-xl font-bold text-gray-800 flex items-center">
-                        <Zap className="w-5 h-5 mr-2 text-blue-600" />
+                        <Zap className="w-5 h-5 mr-2" style={{ color: '#0000CC' }} />
                         {selectedUser.leader.role} Team - Level 1 Personnel (Sorted Low to High)
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">Personnel reporting directly to {selectedUser.leader.name}.</p>
@@ -230,11 +228,11 @@ const PerformanceDashboard = ({ performanceData, selectUser, selectedUser }: any
                 </div>
             )}
 
-            {/* Level 2: Execution Filter (BHs or Tele) */}
+            {/* Level 2: Execution Filter */}
             {selectedUser.level1 && level2Personnel.length > 0 && (
-                <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-blue-500">
+                <div className="bg-white p-6 rounded-xl shadow-lg border-l-4" style={{ borderLeftColor: '#0000CC' }}>
                     <h2 className="text-xl font-bold text-gray-800 flex items-center">
-                        <Briefcase className="w-5 h-5 mr-2 text-green-600" />
+                        <Briefcase className="w-5 h-5 mr-2" style={{ color: '#0000CC' }} />
                         {selectedUser.level1.role} Team - Level 2 Personnel (Sorted Low to High)
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">Personnel managed by {selectedUser.level1.name}.</p>
@@ -246,16 +244,16 @@ const PerformanceDashboard = ({ performanceData, selectUser, selectedUser }: any
             <div className="pt-4">
                 {activeUser ? (
                     <>
-                        <h2 className="text-2xl font-extrabold text-indigo-700 mb-6">
+                        <h2 className="text-2xl font-extrabold mb-6" style={{ color: '#0000CC' }}>
                             Performance Analysis: {activeUser.name} ({activeUser.role})
                         </h2>
                         {/* KPIs for the selected user */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                            <KPICard title="Current Score" value={activeUser.score} icon={Zap} color="#6366F1" isScore={true} />
-                            <KPICard title="Role" value={activeUser.role} icon={Briefcase} color="#FBBF24" isScore={false} />
-                            <KPICard title="Manager" value={activeUser.managerId ? performanceData.find((p: any) => p.id === activeUser.managerId)?.name || 'N/A' : 'CEO'} icon={Users} color="#10B981" isScore={false} />
+                            <KPICard title="Current Score" value={activeUser.score} icon={Zap} color="#0000CC" isScore={true} />
+                            <KPICard title="Role" value={activeUser.role} icon={Briefcase} color="#0000CC" isScore={false} />
+                            <KPICard title="Manager" value={activeUser.managerId ? performanceData.find((p: any) => p.id === activeUser.managerId)?.name || 'N/A' : 'CEO'} icon={Users} color="#0000CC" isScore={false} />
                         </div>
-                        {/* Performance Graph for the selected user */}
+                        {/* Performance Graph */}
                         <PerformanceLineGraph data={activeUser.performanceHistory} userName={activeUser.name} />
                     </>
                 ) : (
@@ -269,8 +267,7 @@ const PerformanceDashboard = ({ performanceData, selectUser, selectedUser }: any
     );
 };
 
-
-// --- MAIN EXECUTIVE DASHBOARD COMPONENT (Simplified) ---
+// --- MAIN EXECUTIVE DASHBOARD COMPONENT ---
 const ExecutiveDashboard = () => {
     const [performanceData] = useState<any[]>(PERFORMANCE_DATA);
 
@@ -280,19 +277,16 @@ const ExecutiveDashboard = () => {
         level2: null, 
     });
 
-    // --- User Selection Logic ---
     const selectUser = (user: any, level: number) => {
         let newSelection: any = { leader: null, level1: null, level2: null };
         const data = PERFORMANCE_DATA; 
 
-        if (level === 0) { // Selecting Leader (COO, CMO, etc.)
+        if (level === 0) {
             newSelection.leader = user;
-            // Find lowest scoring Level 1 to auto-select (to demonstrate drill-down)
             const nextLevel1 = data.filter(p => p.managerId === user.id && ['PM', 'BD'].includes(p.role)).sort((a,b) => a.score - b.score)[0];
             
             if (nextLevel1) {
                  newSelection.level1 = nextLevel1;
-                 // Find lowest scoring Level 2 to auto-select
                  const nextLevel2 = data.filter(p => p.managerId === nextLevel1.id && ['BH', 'Tele'].includes(p.role)).sort((a,b) => a.score - b.score)[0];
                  if (nextLevel2) {
                     newSelection.level2 = nextLevel2;
@@ -302,10 +296,9 @@ const ExecutiveDashboard = () => {
                 newSelection.level2 = null;
             }
 
-        } else if (level === 1) { // Selecting Level 1 (PM, BD)
+        } else if (level === 1) {
             newSelection.leader = selectedUser.leader;
             newSelection.level1 = user;
-            // Find lowest scoring Level 2 to auto-select
             const nextLevel2 = data.filter(p => p.managerId === user.id && ['BH', 'Tele'].includes(p.role)).sort((a,b) => a.score - b.score)[0];
             if (nextLevel2) {
                 newSelection.level2 = nextLevel2;
@@ -313,7 +306,7 @@ const ExecutiveDashboard = () => {
                 newSelection.level2 = null;
             }
 
-        } else if (level === 2) { // Selecting Level 2 (BH, Tele)
+        } else if (level === 2) {
             newSelection = { ...selectedUser, level2: user };
         }
         
@@ -330,7 +323,6 @@ const ExecutiveDashboard = () => {
         }
     }, []); 
 
-
     return (
         <div className="min-h-screen bg-gray-50 sm:p-8 font-sans">
             <style>{`
@@ -339,8 +331,8 @@ const ExecutiveDashboard = () => {
             <div className="max-w-7xl mx-auto space-y-6">
                 
                 <header className="border-b pb-4">
-                    <h1 className="text-3xl font-extrabold text-indigo-800 drop-shadow-sm mb-4 flex items-center">
-                        <Users className="w-7 h-7 inline mr-3 align-text-bottom text-purple-600" />
+                    <h1 className="text-3xl font-extrabold drop-shadow-sm mb-4 flex items-center" style={{ color: '#0000CC' }}>
+                        <Users className="w-7 h-7 inline mr-3 align-text-bottom" style={{ color: '#0000CC' }} />
                         Executive Team Performance Hierarchy
                     </h1>
                 </header>

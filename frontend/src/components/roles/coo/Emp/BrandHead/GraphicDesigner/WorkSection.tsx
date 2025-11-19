@@ -1,12 +1,10 @@
-import React, { useState, Fragment, useRef, useEffect } from "react";
+import { useState, Fragment, useRef, useEffect } from "react";
 import {
   format,
   addMonths,
   subMonths,
   startOfMonth,
-  endOfMonth,
   startOfWeek,
-  endOfWeek,
   isSameMonth,
   isSameDay,
   addDays,
@@ -22,7 +20,6 @@ import {
   PlayCircle,
   Timer,
   HelpCircle,
-  Send,
   MessageSquare,
   AlertTriangle,
 } from "lucide-react";
@@ -31,17 +28,14 @@ import { api } from "../../../../../../utils/api/Employees/api";
 import { useDispatch, useSelector } from "react-redux";
 
 // --- TYPE DEFINITIONS ---
-// --- UPDATED TYPE DEFINITIONS ---
 interface ClientType {
   id: string;
-  name: string; // We'll derive this from the tasks
+  name: string;
   avatarUrl: string;
 }
 
-// This now matches the fields from your backend data to avoid confusion
 interface TaskDetails {
-  marketerGuide: string; // 'content' from backend
-  // Designer Guide fields
+  marketerGuide: string;
   objective: string;
   visual: string;
   headline: string;
@@ -50,12 +44,11 @@ interface TaskDetails {
   branding: string;
 }
 
-// This is the main type for a task in the frontend
 interface DesignerTask {
-  id: string; // Changed to string to match backend UUID
+  id: string;
   clientId: string;
-  clientName: string; // Added for display purposes
-  title: string; // 'campaignTitle' from backend
+  clientName: string;
+  title: string;
   start: Date;
   status: "pending_review" | "rework_requested" | "approved" | "Help_requested" | "GF_APPROVED";
   details: TaskDetails;
@@ -65,170 +58,166 @@ interface DesignerTask {
   suggestion?: { text: string; link?: string };
 }
 
-// --- Memoized component with its OWN state for file uploads ---
-// --- REDESIGNED MODAL CONTENT COMPONENT ---
-const MemoizedTaskContent = React.memo(
-  ({
-    activeTask,
-    handleUpload,
-  }: {
-    activeTask: DesignerTask;
-    handleUpload: (files: File[]) => void;
-  }) => {
-    const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+// --- MEMOIZED TASK CONTENT COMPONENT ---
+const MemoizedTaskContent = ({
+  activeTask,
+  handleUpload,
+}: {
+  activeTask: DesignerTask;
+  handleUpload: (files: File[]) => void;
+}) => {
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleRemoveFile = (fileName: string) => {
-      setUploadedFiles((prevFiles) =>
-        prevFiles.filter((file) => file.name !== fileName)
-      );
-    };
+  const handleRemoveFile = (fileName: string) => {
+    setUploadedFiles((prevFiles) =>
+      prevFiles.filter((file) => file.name !== fileName)
+    );
+  };
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (event.target.files) {
-        // Convert the FileList to an array and append it to the current state
-        const newFiles = Array.from(event.target.files);
-        setUploadedFiles((prevFiles) => [...prevFiles, ...newFiles]);
-      }
-    };
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const newFiles = Array.from(event.target.files);
+      setUploadedFiles((prevFiles) => [...prevFiles, ...newFiles]);
+    }
+  };
 
-    const onUploadClick = () => {
-      handleUpload(uploadedFiles);
-    };
+  const onUploadClick = () => {
+    handleUpload(uploadedFiles);
+  };
 
-    return (
-      <div className="mt-4 space-y-4">
-        {/* --- RESPONSE FROM BRAND HEAD (FULL WIDTH) --- */}
-        {/* This block is now outside the grid, so it takes up the full width */}
-        {activeTask.suggestion && (
-          <div className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-md shadow-sm">
-            <h4 className="font-bold text-blue-800 flex items-center">
-              <MessageSquare className="h-5 w-5 mr-2" />
-              Response from Brand Head
-            </h4>
-            <p className="mt-2 text-sm text-blue-700 whitespace-pre-wrap">
-              {activeTask.suggestion.text}
-            </p>
-          </div>
-        )}
-
-        {activeTask.reworkComment && (
-          <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-md">
-            <h4 className="font-bold text-yellow-800 flex items-center">
-              <AlertTriangle className="h-5 w-5 mr-2" />
-              Rework Requested by Digital Marketer
-            </h4>
-            <p className="mt-2 text-sm text-yellow-700 whitespace-pre-wrap">
-              "{activeTask.reworkComment}"
-            </p>
-          </div>
-        )}
-
-        {/* --- GUIDES (TWO COLUMNS) --- */}
-        {/* This grid now only contains the two guide sections */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-          {/* --- MARKETER GUIDE SECTION (LEFT SIDE) --- */}
-          <div className="space-y-3 bg-white p-4 rounded-lg border">
-            <h4 className="text-lg font-bold text-gray-800">Marketer Guide</h4>
-            <p className="text-sm text-gray-600 whitespace-pre-line">
-              {activeTask.details.marketerGuide}
-            </p>
-          </div>
-
-          {/* --- DESIGNER GUIDE SECTION (RIGHT SIDE) --- */}
-          <div className="space-y-3 bg-white p-4 rounded-lg border">
-            <h4 className="text-lg font-bold text-gray-800">Designer Guide</h4>
-            <div className="text-sm text-gray-600 space-y-2">
-              <p>
-                <strong>Objective:</strong> {activeTask.details.objective}
-              </p>
-              <p>
-                <strong>Visual:</strong> {activeTask.details.visual}
-              </p>
-              <p>
-                <strong>Headline:</strong> {activeTask.details.headline}
-              </p>
-              <p>
-                <strong>Message:</strong> {activeTask.details.message}
-              </p>
-              <p>
-                <strong>CTA:</strong> {activeTask.details.cta}
-              </p>
-              <p>
-                <strong>Branding:</strong> {activeTask.details.branding}
-              </p>
-            </div>
-          </div>
+  return (
+    <div className="mt-4 space-y-4">
+      {/* RESPONSE FROM BRAND HEAD */}
+      {activeTask.suggestion && (
+        <div className="p-4 rounded-r-md shadow-sm border-l-4" style={{ backgroundColor: '#F0F0FF', borderLeftColor: '#0000CC' }}>
+          <h4 className="font-bold flex items-center" style={{ color: '#0000CC' }}>
+            <MessageSquare className="h-5 w-5 mr-2" />
+            Response from Brand Head
+          </h4>
+          <p className="mt-2 text-sm text-gray-700 whitespace-pre-wrap">
+            {activeTask.suggestion.text}
+          </p>
         </div>
-        {/* --- SUBMISSION SECTION (FULL WIDTH) --- */}
-        <div className="md:col-span-2 space-y-4 mt-4 pt-4 border-t">
-          <h4 className="font-semibold text-gray-700">Submission</h4>
-          <div
-            className="flex justify-center items-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-200"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <div className="text-center">
-              <UploadCloud className="mx-auto h-10 w-10 text-gray-400" />
-              <p className="mt-2 text-sm text-gray-600">
-                <span className="font-semibold text-blue-600">
-                  Click to upload image/video
-                </span>
-              </p>
-            </div>
+      )}
+
+      {activeTask.reworkComment && (
+        <div className="p-4 rounded-r-md border-l-4 bg-yellow-50 border-yellow-400">
+          <h4 className="font-bold text-yellow-800 flex items-center">
+            <AlertTriangle className="h-5 w-5 mr-2" />
+            Rework Requested by Digital Marketer
+          </h4>
+          <p className="mt-2 text-sm text-yellow-700 whitespace-pre-wrap">
+            "{activeTask.reworkComment}"
+          </p>
+        </div>
+      )}
+
+      {/* GUIDES */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        {/* MARKETER GUIDE */}
+        <div className="space-y-3 bg-white p-4 rounded-lg border-l-4" style={{ borderLeftColor: '#0000CC' }}>
+          <h4 className="text-lg font-bold" style={{ color: '#0000CC' }}>
+            Marketer Guide
+          </h4>
+          <p className="text-sm text-gray-600 whitespace-pre-line">
+            {activeTask.details.marketerGuide}
+          </p>
+        </div>
+
+        {/* DESIGNER GUIDE */}
+        <div className="space-y-3 bg-white p-4 rounded-lg border-l-4" style={{ borderLeftColor: '#0000CC' }}>
+          <h4 className="text-lg font-bold" style={{ color: '#0000CC' }}>
+            Designer Guide
+          </h4>
+          <div className="text-sm text-gray-600 space-y-2">
+            <p>
+              <strong>Objective:</strong> {activeTask.details.objective}
+            </p>
+            <p>
+              <strong>Visual:</strong> {activeTask.details.visual}
+            </p>
+            <p>
+              <strong>Headline:</strong> {activeTask.details.headline}
+            </p>
+            <p>
+              <strong>Message:</strong> {activeTask.details.message}
+            </p>
+            <p>
+              <strong>CTA:</strong> {activeTask.details.cta}
+            </p>
+            <p>
+              <strong>Branding:</strong> {activeTask.details.branding}
+            </p>
           </div>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-            accept="image/*,video/*"
-            multiple // This allows multiple file selection
-          />
-
-          {/* 👇 THIS ENTIRE BLOCK IS THE FIX 👇 */}
-          {uploadedFiles.length > 0 && (
-            <div className="space-y-2">
-              <h5 className="text-sm font-medium text-gray-600">
-                Selected Files:
-              </h5>
-              {/* 1. We now MAP over the uploadedFiles array */}
-              {uploadedFiles.map((file) => (
-                <div
-                  key={file.name}
-                  className="flex items-center justify-between bg-white p-2 rounded-lg border"
-                >
-                  <div className="flex items-center space-x-2 truncate">
-                    <Paperclip className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                    {/* We display the individual file.name here */}
-                    <span className="text-sm text-gray-700 truncate">
-                      {file.name}
-                    </span>
-                  </div>
-                  {/* 2. The remove button now removes only ONE file */}
-                  <button onClick={() => handleRemoveFile(file.name)}>
-                    <X className="h-5 w-5 text-red-500" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={onUploadClick}
-            // Disable button if the files array is empty
-            disabled={uploadedFiles.length === 0}
-            className="w-full inline-flex justify-center rounded-md bg-blue-600 px-4 py-3 text-white shadow-sm hover:bg-blue-700 disabled:bg-gray-400"
-          >
-            Upload {uploadedFiles.length} File(s) & Complete Task
-          </button>
         </div>
       </div>
-    );
-  }
-);
 
-// --- Isolated Countdown Timer Component ---
+      {/* SUBMISSION SECTION */}
+      <div className="space-y-4 mt-4 pt-4 border-t">
+        <h4 className="font-semibold text-gray-700">Submission</h4>
+        <div
+          className="flex justify-center items-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-200 transition-colors"
+          style={{ borderColor: '#0000CC' }}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <div className="text-center">
+            <UploadCloud className="mx-auto h-10 w-10 text-gray-400" />
+            <p className="mt-2 text-sm text-gray-600">
+              <span className="font-semibold" style={{ color: '#0000CC' }}>
+                Click to upload image/video
+              </span>
+            </p>
+          </div>
+        </div>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+          accept="image/*,video/*"
+          multiple
+        />
+
+        {uploadedFiles.length > 0 && (
+          <div className="space-y-2">
+            <h5 className="text-sm font-medium text-gray-600">
+              Selected Files:
+            </h5>
+            {uploadedFiles.map((file) => (
+              <div
+                key={file.name}
+                className="flex items-center justify-between bg-white p-2 rounded-lg border"
+              >
+                <div className="flex items-center space-x-2 truncate">
+                  <Paperclip className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                  <span className="text-sm text-gray-700 truncate">
+                    {file.name}
+                  </span>
+                </div>
+                <button onClick={() => handleRemoveFile(file.name)}>
+                  <X className="h-5 w-5 text-red-500" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={onUploadClick}
+          disabled={uploadedFiles.length === 0}
+          className="w-full inline-flex justify-center rounded-md px-4 py-3 text-white shadow-sm hover:opacity-90 disabled:bg-gray-400"
+          style={{ backgroundColor: uploadedFiles.length > 0 ? '#0000CC' : '' }}
+        >
+          Upload {uploadedFiles.length} File(s) & Complete Task
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// --- COUNTDOWN TIMER COMPONENT ---
 const CountdownTimer = ({ initialTime, isRunning }: any) => {
   const [timeLeft, setTimeLeft] = useState(initialTime);
 
@@ -242,7 +231,7 @@ const CountdownTimer = ({ initialTime, isRunning }: any) => {
     let timer: NodeJS.Timeout;
     if (isRunning && timeLeft > 0) {
       timer = setInterval(() => {
-        setTimeLeft((prevTime: any) => prevTime - 1);
+        setTimeLeft((prevTime: number) => prevTime - 1);
       }, 1000);
     }
     return () => clearInterval(timer);
@@ -257,7 +246,7 @@ const CountdownTimer = ({ initialTime, isRunning }: any) => {
   };
 
   return (
-    <div className="flex items-center space-x-2 p-2 bg-red-100 text-red-700 rounded-lg">
+    <div className="flex items-center space-x-2 p-2 rounded-lg" style={{ backgroundColor: '#FFE6E6', color: '#DC2626' }}>
       <Timer className="h-6 w-6" />
       <span className="font-mono text-xl font-bold">
         {formatTime(timeLeft)}
@@ -266,7 +255,7 @@ const CountdownTimer = ({ initialTime, isRunning }: any) => {
   );
 };
 
-// --- THE MAIN DASHBOARD COMPONENT ---
+// --- MAIN DASHBOARD COMPONENT ---
 const WorkSection = () => {
   const [clients, setClients] = useState<ClientType[]>([]);
   const [selectedClient, setSelectedClient] = useState<ClientType | null>(null);
@@ -279,29 +268,25 @@ const WorkSection = () => {
   const accessToken = useSelector((state: any) => state.auth.accessToken);
   const dispatch = useDispatch();
 
-  // 1. Fetch initial data
   useEffect(() => {
     const fetchAndProcessTasks = async () => {
       if (!accessToken) return;
 
-      // 1. Fetch data from the API
       const response = await api.designer.getContent.get(accessToken, dispatch);
       console.log("response", response);
 
-      // 1. First, flatten the nested structure to get one big array of all marketing content.
       const transformedTasks: DesignerTask[] = response.flatMap(
         (client: any) => {
           return (
             client.MarketingContent
-              // ✅ FIX 1: Corrected filter to show ALL actionable tasks for the designer
               .filter(
                 (data: any) =>
                   data.status === "pending_review" ||
                   data.status === "rework_requested" ||
-                  data.status === "Help_requested" || data.status === "approved"
+                  data.status === "Help_requested" ||
+                  data.status === "approved"
               )
               .map((data: any) => {
-                // ✅ FIX 2: Added logic to find the Brand Head's latest comment
                 const latestResolvedTicket = data.HelpTicket?.filter(
                   (t: any) => t.status === "RESOLVED" && t.response
                 ).sort(
@@ -316,10 +301,10 @@ const WorkSection = () => {
                   clientName: client.company_name,
                   title: data.campaignTitle,
                   start: new Date(data.date),
-                  status: data.status === "approved" ? "pending_review" : data.status, // Use the real status from the backend
+                  status: data.status === "approved" ? "pending_review" : data.status,
                   suggestion: latestResolvedTicket
-                ? { text: latestResolvedTicket.response }
-                : undefined,
+                    ? { text: latestResolvedTicket.response }
+                    : undefined,
                   reworkComment: data.reworkComment,
                   details: {
                     marketerGuide: data.content,
@@ -340,7 +325,6 @@ const WorkSection = () => {
 
       setAllTasks(transformedTasks);
 
-      // Dynamically create the list of clients from the fetched tasks
       const uniqueClients: ClientType[] = [];
       const clientMap = new Map();
       transformedTasks.forEach((task) => {
@@ -365,19 +349,14 @@ const WorkSection = () => {
     fetchAndProcessTasks();
   }, [accessToken, dispatch, needsRefresh]);
 
-  // 2. Listen for PRIVATE real-time updates for THIS user
   useEffect(() => {
-    // This variable will hold our channel subscription
     let privateChannel: any;
 
-    // We need to get the user's ID to build the channel name
     const setupSubscription = async () => {
-      // const { data: { user } } = await supabase.auth.getUser();
       const userId = await api.designer.getUserId.get(accessToken, dispatch);
       console.log("userId", userId);
 
       if (userId) {
-        // 1. Construct the private channel name. MUST match the backend convention.
         const privateChannelName = `private-notifications-${userId}`;
         console.log(`👂 Subscribing to private channel: ${privateChannelName}`);
 
@@ -386,7 +365,7 @@ const WorkSection = () => {
         privateChannel
           .on(
             "broadcast",
-            { event: "new_task_ready" }, // Listen for the specific event from the backend
+            { event: "new_task_ready" },
             (payload: any) => {
               console.log(
                 "🎉 A new task was assigned specifically to me!",
@@ -395,17 +374,15 @@ const WorkSection = () => {
 
               alert("A new design task is ready for you!");
 
-              // 2. Trigger a data refresh to show the new task in the UI
               setNeedsRefresh((prev) => !prev);
             }
           )
-
           .on("broadcast", { event: "ticket_resolved" }, (payload: any) => {
             console.log("✅ Help ticket was resolved!", payload);
             alert(
               "The Brand Head has responded to your help request. Your task is now unblocked."
             );
-            setNeedsRefresh((prev) => !prev); // Refresh data to see the new status and suggestion
+            setNeedsRefresh((prev) => !prev);
           })
           .subscribe((status: any, err: any) => {
             if (status === "SUBSCRIBED") {
@@ -420,14 +397,13 @@ const WorkSection = () => {
 
     setupSubscription();
 
-    // 3. The cleanup function is crucial to prevent memory leaks
     return () => {
       if (privateChannel) {
         supabase.removeChannel(privateChannel);
         console.log("Unsubscribed from private channel.");
       }
     };
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, [accessToken, dispatch]);
 
   const filteredEvents = allTasks.filter(
     (task) =>
@@ -460,24 +436,17 @@ const WorkSection = () => {
       `Sending ${uploadedFiles.length} files to the backend for task "${activeTask.title}"`
     );
 
-    // Create an array of promises, one for each file upload
     const uploadPromises = uploadedFiles.map(async (file) => {
-      // 1. Create a FormData object for each file
       const formData = new FormData();
-      formData.append("file", file); // 'file' is the key the backend will look for
-      formData.append("taskId", activeTask.id); // Send the task ID along with the file
+      formData.append("file", file);
+      formData.append("taskId", activeTask.id);
 
-      // 2. Call a new API endpoint designed to handle file uploads
-      //    We will create this API function in your utils/api.ts file
-      //    and the corresponding route on the backend.
       await api.designer.uploadSubmission.post(accessToken, dispatch, formData);
     });
 
     try {
-      // 3. Wait for all files to be successfully sent and processed by the backend
       await Promise.all(uploadPromises);
 
-      // 4. If all uploads succeed, update the UI
       setAllTasks((prevTasks) =>
         prevTasks.map((task) =>
           task.id === activeTask.id ? { ...task, status: "approved" } : task
@@ -498,7 +467,7 @@ const WorkSection = () => {
     if (!comment || !activeTask) return;
 
     try {
-      const response = api.designer.getHelpRequests.post(
+      api.designer.getHelpRequests.post(
         accessToken,
         dispatch,
         comment,
@@ -508,17 +477,15 @@ const WorkSection = () => {
       console.error("Error sending help request:", error);
     }
 
-    // CHANGED: Use 'setAllTasks' to match your current state variable.
-
     setNeedsRefresh((prev) => !prev);
     closeModal();
   };
 
   // --- SUB-COMPONENTS ---
   const ClientSelector = () => (
-    <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div className="p-6 bg-white rounded-lg shadow-sm border-l-4 mb-6" style={{ borderLeftColor: '#0000CC' }}>
       <div className="flex items-center mb-4">
-        <Users className="h-6 w-6 text-gray-500 mr-3" />
+        <Users className="h-6 w-6 mr-3" style={{ color: '#0000CC' }} />
         <h2 className="text-xl font-bold text-gray-800">Clients</h2>
       </div>
       <div className="client-selector-container flex items-center space-x-2 pb-2 -mb-2 overflow-x-auto">
@@ -528,9 +495,17 @@ const WorkSection = () => {
             onClick={() => setSelectedClient(client)}
             className={`flex-shrink-0 flex items-center space-x-2 px-3 py-1.5 rounded-full border-2 transition-all duration-200 ${
               selectedClient && selectedClient.id === client.id
-                ? "bg-blue-600 border-blue-600 text-white shadow-md"
-                : "bg-white border-gray-200 text-gray-600 hover:border-blue-500 hover:bg-blue-50"
+                ? "text-white shadow-md"
+                : "bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
             }`}
+            style={
+              selectedClient && selectedClient.id === client.id
+                ? {
+                    backgroundColor: '#0000CC',
+                    borderColor: '#0000CC',
+                  }
+                : {}
+            }
           >
             <img
               src={client.avatarUrl}
@@ -562,13 +537,15 @@ const WorkSection = () => {
           return "bg-gray-100 text-gray-500 border-gray-400 opacity-60";
         case "approved":
           return "bg-green-100 text-green-800 border-green-400";
+        default:
+          return "bg-gray-100 text-gray-800 border-gray-400";
       }
     };
 
     return (
-      <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200 flex-grow flex flex-col">
+      <div className="p-6 bg-white rounded-lg shadow-sm border-l-4 flex-grow flex flex-col" style={{ borderLeftColor: '#0000CC' }}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold" style={{ color: '#0000CC' }}>
             {format(currentDate, "MMMM yyyy")}
           </h2>
           <div className="flex items-center space-x-2">
@@ -580,7 +557,8 @@ const WorkSection = () => {
             </button>
             <button
               onClick={() => setCurrentDate(new Date())}
-              className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:border-transparent transition-colors"
+              style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
             >
               Today
             </button>
@@ -602,8 +580,6 @@ const WorkSection = () => {
             </div>
           ))}
           {days.map((day, index) => {
-            // --- THIS IS THE FIX ---
-            // It now filters the main 'events' list by BOTH date AND the selected client.
             const dayEvents = allTasks.filter(
               (event) =>
                 selectedClient &&
@@ -621,11 +597,16 @@ const WorkSection = () => {
                 <span
                   className={`font-medium ${
                     isSameDay(day, new Date())
-                      ? "text-blue-600"
+                      ? "font-bold"
                       : isSameMonth(day, monthStart)
                       ? "text-gray-800"
                       : "text-gray-400"
                   }`}
+                  style={
+                    isSameDay(day, new Date())
+                      ? { color: '#0000CC' }
+                      : {}
+                  }
                 >
                   {format(day, "d")}
                 </span>
@@ -638,7 +619,7 @@ const WorkSection = () => {
                       )}`}
                     >
                       {event.suggestion && (
-                        <MessageSquare className="inline-block h-4 w-4 mr-1 text-blue-600" />
+                        <MessageSquare className="inline-block h-4 w-4 mr-1" style={{ color: '#0000CC' }} />
                       )}
                       {event.title}
                     </div>
@@ -657,7 +638,6 @@ const WorkSection = () => {
     const [helpComment, setHelpComment] = useState("");
 
     useEffect(() => {
-      // Reset help state when modal opens for a new task
       setShowHelp(false);
       setHelpComment("");
     }, [isModalOpen]);
@@ -689,10 +669,11 @@ const WorkSection = () => {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-gray-50 p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-gray-50 p-6 text-left align-middle shadow-xl transition-all border-2" style={{ borderColor: '#0000CC' }}>
                   <Dialog.Title
                     as="h3"
                     className="text-2xl font-bold leading-8 text-gray-900 flex justify-between items-start"
+                    style={{ color: '#0000CC' }}
                   >
                     <div>
                       {activeTask.title}
@@ -720,7 +701,8 @@ const WorkSection = () => {
                         <textarea
                           value={helpComment}
                           onChange={(e) => setHelpComment(e.target.value)}
-                          className="w-full p-2 border rounded-md"
+                          className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+                          style={{ '--tw-ring-color': '#0000CC' } as React.CSSProperties}
                           rows={3}
                           placeholder="e.g., I'm not sure about the color palette..."
                         />
@@ -734,7 +716,8 @@ const WorkSection = () => {
                           <button
                             onClick={() => handleHelpRequest(helpComment)}
                             disabled={!helpComment}
-                            className="px-3 py-1 text-sm bg-red-600 text-white rounded-md disabled:bg-gray-300"
+                            className="px-3 py-1 text-sm text-white rounded-md disabled:bg-gray-300"
+                            style={{ backgroundColor: !helpComment ? '' : '#DC2626' }}
                           >
                             Send Request
                           </button>
@@ -743,7 +726,8 @@ const WorkSection = () => {
                     ) : (
                       <button
                         onClick={() => setShowHelp(true)}
-                        className="flex items-center text-sm font-semibold text-gray-500 hover:text-red-600"
+                        className="flex items-center text-sm font-semibold text-gray-500 hover:opacity-80"
+                        style={{ '--hover-color': '#DC2626' } as React.CSSProperties}
                       >
                         <HelpCircle className="h-5 w-5 mr-2" /> Need Help? Raise
                         a Ticket
@@ -772,7 +756,8 @@ const WorkSection = () => {
         <button
           onClick={handleProceed}
           disabled={!nextTask}
-          className="w-full flex items-center justify-center py-4 px-6 bg-blue-600 text-white font-bold text-lg rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center py-4 px-6 text-white font-bold text-lg rounded-lg shadow-lg hover:opacity-90 transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          style={{ backgroundColor: nextTask ? '#0000CC' : '' }}
         >
           <PlayCircle className="h-6 w-6 mr-3" />
           {nextTask
