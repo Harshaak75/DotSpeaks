@@ -506,7 +506,7 @@ const ProfileSection: React.FC = () => {
                     <div>
                         <label 
                           className="block text-[0.9rem] font-medium text-gray-500 mb-1"
-                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold', color: '#0000CC' }}
+                          style={{ fontFamily: 'Inter, sans-serif', color: '#0000CC' }}
                         >
                           Email Address
                         </label>
@@ -533,7 +533,7 @@ const ProfileSection: React.FC = () => {
                     <div>
                         <label 
                           className="block text-[0.9rem] font-medium text-gray-500 mb-1"
-                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold', color: '#0000CC' }}
+                          style={{ fontFamily: 'Inter, sans-serif', color: '#0000CC' }}
                         >
                           Contact Number
                         </label>
@@ -562,7 +562,7 @@ const ProfileSection: React.FC = () => {
                     <div>
                         <label 
                           className="block text-[0.9rem] font-medium text-gray-500 mb-1"
-                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold', color: '#0000CC' }}
+                          style={{ fontFamily: 'Inter, sans-serif', color: '#0000CC' }}
                         >
                           Employee Code
                         </label>
@@ -579,7 +579,7 @@ const ProfileSection: React.FC = () => {
                     <div>
                         <label 
                           className="block text-[0.9rem] font-medium text-gray-500 mb-1"
-                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold', color: '#0000CC' }}
+                          style={{ fontFamily: 'Inter, sans-serif', color: '#0000CC' }}
                         >
                           Designation
                         </label>
@@ -606,7 +606,7 @@ const ProfileSection: React.FC = () => {
                     <div>
                         <label 
                           className="block text-[0.9rem] font-medium text-gray-500 mb-1"
-                          style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold', color: '#0000CC' }}
+                          style={{ fontFamily: 'Inter, sans-serif', color: '#0000CC' }}
                         >
                           Join Date
                         </label>
