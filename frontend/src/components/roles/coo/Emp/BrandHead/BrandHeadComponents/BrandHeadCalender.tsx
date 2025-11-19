@@ -453,7 +453,7 @@ const CalendarSyncDashboard = () => {
   const handleConnect = () => {
     try {
       const newpopup = window.open(
-        `http://localhost:5000/api/googleAuth/google/redirect?tokens=${accessToken}`,
+        `https://dotspeaks.onrender.com/api/googleAuth/google/redirect?tokens=${accessToken}`,
         "google-auth",
         "width=500,height=600"
       );
