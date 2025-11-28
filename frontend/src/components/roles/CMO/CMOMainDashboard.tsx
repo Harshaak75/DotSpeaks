@@ -1,5 +1,6 @@
 // import ProfileSection from "../../../ProfileSection";
 
+import HrmDashboard from "../../Hrm_Dashboard/hrmDashboard";
 import ProfileSection from "../coo/ProfileSection";
 import CompanyGoalCMO from "./CompanyGoalCMO";
 import CMOLeadTargetCalculator from "./LeadTargetSetter";
@@ -23,6 +24,8 @@ export const CMOMainDashboard: React.FC<CMOMainDashboardProps> = ({
         return <CMOLeadTargetCalculator />;
       case "UploadLeads":
         return <CMOLeadDataUploader/>
+      case "hrm":
+        return <HrmDashboard/>
     }
   };
 

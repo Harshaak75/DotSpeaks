@@ -14,6 +14,7 @@ import { AuthCheck } from "./utils/Token/useAuthCheck";
 import ClientLogin from "./components/auth/ClientLogin";
 import ResetPasswordPage from "./components/auth/ResetPasswordPage";
 import AuthCallback from "./utils/AuthCallBack";
+import HrmDashboard from "./components/Hrm_Dashboard/hrmDashboard";
 
 function App() {
   // const role = localStorage.getItem("role");

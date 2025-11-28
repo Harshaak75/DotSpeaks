@@ -33,6 +33,8 @@ model users {
   requestedTickets HelpTicket[]   @relation("TicketRequester")
   resolvedTickets  HelpTicket[]   @relation("TicketResolver")
   YearlyTarget     YearlyTarget[]
+
+  ExternalIdentity ExternalIdentity[]
 }
 
 model attendance {
@@ -772,4 +774,16 @@ model TargetPackage {
 
   // Relationship back to the parent
   cmoTarget CmoTarget @relation(fields: [cmoTargetId], references: [id])
+}
+
+model ExternalIdentity {
+  id        String   @id @default(cuid())
+  provider  String   // e.g. "keycloak"
+  subject   String   // The Keycloak 'sub' claim (unique per user)
+  email     String   @unique
+
+  userId    String?  @db.Uuid       // ✅ THIS FIX IS REQUIRED
+  user      users?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }

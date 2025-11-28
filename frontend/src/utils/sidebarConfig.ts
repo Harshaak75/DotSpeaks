@@ -30,14 +30,15 @@ export const getSidebarItems = (role: string) => {
         {id:"target", label: "Targets", icon:Target},
         {id:"profitLoss", label: "Profit & Loss", icon:Target},
         { id: "TargetVsAchive", label: "Target VS Achive", icon: UserPlus },
-        { id: "performace", label: "Performace", icon: UserPlus }
+        { id: "performace", label: "Performace", icon: UserPlus },
+        { id: "hrm", label: "HRM", icon: UserPlus }
       ];
     case "CMO":
       return [{ id: "profile", label: "Profile", icon: User },
         { id: "company-goals", label: "Company Goals", icon: Building2 },
         { id: "LeadSetter", label: "Lead Target Setter", icon: UserPlus }
         ,{ id: "UploadLeads", label: "Upload Leads", icon: UserPlus },
-        
+        { id: "hrm", label: "HRM", icon: UserPlus }
       ];
     case "COO":
       return [
@@ -75,6 +76,7 @@ export const getSidebarItems = (role: string) => {
         { id: "meetings", label: "Meetings", icon: Calendar },
         { id: "documents", label: "Legal Documents", icon: FileText },
         { id: "tutorials", label: "Tutorials", icon: GraduationCap },
+        { id: "hrm", label: "HRM", icon: UserPlus }
       ];
 
     case "DIGITAL_MARKETER":

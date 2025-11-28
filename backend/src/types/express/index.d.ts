@@ -6,6 +6,7 @@ declare namespace Express {
       user_id: string;
       role: string;
     };
+    validAccessToken?: string;
   }
 }
 

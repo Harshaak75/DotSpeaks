@@ -13,6 +13,9 @@ import { authenticate_user } from "../middleware/authMiddleware";
 import { handleLogout } from "../controller/attendanceController";
 import crypto, { Hash } from "crypto";
 import { sendPasswordResetEmail } from "../utils/Functionality/Functions1";
+import { ensureFreshKeycloakToken } from "../middleware/validateKeycloakBeforeHRM";
+import axios from "axios";
+import * as jwt from "jsonwebtoken";
 
 env.config();
 
@@ -52,54 +55,104 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req: any, res: any) => {
   const { email, password } = req.body;
 
-  const saltRounds = process.env.SALT_ROUNDS;
-  if (!saltRounds) {
-    return res.status(500).json({
-      error: "SALT_ROUNDS is not defined in the environment variables",
-    });
+  if(!email && !password){
+    return res.status(500).json({message:"Provide the email or password"})
   }
 
-  try {
-    const userData = await prisma.users.findUnique({
+  const tokenUrl = `${process.env.KEYCLOAK_BASE_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`;
+  console.log("Token URL: ", tokenUrl, "Email: ", email, "Password: ", password, "Client ID: ", process.env.KEYCLOAK_PROVISIONER_CLIENT_ID, "Client Secret: ", process.env.KEYCLOAK_PROVISIONER_CLIENT_SECRET);
+
+  const body = new URLSearchParams({
+    grant_type: "password",
+    client_id: process.env.KEYCLOAK_PROVISIONER_CLIENT_ID!, // e.g. hrm-backend
+    client_secret: process.env.KEYCLOAK_PROVISIONER_CLIENT_SECRET!, // from Credentials tab
+    username: email,
+    password,
+  });
+
+      let kc;
+    try {
+      const { data } = await axios.post(tokenUrl, body, {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      });
+      kc = data;
+    } catch (err: any) {
+      return res.status(401).json({ error: "Invalid credentials (Keycloak)", err });
+    }
+
+    const decoded = JSON.parse(
+      Buffer.from(kc.access_token.split(".")[1], "base64").toString("utf8")
+    );
+
+    const keycloakSub = decoded.sub;
+    const roles = decoded.realm_access?.roles || "";
+
+    
+    const role = Array.isArray(roles) ? roles[0]: roles;
+    console.log("roles: ", role)
+    let user = await prisma.users.findUnique({ where: { email } });
+
+    if (!user) {
+      user = await prisma.users.create({
+        data: {
+          email,
+          password: "", // handled by Keycloak
+          role: role,
+        },
+      });
+    }
+
+    await prisma.externalIdentity.upsert({
       where: { email },
-      select: {
-        password: true,
-        role: true,
-        id: true,
+      update: { subject: keycloakSub },
+      create: {
+        provider: "keycloak",
+        subject: keycloakSub,
+        email,
+        userId: user.id,
       },
     });
 
-    if (!userData) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
-
-    if (!userData.password) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
-    const isPasswordValid = CompareFunction(password, userData.password);
-
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
-
-    const { accessToken, refreshToken } = GenerateTokens(
-      userData.id,
-      userData.role
+    const appToken = jwt.sign(
+      { id: user.id, role: role, email: user.email },
+      process.env.JWT_SECRET!,
+      { expiresIn: "7d" }
     );
 
-    // console.log("Access Token:", accessToken, "Refresh Token:", refreshToken);
+    res.cookie("keycloak_token", kc.access_token, {
+      httpOnly: true,
+      secure: false, // ✅ must be false in localhost (no HTTPS)
+      sameSite: "lax", // ✅ allows cookies for cross-site GETs
+      maxAge: kc.expires_in * 1000, // 5 mins
+    });
+
+    res.cookie("keycloak_refresh_token", kc.refresh_token, {
+      httpOnly: true,
+      secure: false, // ✅ must be false in localhost (no HTTPS)
+      sameSite: "lax", // ✅ allows cookies for cross-site GETs
+      maxAge: kc.refresh_expires_in * 1000, // ~30 mins
+    });
+
+  try {
+
+    const { accessToken, refreshToken } = GenerateTokens(
+      user.id,
+      role
+    );
+
+    console.log("Access Token:", accessToken, "Refresh Token:", refreshToken);
 
     // add the login to the attendance table
 
     const loginTimestamp = new Date();
 
-    console.log("Login timestamp:", loginTimestamp);
+    // console.log("Login timestamp:", loginTimestamp);
 
-    console.log("The user ID being used is:", userData.id);
+    // console.log("The user ID being used is:", userData.id);
 
     await prisma.attendance.create({
       data: {
-        user_id: userData.id,
+        user_id: user.id,
         login_time: loginTimestamp,
       },
     });
@@ -111,9 +164,14 @@ router.post("/login", async (req: any, res: any) => {
       maxAge: 1000 * 60 * 60 * 24 * 20, // 20 days
     });
 
-    res
-      .status(200)
-      .json({ message: "Login successful", accessToken, role: userData.role });
+      res.json({
+      accessToken,
+      apptoken: appToken, // your app token (frontend uses this)
+      keycloakToken: kc.access_token,
+      role: user.role,
+      userId: user.id,
+      email,
+    });
   } catch (error) {
     console.error("Error during login:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -337,6 +395,29 @@ router.post("/Clientlogout", authenticate_user, async (req, res) => {
   } catch (error) {
     console.error("Error during logout:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/go-to-hrm", ensureFreshKeycloakToken, async (req, res) => {
+  try {
+    const { tenantCode } = req.query;
+    const backend_url = process.env.HRM_BACKEND_ROUTE
+
+    if (!tenantCode)
+      return res.status(400).json({ error: "tenantCode is required" });
+
+    const accessToken = req.validAccessToken;
+
+    if(!accessToken) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    // Redirect to HRM frontend
+    const hrmRedirectUrl = `${backend_url}/api/tenant/sso-login/${tenantCode}?token=${accessToken}`;
+    res.json({ redirectUrl: hrmRedirectUrl });
+  } catch (err: any) {
+    console.error("Redirect failed:", err.message);
+    res.status(500).json({ error: "Failed to redirect to HRM" });
   }
 });
 

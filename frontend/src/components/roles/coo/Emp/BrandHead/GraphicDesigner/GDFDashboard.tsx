@@ -7,6 +7,7 @@ import TutorialsSection from '../../../TutorialsSection';
 import ProfileSection from '../../../ProfileSection';
 import EventSection from './EventSection';
 import WorkSection from './WorkSection';
+import HrmDashboard from '../../../../../Hrm_Dashboard/hrmDashboard';
 
 
 interface GDFDashboardProps {
@@ -34,6 +35,8 @@ const GDFDashboard: React.FC<GDFDashboardProps> = ({ activeSection }) => {
         return <DocumentsSection />;
       case 'tutorials':
         return <TutorialsSection />;
+      case 'hrm':
+        return <HrmDashboard/>
       default:
         return <ProfileSection />;
     }

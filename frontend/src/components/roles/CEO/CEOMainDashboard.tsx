@@ -1,5 +1,6 @@
 // import ProfileSection from "../../../ProfileSection";
 
+import HrmDashboard from "../../Hrm_Dashboard/hrmDashboard";
 import ProfileSection from "../coo/ProfileSection";
 import CEOYearlyTargetDashboard from "./CEOYearlyTargetDashboard";
 import ExecutiveDashboard from "./Performace";
@@ -27,6 +28,8 @@ export const CEOMainDashboard: React.FC<CEOMainDashboardProps> = ({
         return <TargetVsAchive/>
       case"performace":
         return <ExecutiveDashboard/>
+      case"hrm":
+        return <HrmDashboard/>
     }
   };
 
