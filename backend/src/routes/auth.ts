@@ -307,12 +307,6 @@ router.post("/Clientlogin", async (req: any, res: any) => {
 
   // Track attendance (optional for clients)
   const loginTimestamp = new Date();
-  await prisma.clientAttendance.create({
-    data: {
-      client_id: user.id,
-      login_time: loginTimestamp,
-    },
-  });
 
   // Set KEYCLOAK tokens as cookies
   res.cookie("keycloak_token", kc.access_token, {
