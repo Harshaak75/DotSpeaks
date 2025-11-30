@@ -76,6 +76,8 @@ export const authenticate_user = async (
   const kcAccessToken = req.cookies?.keycloak_token;
   const kcRefreshToken = req.cookies?.keycloak_refresh_token;
 
+  console.log(kcAccessToken, kcRefreshToken)
+
   let appTokenValid = true;
   let keycloakTokenValid = true;
 
@@ -115,6 +117,8 @@ export const authenticate_user = async (
     keycloakTokenValid = false;
   }
 
+  console.log("token faild")
+
   /*****************************************
    * ✅ 3. BOTH VALID → ALLOW
    *****************************************/
@@ -125,6 +129,8 @@ export const authenticate_user = async (
     };
     return next();
   }
+
+  console.log("❌ One or both tokens invalid");
 
   /*****************************************
    * 🔁 4. APP TOKEN EXPIRED → REFRESH ONLY APP TOKEN
@@ -154,6 +160,8 @@ export const authenticate_user = async (
     appDecoded = { userId, role };
     appTokenValid = true;
   }
+
+  console.log("came here 2")
 
   /*****************************************
    * 🔁 5. KEYCLOAK TOKEN EXPIRED → SILENT REFRESH
@@ -196,6 +204,7 @@ export const authenticate_user = async (
         .json({ error: "Keycloak session expired. Please login again." });
     }
   }
+  console.log("came here")
 
   /*****************************************
    * ✅ 6. CONTINUE IF BOTH VALID NOW
@@ -203,6 +212,8 @@ export const authenticate_user = async (
   if (appTokenValid && keycloakTokenValid) {
     return next();
   }
+
+  console.log("❌ Both tokens invalid");
 
   return res
     .status(401)

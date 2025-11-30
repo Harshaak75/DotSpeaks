@@ -158,6 +158,7 @@ model Package {
   PackageEmployee             PackageEmployee[]
   UploadedLeads               UploadedLeads[]
   TelecommunicatorLeads       TelecommunicatorLeads[]
+  clientSubscriptions         ClientSubscription[]
 }
 
 // it is mainly used to get the information about : "Who is working on the Spark package?"
@@ -261,6 +262,8 @@ model clients {
   OnboardingData           ClientOnboardingData?
   EmployeeClientAssignment EmployeeClientAssignment[]
   externalIdentities       ExternalIdentity[]
+  clientSubscriptions      ClientSubscription[]
+  billingHistories         BillingHistory[]
 }
 
 model ClientOnboardingData {
@@ -790,4 +793,66 @@ model ExternalIdentity {
   client   clients? @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+}
+
+// supscription and billing history
+
+model ClientSubscription {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  clientId String  @db.Uuid
+  client   clients @relation(fields: [clientId], references: [id])
+
+  packageId String?  @db.Uuid
+  package   Package? @relation(fields: [packageId], references: [id])
+
+  status SubscriptionStatus @default(ACTIVE)
+
+  startDate    DateTime     @default(now())
+  endDate      DateTime?
+  renewalDate  DateTime? // next billing date
+  billingCycle BillingCycle @default(MONTHLY)
+
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  billingHistories BillingHistory[]
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PAUSED
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+model BillingHistory {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  subscriptionId String             @db.Uuid
+  subscription   ClientSubscription @relation(fields: [subscriptionId], references: [id])
+
+  clientId String  @db.Uuid
+  client   clients @relation(fields: [clientId], references: [id])
+
+  amount   Decimal @db.Decimal(10, 2)
+  currency String  @default("INR")
+
+  invoiceNumber String        @unique
+  status        InvoiceStatus @default(PAID)
+
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+enum InvoiceStatus {
+  PAID
+  UNPAID
+  FAILED
+  REFUNDED
 }

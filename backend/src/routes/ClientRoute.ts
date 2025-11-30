@@ -69,4 +69,44 @@ router.get("/contentDesign", authenticate_user, GetTheDesign)
 router.get("/GetTeamMembers", authenticate_user, GetTeamMembers);
 
 
+// profile
+router.get("/getClientDetails", authenticate_user, async (req, res) =>{
+  try {
+    const clientId = req.user?.user_id;
+
+    const clientData: any = await prisma.clientOnboardingData.findUnique({
+      where:{
+        clientId: clientId
+      }
+    })
+
+    if(!clientData){
+      return res.status(404).json({message: "Client data not found"});
+    }
+
+    const {id, ...rest} = clientData;
+    res.status(200).json(rest);
+  } catch (error) {
+    res.status(500).json({message: "Error fetching client details", error: error});
+  }
+})
+
+router.get("/billind_and_subscription", authenticate_user, async (req, res) =>{
+  try {
+    const clientId = req.user?.user_id;
+
+    const bilingData = await prisma.clientSubscription.findFirst({
+      where:{
+        clientId: clientId,
+        status: "ACTIVE"
+      },
+      include:{
+        billingHistories: true
+      }
+    })
+    res.status(200).json(bilingData);
+  } catch (error) {
+    res.status(500).json({message: "Error fetching billing and subscription details", error: error});
+  }
+})
 export default router;
