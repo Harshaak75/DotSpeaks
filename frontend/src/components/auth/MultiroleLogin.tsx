@@ -23,6 +23,8 @@ const MultiroleLogin = () => {
       const response = await api.auth.login.verify(email, password)
 
       console.log(response)
+      console.log("response-data: ", response.data)
+      console.log("response-accesstoken: ", response.accessToken)
 
       dispatch(setAccessToken(response.accessToken))
       dispatch(setRole(response.role))
