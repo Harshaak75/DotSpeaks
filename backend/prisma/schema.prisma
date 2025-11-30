@@ -260,6 +260,7 @@ model clients {
   MarketingContent         MarketingContent[]
   OnboardingData           ClientOnboardingData?
   EmployeeClientAssignment EmployeeClientAssignment[]
+  externalIdentities       ExternalIdentity[]
 }
 
 model ClientOnboardingData {
@@ -777,13 +778,16 @@ model TargetPackage {
 }
 
 model ExternalIdentity {
-  id        String   @id @default(cuid())
-  provider  String   // e.g. "keycloak"
-  subject   String   // The Keycloak 'sub' claim (unique per user)
-  email     String   @unique
+  id       String @id @default(cuid())
+  provider String // e.g. "keycloak"
+  subject  String // The Keycloak 'sub' claim (unique per user)
+  email    String @unique
 
-  userId    String?  @db.Uuid       // ✅ THIS FIX IS REQUIRED
-  user      users?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String? @db.Uuid // ✅ THIS FIX IS REQUIRED
+  user   users?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  clientId String?  @db.Uuid
+  client   clients? @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 }

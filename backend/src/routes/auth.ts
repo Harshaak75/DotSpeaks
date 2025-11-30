@@ -179,66 +179,174 @@ router.post("/login", async (req: any, res: any) => {
 });
 
 // client login
+// router.post("/Clientlogin", async (req: any, res: any) => {
+//   const { email, password } = req.body;
+
+//   const saltRounds = process.env.SALT_ROUNDS;
+//   if (!saltRounds) {
+//     return res.status(500).json({
+//       error: "SALT_ROUNDS is not defined in the environment variables",
+//     });
+//   }
+
+//   try {
+//     const userData = await prisma.clients.findUnique({
+//       where: { email },
+//       select: {
+//         password: true,
+//         id: true,
+//       },
+//     });
+
+//     if (!userData) {
+//       return res.status(401).json({ error: "Invalid email or password" });
+//     }
+
+//     if (!userData.password) {
+//       return res.status(401).json({ error: "Invalid email or password" });
+//     }
+
+//     const isPasswordValid = CompareFunction(password, userData.password);
+
+//     if (!isPasswordValid) {
+//       return res.status(401).json({ error: "Invalid email or password" });
+//     }
+
+//     console.log("user id: ", userData.id);
+
+//     const { accessToken, refreshToken } = GenerateTokens(userData.id, "CLIENT");
+
+//     const loginTimestamp = new Date();
+
+//     console.log("Login timestamp:", loginTimestamp);
+
+//     console.log("The user ID being used is:", userData.id);
+
+//     console.log(accessToken, refreshToken);
+
+//     res.cookie("refreshToken", refreshToken, {
+//       httpOnly: true,
+//       secure: true, // Set to true in production
+//       sameSite: "none", // Adjust based on your requirements
+//       maxAge: 1000 * 60 * 60 * 24 * 20, // 20 days
+//     });
+
+//     res
+//       .status(200)
+//       .json({ message: "Login successful", accessToken, role: "CLIENT" });
+//   } catch (error) {
+//     console.error("Error during login:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// });
+
+// CLIENT LOGIN via KEYCLOAK (Same as Employee Login)
 router.post("/Clientlogin", async (req: any, res: any) => {
   const { email, password } = req.body;
 
-  const saltRounds = process.env.SALT_ROUNDS;
-  if (!saltRounds) {
-    return res.status(500).json({
-      error: "SALT_ROUNDS is not defined in the environment variables",
-    });
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password required" });
   }
 
+  const tokenUrl = `${process.env.KEYCLOAK_BASE_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`;
+
+  const body = new URLSearchParams({
+    grant_type: "password",
+    client_id: process.env.KEYCLOAK_PROVISIONER_CLIENT_ID!,
+    client_secret: process.env.KEYCLOAK_PROVISIONER_CLIENT_SECRET!,
+    username: email,
+    password,
+  });
+
+  let kc;
   try {
-    const userData = await prisma.clients.findUnique({
-      where: { email },
-      select: {
-        password: true,
-        id: true,
+    const { data } = await axios.post(tokenUrl, body, {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    kc = data;
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid Keycloak credentials", err });
+  }
+
+  // Decode keycloak access token to extract info
+  const decoded = JSON.parse(
+    Buffer.from(kc.access_token.split(".")[1], "base64").toString("utf8")
+  );
+
+  const keycloakSub = decoded.sub;
+
+  // For client roles, we force role = CLIENT
+  const role = "CLIENT";
+
+  // Check or create local client user
+  let user = await prisma.clients.findUnique({ where: { email } });
+
+  if (!user) {
+    user = await prisma.clients.create({
+      data: {
+        email,
+        password: "", // Password handled by Keycloak
       },
     });
-
-    if (!userData) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
-
-    if (!userData.password) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
-
-    const isPasswordValid = CompareFunction(password, userData.password);
-
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
-
-    console.log("user id: ", userData.id);
-
-    const { accessToken, refreshToken } = GenerateTokens(userData.id, "CLIENT");
-
-    const loginTimestamp = new Date();
-
-    console.log("Login timestamp:", loginTimestamp);
-
-    console.log("The user ID being used is:", userData.id);
-
-    console.log(accessToken, refreshToken);
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true, // Set to true in production
-      sameSite: "none", // Adjust based on your requirements
-      maxAge: 1000 * 60 * 60 * 24 * 20, // 20 days
-    });
-
-    res
-      .status(200)
-      .json({ message: "Login successful", accessToken, role: "CLIENT" });
-  } catch (error) {
-    console.error("Error during login:", error);
-    res.status(500).json({ error: "Internal server error" });
   }
+
+  // Store Keycloak external identity
+  await prisma.externalIdentity.upsert({
+    where: { email },
+    update: { subject: keycloakSub },
+    create: {
+      provider: "keycloak",
+      subject: keycloakSub,
+      email,
+      clientId: user.id,
+    },
+  });
+
+  // Generate internal tokens
+  const { accessToken, refreshToken } = GenerateTokens(user.id, role);
+
+  // Track attendance (optional for clients)
+  const loginTimestamp = new Date();
+  await prisma.clientAttendance.create({
+    data: {
+      client_id: user.id,
+      login_time: loginTimestamp,
+    },
+  });
+
+  // Set KEYCLOAK tokens as cookies
+  res.cookie("keycloak_token", kc.access_token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: kc.expires_in * 1000,
+  });
+
+  res.cookie("keycloak_refresh_token", kc.refresh_token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: kc.refresh_expires_in * 1000,
+  });
+
+  // Set internal refresh token
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: 1000 * 60 * 60 * 24 * 20,
+  });
+
+  // Response same format as employee login
+  res.json({
+    accessToken,
+    keycloakToken: kc.access_token,
+    role,
+    clientId: user.id,
+    email,
+  });
 });
+
 
 router.get("/authCheck", async (req, res) => {
   try {
