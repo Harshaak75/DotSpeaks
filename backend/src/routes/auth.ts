@@ -121,15 +121,15 @@ router.post("/login", async (req: any, res: any) => {
 
     res.cookie("keycloak_token", kc.access_token, {
       httpOnly: true,
-      secure: false, // ✅ must be false in localhost (no HTTPS)
-      sameSite: "lax", // ✅ allows cookies for cross-site GETs
+      secure: true, // ✅ must be false in localhost (no HTTPS)
+      sameSite: "none", // ✅ allows cookies for cross-site GETs
       maxAge: kc.expires_in * 1000, // 5 mins
     });
 
     res.cookie("keycloak_refresh_token", kc.refresh_token, {
       httpOnly: true,
-      secure: false, // ✅ must be false in localhost (no HTTPS)
-      sameSite: "lax", // ✅ allows cookies for cross-site GETs
+      secure: true, // ✅ must be false in localhost (no HTTPS)
+      sameSite: "none", // ✅ allows cookies for cross-site GETs
       maxAge: kc.refresh_expires_in * 1000, // ~30 mins
     });
 
@@ -159,8 +159,8 @@ router.post("/login", async (req: any, res: any) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Set to true in production
-      sameSite: "Strict", // Adjust based on your requirements
+      secure: true, // Set to true in production
+      sameSite: "None", // Adjust based on your requirements
       maxAge: 1000 * 60 * 60 * 24 * 20, // 20 days
     });
 
