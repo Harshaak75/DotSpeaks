@@ -226,8 +226,8 @@ router.post("/Clientlogin", async (req: any, res: any) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Set to true in production
-      sameSite: "Strict", // Adjust based on your requirements
+      secure: true, // Set to true in production
+      sameSite: "none", // Adjust based on your requirements
       maxAge: 1000 * 60 * 60 * 24 * 20, // 20 days
     });
 
