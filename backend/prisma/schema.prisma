@@ -95,6 +95,8 @@ model documents {
   title           String
   type            String
   category        String
+  clientId        String?   @db.Uuid
+  client          clients?  @relation(fields: [clientId], references: [id])
   size            String?
   last_modified   DateTime? @default(now()) @db.Timestamptz(6)
   download_url    String?
@@ -264,6 +266,8 @@ model clients {
   externalIdentities       ExternalIdentity[]
   clientSubscriptions      ClientSubscription[]
   billingHistories         BillingHistory[]
+  documents                documents[]
+  notifications            Notification[]
 }
 
 model ClientOnboardingData {
@@ -855,4 +859,65 @@ enum InvoiceStatus {
   UNPAID
   FAILED
   REFUNDED
+}
+
+// ads
+
+model ClientAd {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  title       String
+  description String?
+  imageUrl    String // URL from Supabase/S3
+  type        String? // e.g. "Festival", "Discount", "Seasonal", "Special"
+
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+
+  status AdStatus @default(ACTIVE)
+
+  ctaText String? // e.g. "Claim Offer"
+  ctaLink String? // Optional URL for actions (claim, more details)
+
+  displayOrder Int @default(1) // to show ads in order
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum AdStatus {
+  ACTIVE
+  INACTIVE
+  SCHEDULED
+  EXPIRED
+}
+
+// notification
+model Notification {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  // Which client user should receive this notification
+  clientId String  @db.Uuid
+  client   clients @relation(fields: [clientId], references: [id])
+
+  // Notification content
+  title   String
+  message String?
+  type    NotificationType // report | offer | meeting | general
+  icon    String? // optional icon name: "report", "gift", "calendar" etc.
+
+  // Optional link to redirect user
+  targetUrl String? // e.g. "/report/123", "/offers", "/meeting/456"
+
+  // Status
+  isRead Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+enum NotificationType {
+  REPORT
+  OFFER
+  MEETING
+  GENERAL
 }
