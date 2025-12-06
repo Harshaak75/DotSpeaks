@@ -136,12 +136,13 @@ export const authenticate_user = async (
    * 🔁 4. APP TOKEN EXPIRED → REFRESH ONLY APP TOKEN
    *****************************************/
   if (!appTokenValid && appRefreshToken) {
-    const { accessToken, role, userId, refreshToken } =
+    const { accessToken, role, userId, refreshToken, name } =
       await VerifyRefreshToken(appRefreshToken);
 
     // ✅ Only APP TOKEN is sent back to frontend
     res.setHeader("x-new-access-token", accessToken);
     res.setHeader("x-user-role", role);
+    res.setHeader("x-user-name", name);
 
     if (refreshToken) {
       res.cookie("refreshToken", refreshToken, {

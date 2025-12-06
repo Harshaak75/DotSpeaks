@@ -56,16 +56,16 @@ export async function SaveClientRefreshToken(
     throw new Error("Failed to save refresh token");
   }
 }
-export function GenerateTokens(userId: string, role: string) {
+export function GenerateTokens(userId: string, role: string, name: string) {
   const accessToken = jwt.sign(
-    { userId, role },
+    { userId, role, name },
     process.env.ACCESS_SECRET as string,
     {
       expiresIn: "15m",
     }
   );
   const refreshToken = jwt.sign(
-    { userId, role },
+    { userId, role, name },
     process.env.REFRESH_SECRET as string,
     {
       expiresIn: "20d",
@@ -78,6 +78,7 @@ export function GenerateTokens(userId: string, role: string) {
   );
 
   console.log("role: ", role);
+  console.log("userName: ", name)
 
   if (role == "CLIENT") {
     SaveClientRefreshToken(userId, hashedRefreshToken);
@@ -104,11 +105,11 @@ export const VerifyRefreshToken = async (refreshtoken: string) => {
           throw new Error("Invalid token payload");
         }
 
-        const { userId, role } = decoded;
+        const { userId, role, name } = decoded;
 
-        const { accessToken, refreshToken } = GenerateTokens(userId, role);
+        const { accessToken, refreshToken } = GenerateTokens(userId, role, name);
 
-        return { accessToken, role, userId, refreshToken };
+        return { accessToken, role, userId, refreshToken, name };
       } else {
         throw new Error("Invalid refresh token");
       }

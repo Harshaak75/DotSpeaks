@@ -113,8 +113,24 @@ router.post("/login", async (req: any, res: any) => {
       },
     });
 
+    const userName = await prisma.profiles.findUnique({
+      where:{
+        email: email
+      },
+      select:{
+        name: true
+      }
+    })
+
+    if(!userName){
+      res.status(500).json({message: "Profile not found" });
+      return;
+    }
+    
+    console.log("User Name fetched: ", userName?.name);
+
     const appToken = jwt.sign(
-      { id: user.id, role: role, email: user.email },
+      { id: user.id, role: role, email: user.email, name: userName?.name || "" },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" }
     );
@@ -137,7 +153,8 @@ router.post("/login", async (req: any, res: any) => {
 
     const { accessToken, refreshToken } = GenerateTokens(
       user.id,
-      role
+      role,
+      userName.name
     );
 
     console.log("Access Token:", accessToken, "Refresh Token:", refreshToken);
@@ -171,6 +188,7 @@ router.post("/login", async (req: any, res: any) => {
       role: user.role,
       userId: user.id,
       email,
+      name: userName.name,
     });
   } catch (error) {
     console.error("Error during login:", error);
@@ -290,6 +308,8 @@ router.post("/Clientlogin", async (req: any, res: any) => {
     });
   }
 
+
+
   // Store Keycloak external identity
   await prisma.externalIdentity.upsert({
     where: { email },
@@ -302,8 +322,22 @@ router.post("/Clientlogin", async (req: any, res: any) => {
     },
   });
 
+  const userName = await prisma.profiles.findUnique({
+      where:{
+        email: email
+      },
+      select:{
+        name: true
+      }
+    })
+
+    if(!userName){
+      res.status(500).json({message: "Profile not found" });
+      return;
+    }
+
   // Generate internal tokens
-  const { accessToken, refreshToken } = GenerateTokens(user.id, role);
+  const { accessToken, refreshToken } = GenerateTokens(user.id, role, userName.name);
 
   // Track attendance (optional for clients)
   const loginTimestamp = new Date();

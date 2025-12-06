@@ -61,7 +61,7 @@ app.use(
     // origin: "http://localhost:5173",
     origin: ["http://localhost:5173", "https://dot-speaks.vercel.app"],
     credentials: true,
-    exposedHeaders: ["x-new-access-token", "x-user-role"], // <-- Add this
+    exposedHeaders: ["x-new-access-token", "x-user-role", "x-user-name"], // <-- Add this
   })
 );
 app.use(express.json());

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { setAccessToken, setRole } from "../../../redux/slice/authSlice";
+import { setName, setAccessToken, setRole } from "../../../redux/slice/authSlice";
 
 const API_BASE_URL = import.meta.env.VITE_SERVER_URL;
 console.log("hiiii", API_BASE_URL);
@@ -12,6 +12,9 @@ const handleResponse = async (response: Response, dispatch: Function) => {
 
   const newAccessToken = response.headers.get("x-new-access-token");
   const newRole = response.headers.get("x-user-role");
+  const newName = response.headers.get("x-user-name");
+
+  console.log("api name:", newName);
 
   // Dispatch actions to update Redux state
   if (newAccessToken) {
@@ -20,7 +23,9 @@ const handleResponse = async (response: Response, dispatch: Function) => {
   if (newRole) {
     dispatch(setRole(newRole));
   }
-
+  if(newName){
+    dispatch(setName(newName));
+  }
   return response.json();
 };
 

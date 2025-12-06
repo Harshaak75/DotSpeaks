@@ -15,7 +15,7 @@ import { getSidebarItems } from "../../utils/sidebarConfig";
 import { getDashboardComponent } from "../../utils/DashboardConfig";
 import { api } from "../../utils/api/Employees/api";
 import { useDispatch, useSelector } from "react-redux";
-import { logout, selectAccessToken } from "../../redux/slice/authSlice";
+import { logout, selectAccessToken, selectUserName } from "../../redux/slice/authSlice";
 import { useNavigate } from "react-router-dom";
 import { Dialog, Transition } from "@headlessui/react";
 import logo from "../../assets/logo.png";
@@ -378,6 +378,7 @@ const DashboardWrapper: React.FC<Props> = ({ userRole }) => {
   const [loading, setLoading] = useState(false);
 
   const accessToken = useSelector(selectAccessToken);
+  const userName = useSelector(selectUserName);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const BREAK_STORAGE_KEY = "WorkBreakKeyv1";
@@ -503,6 +504,7 @@ const DashboardWrapper: React.FC<Props> = ({ userRole }) => {
         console.log("hi everyone");
       } else {
         await api.auth.logout.post(accessToken);
+        localStorage.removeItem("WorkStoragev1");
         localStorage.removeItem("activeSection");
         localStorage.removeItem(SERECT_KEY);
         // clear break storage on logout
@@ -541,7 +543,7 @@ const DashboardWrapper: React.FC<Props> = ({ userRole }) => {
       <GreetingModal
         isOpen={isGreetingOpen}
         onClose={() => setIsGreetingOpen(false)}
-        userName="Harsha"
+        userName={userName || "User"}
       />
 
       <LogoutModal

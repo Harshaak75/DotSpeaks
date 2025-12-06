@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { api } from "../../utils/api/Employees/api";
 import { useDispatch } from "react-redux";
-import { setAccessToken, setRole } from "../../redux/slice/authSlice";
+import { setAccessToken, setName, setRole } from "../../redux/slice/authSlice";
 import { useNavigate } from "react-router-dom";
 
 const MultiroleLogin = () => {
@@ -28,6 +28,7 @@ const MultiroleLogin = () => {
 
       dispatch(setAccessToken(response.accessToken))
       dispatch(setRole(response.role))
+      dispatch(setName(response.name))
 
       navigate("/dashboard")
 
